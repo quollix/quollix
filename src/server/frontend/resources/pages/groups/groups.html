@@ -1,0 +1,39 @@
+<h3>Create group</h3>
+<form id="create-group-form" class="row">
+  <input id="create-group-name-input" name="groupname" type="text" placeholder="Enter group name" required>
+  <button id="create-group-button" type="button" onclick="createGroup(groupname.value)">Create</button>
+</form>
+
+<h3>Group list</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range $.Data.Groups}}
+    {{$group := .}}
+    <tr class="group-row" data-group-id="{{$group.Id}}" data-group-name="{{$group.Name}}">
+      <td class="group-name-cell">{{$group.Name}}</td>
+      <td>
+        <div class="actions-row">
+          <button type="button" class="lean icon-btn group-manage-members-button" title="Manage members"
+            aria-label="Manage members" onclick="manageGroupMembers('{{$group.Id}}')">
+            <i class="mdi mdi-account-multiple-outline" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="lean icon-btn group-manage-apps-button" title="Manage apps"
+            aria-label="Manage apps" onclick="manageGroupApps('{{$group.Id}}')">
+            <i class="mdi mdi-apps" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="lean icon-btn alert group-delete-button" title="Delete group"
+            aria-label="Delete group" onclick="deleteGroup('{{$group.Id}}','{{$group.Name}}')">
+            <i class="mdi mdi-delete-outline" aria-hidden="true"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>

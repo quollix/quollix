@@ -1,0 +1,20 @@
+services:
+  sampleapp:
+    image: sampleapp:local
+    container_name: samplemaintainer_sampleapp_sampleapp
+    environment:
+      - VERSION=2.0
+      - SERVER_URL=https://sampleapp.${SERVER_HOST}
+      - OIDC_CLIENT_ID=${CLIENT_ID}
+      - OIDC_CLIENT_SECRET=${CLIENT_SECRET}
+      - IANA_TIMEZONE=${IANA_TIMEZONE}
+      - PORT=3001
+    ports:
+      - "127.0.0.1:8085:3000"
+    volumes:
+      - samplemaintainer_sampleapp_data:/data
+    labels:
+      quollix.port: 3001
+
+volumes:
+  samplemaintainer_sampleapp_data:

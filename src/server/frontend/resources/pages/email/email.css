@@ -1,0 +1,17 @@
+#enable-email-config-label {
+  align-self: start;
+}
+
+#enable-email-config-label input {
+  margin-top: 10px;
+  margin-left: 50px;
+}
+
+#email-configs-save-button {
+  margin-left: 30px;
+  margin-top: 20px;
+}
+
+.enable-bar-button {
+  margin-top: 28px;
+}

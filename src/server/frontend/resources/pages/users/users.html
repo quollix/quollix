@@ -1,0 +1,69 @@
+<h3>Invite user</h3>
+<form id="create-user-form" class="inline-form-row">
+  <input id="create-user-name-input" class="input-medium" name="username" type="text" placeholder="Enter user name"
+    required>
+  <input id="create-user-email-input" class="input-medium" name="email" type="email" placeholder="Enter email" required>
+  <button id="create-user-button" type="button" onclick="createUser(username.value, email.value)">Invite</button>
+  {{if $.Data.IsEmailEnabled}}
+  <button id="create-user-via-email-button" type="button"
+    onclick="createUserViaEmail(username.value, email.value)">Invite via Email</button>
+  {{end}}
+</form>
+
+<h3>User list</h3>
+<table>
+  <thead>
+    <tr>
+      <th class="user-name-header">Name</th>
+      <th class="user-email-header">Email</th>
+      <th class="user-role-header">Role</th>
+      <th class="user-created-header">Created</th>
+      <th class="user-invitation-expiration-header">Invitation Expiration</th>
+      <th class="user-password-link-header">Password Link</th>
+      <th class="user-actions-header">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range $.Data.Users}}
+    {{$user := .}}
+    <tr class="user-row" data-username="{{$user.Username}}">
+      <td class="user-name-cell">{{$user.Username}}</td>
+      <td class="user-email-cell">{{$user.Email}}</td>
+      <td class="user-role-cell">{{if $user.IsAdmin}}Admin{{else}}User{{end}}</td>
+      <td class="user-created-cell">{{$user.CreatedAt}}</td>
+      <td class="user-invitation-expiration-cell">{{if
+        $user.SetPasswordTokenExpirationDate}}{{$user.SetPasswordTokenExpirationDate}}{{else}}—{{end}}</td>
+      <td class="user-password-link-cell">
+        {{if $user.SetPasswordLink}}
+        <span class="copy-to-clipboard-button" onclick="copyToClipboard('{{$user.SetPasswordLink}}', '{{$.Host}}')">
+          <i class="mdi mdi-content-copy"></i>
+        </span>
+        {{else}}—{{end}}
+      </td>
+      <td class="user-actions-cell">
+        <button type="button" class="lean user-edit-button" title="Edit user" aria-label="Edit user"
+          onclick="location.href='{{$.Paths.FrontendUserEdit}}?user-id={{$user.Id}}'">
+          <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>
+        </button>
+
+        {{if not $user.IsAdmin}}
+        <button type="button" class="lean user-reset-password-button" title="Reset password" aria-label="Reset password"
+          onclick="resetPassword('{{$user.Id}}','{{$user.Username}}')">
+          <i class="mdi mdi-lock-reset" aria-hidden="true"></i>
+        </button>
+        {{if $.Data.IsEmailEnabled}}
+        <button type="button" class="lean user-send-password-reset-email-button" title="Send password reset email"
+          aria-label="Send password reset email" onclick="sendPasswordResetEmail('{{$user.Id}}','{{$user.Username}}')">
+          <i class="mdi mdi-email-fast-outline" aria-hidden="true"></i>
+        </button>
+        {{end}}
+        <button type="button" class="lean alert user-delete-button" title="Delete user" aria-label="Delete user"
+          onclick="deleteUser('{{$user.Id}}','{{$user.Username}}')">
+          <i class="mdi mdi-delete-outline" aria-hidden="true"></i>
+        </button>
+        {{end}}
+      </td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>

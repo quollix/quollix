@@ -1,0 +1,2 @@
+FROM alpine:3.24.0
+RUN apk add --no-cache restic=0.18.1-r7 rclone=1.74.1-r1 openssh-client-default=10.3_p1-r0 sshpass=1.10-r0

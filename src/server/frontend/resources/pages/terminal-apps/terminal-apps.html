@@ -1,0 +1,28 @@
+<table>
+    <thead>
+    <tr>
+        <th>Maintainer</th>
+        <th>App</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range $.Data.Apps }}
+    <tr class="terminal-app-row" data-maintainer="{{ .Maintainer }}" data-app-name="{{ .AppName }}">
+        <td class="terminal-app-maintainer-cell">{{ .Maintainer }}</td>
+        <td class="terminal-app-name-cell">{{ .AppName }}</td>
+        <td>
+            <div class="actions-row">
+            <button type="button"
+                    class="lean icon-btn terminal-view-services-button"
+                    title="View services"
+                    aria-label="View services"
+                    onclick="location.href='{{$.Paths.FrontendTerminalServices}}?maintainer={{.Maintainer}}&appName={{.AppName}}'">
+                <i class="mdi mdi-format-list-bulleted" aria-hidden="true"></i>
+            </button>
+            </div>
+        </td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>

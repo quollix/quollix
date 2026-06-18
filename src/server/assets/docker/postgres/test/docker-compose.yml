@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:17.5
+    container_name: quollix_postgres_postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=postgres
+    # We cannot use a faster in-memory volume for testing, since the backup feature tests require a persistent volume.
+    volumes:
+      - quollix_postgres_data:/var/lib/postgresql/data
+    networks:
+        - quollix_postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+
+networks:
+  quollix_postgres:
+    external: true
+
+volumes:
+  quollix_postgres_data:
+    name: quollix_postgres_data

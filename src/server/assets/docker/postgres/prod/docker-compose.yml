@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17.5
+    container_name: quollix_postgres_postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=postgres
+    volumes:
+      - quollix_postgres_data:/var/lib/postgresql/data
+    networks:
+        - quollix_postgres
+    restart: unless-stopped
+
+networks:
+  quollix_postgres:
+    external: true
+
+volumes:
+  quollix_postgres_data:
+    name: quollix_postgres_data

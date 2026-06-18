@@ -1,0 +1,51 @@
+<table>
+    <thead>
+    <tr>
+        <th>Maintainer</th>
+        <th>App</th>
+        <th>Client ID</th>
+        <th>Client secret</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {{if eq (len $.Data.Apps) 0}}
+    <tr><td colspan="6" style="opacity:.7">No apps available</td></tr>
+    {{else}}
+    {{range $.Data.Apps}}
+    {{$app := .}}
+
+    <tr class="oidc-client-row" data-app-name="{{$app.AppName}}">
+        <td class="oidc-maintainer-cell">{{$app.Maintainer}}</td>
+        <td class="oidc-app-name-cell">{{$app.AppName}}</td>
+
+        <td class="client-id-cell">
+            <div class="actions-row">
+                <span class="mono">{{$app.ClientId}}</span>
+                <button type="button" class="icon-btn lean" onclick="copyToClipboard('{{$app.ClientId}}','Client ID')">
+                    <i class="mdi mdi-clipboard-outline"></i>
+                </button>
+            </div>
+        </td>
+
+        <td class="client-secret-cell">
+            <div class="actions-row">
+                <span class="mono">****************</span>
+                <button type="button" class="icon-btn lean" onclick="copyToClipboard('{{$app.ClientSecret}}','Client secret')">
+                    <i class="mdi mdi-clipboard-outline"></i>
+                </button>
+            </div>
+        </td>
+
+        <td class="oidc-actions-cell">
+            <button type="button" class="regen-btn lean" onclick="regenerateOidcCredentials('{{$app.AppId}}','{{$app.Maintainer}} / {{$app.AppName}}')">
+                Regenerate
+            </button>
+        </td>
+    </tr>
+
+    {{end}}
+    {{end}}
+    </tbody>
+</table>

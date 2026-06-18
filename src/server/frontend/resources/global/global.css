@@ -1,0 +1,112 @@
+:root {
+    --light-dark: #3a4254;
+    --medium-dark: #13171F;
+    --deep-dark: #0B0E13;
+    --alert-color: #ff3333;
+    --alert-hover-color: #cc0000;
+    --button-hover-color: #016699;
+    --space-unit: 12px;
+    --space-tight: 6px;
+}
+
+@font-face {
+    font-family: 'Material Design Icons';
+    src: url('{{.Paths.WebResourcesVendorFonts}}/materialdesignicons-webfont.{{.ApplicationVersion}}.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+#snackbar {
+    visibility: hidden;
+    min-width: 200px;
+    background: var(--light-dark);
+    color: white;
+    text-align: center;
+    border-radius: 8px;
+    padding: 12px;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: visibility 0s, opacity 0.3s ease-in-out;
+    opacity: 0;
+    border: 2px solid var(--deep-dark);
+}
+
+#snackbar.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+.lean {
+    padding: 0.1rem 0.5rem;
+    margin: 0;
+    border: none;
+}
+
+.alert {
+    background: var(--alert-color);
+    border-color: var(--alert-color);
+    border: none;
+}
+
+.alert:hover {
+    background: var(--alert-hover-color);
+    border-color: var(--alert-hover-color);
+    border: none;
+}
+
+.label-bar {
+    display: flex;
+    gap: var(--space-unit);
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.label-bar button {
+    margin-bottom: 28px;
+}
+
+.label-bar label {
+    display: grid;
+    gap: var(--space-tight);
+}
+
+.inline-form-row {
+    display: flex;
+    gap: var(--space-unit);
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.mono {
+    font-family: "Liberation Mono", monospace;
+}
+
+.input-medium {
+    min-width: 250px;
+    max-width: 300px;
+    width: 100%;
+}
+
+/* Flex container for grouped controls. In tables, put this on a child div inside the td so table-cell layout and row borders stay intact. */
+.actions-row {
+    display: flex;
+    gap: var(--space-unit);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 4px 6px;
+}
+
+.icon-btn .mdi {
+    font-size: 18px;
+    line-height: 1;
+}

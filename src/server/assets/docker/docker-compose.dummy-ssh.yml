@@ -1,0 +1,16 @@
+services:
+  ssh-server:
+    image: linuxserver/openssh-server:latest
+    container_name: dummy_backup_server
+    environment:
+      - PASSWORD_ACCESS=true
+      - USER_NAME=sshadmin
+      - USER_PASSWORD=sshpassword
+    ports:
+      - "127.0.0.1:2222:2222"
+    networks:
+      - quollix_postgres
+
+networks:
+  quollix_postgres:
+    external: true

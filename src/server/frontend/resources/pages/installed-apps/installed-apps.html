@@ -1,0 +1,142 @@
+<script>window.host = '{{$.Host}}'</script>
+<!-- A helpful development feature. When the development container is deployed locally, you can add new published apps or edit them, and load them directly into the installed apps page by clicking this button, making it easy to experiment with app configurations. To apply new docker compose yaml configurations, simply restart the app. -->
+{{ if and $.Config.ShowReloadFrontendTemplatesButton $.Auth.IsAdmin }}
+<div class="actions-row">
+  <button id="app-store-reload-button" type="button" onclick="reloadAppsIntoStoreMock()">
+    Reload local store apps
+  </button>
+  {{ if $.Auth.IsAdmin }}
+  <button id="upload-app-button" type="button" onclick="uploadVersionFile()">
+    Upload
+  </button>
+  {{end}}
+</div>
+{{else if $.Auth.IsAdmin }}
+<div class="actions-row">
+  <button id="upload-app-button" type="button" onclick="uploadVersionFile()">
+    Upload
+  </button>
+</div>
+{{end}}
+
+<table id="installed-apps-table" class="vcenter">
+  <thead>
+    <tr>
+      {{if $.Auth.IsAdmin}}
+      <th>Maintainer</th>
+      <th>App</th>
+      <th>Version</th>
+      <th>Created</th>
+      {{else}}
+      <th>App</th>
+      {{end}}
+      <th>Access</th>
+      {{if $.Auth.IsAdmin}}
+      <th class="status-table-header">Status</th>
+      <th class="access-policy-table-header">Access Policy</th>
+      <th>Operations</th>
+      {{end}}
+    </tr>
+  </thead>
+
+  <tbody id="installed-apps-tbody">
+
+    {{if eq (len $.Data.Apps) 0}}
+    {{if $.Auth.IsAdmin}}
+    <tr>
+      <td colspan="9" style="opacity:.7">No apps available for you, yet</td>
+    </tr>
+    {{else}}
+    <tr>
+      <td colspan="5" style="opacity:.7">No apps available for you, yet</td>
+    </tr>
+    {{end}}
+    {{else}}
+
+    {{range $.Data.Apps}}
+    {{$app := .}}
+
+    <tr data-app-id="{{$app.AppId}}" data-app-name="{{$app.AppName}}">
+      {{if $.Auth.IsAdmin}}
+      <td class="app-maintainer">{{$app.Maintainer}}</td>
+      {{end}}
+      <td class="app-cell">
+        {{if $app.DocsUrl}}
+        <a class="app-homepage-link" href="{{$app.DocsUrl}}" target="_blank" rel="noopener noreferrer">
+          <span class="mdi mdi-open-in-new" aria-hidden="true"></span>
+        </a>
+        {{end}}
+        <span class="app-name">{{$app.AppName}}</span>
+      </td>
+      {{if $.Auth.IsAdmin}}
+      <td class="app-version">{{$app.VersionName}}</td>
+      {{if $app.IsOfficialDatabaseApp}}
+      <td class="app-version-created">—</td>
+      {{else}}
+      <td class="app-version-created" title="{{$app.VersionCreationTimestampTooltip}}">
+        {{$app.VersionCreationTimestampFormatted}}</td>
+      {{end}}
+      {{end}}
+
+      <td class="app-access">
+        {{if $app.IsOfficialDatabaseApp}}
+        —
+        {{else}}
+        <button type="button" class="open-btn lean" onclick="openFromRow(
+                        '{{$app.AppName}}',
+                        '{{$app.AccessPolicy}}',
+                        '{{$.Policies.PublicAccessPolicy}}',
+                        '{{$.Host}}'                        )" {{if not $app.IsRunning }} disabled aria-disabled="true"
+          {{end}}>
+          Open
+        </button>
+        {{end}}
+      </td>
+
+      {{if $.Auth.IsAdmin}}
+
+      <td class="app-status">{{if $app.IsRunning}}Running{{else}}Not running{{end}}</td>
+
+      <td class="app-access-policy">
+        {{if $app.IsOfficialDatabaseApp}}
+        —
+        {{else}}
+        <select class="vis-select lean" data-prev-access-policy="{{$app.AccessPolicy}}"
+          onchange="changeAccessPolicy(this)">
+          <option value="{{ $.Policies.AdminOnlyAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Policies.AdminOnlyAccessPolicy}}selected{{end}}>Admin only</option>
+          <option value="{{ $.Policies.GroupRestrictedAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Policies.GroupRestrictedAccessPolicy}}selected{{end}}>Group restricted</option>
+          <option value="{{ $.Policies.AuthenticatedAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Policies.AuthenticatedAccessPolicy}}selected{{end}}>Authenticated</option>
+          <option value="{{ $.Policies.PublicAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Policies.PublicAccessPolicy}}selected{{end}}>Public</option>
+        </select>
+        {{end}}
+      </td>
+
+      <td class="app-operations">
+        <select class="ops-select lean"
+          onchange="handleOperationsSelectChange(this, '{{$app.AppId}}', '{{$app.AppName}}')">
+          <option value="" hidden>Operations</option>
+          {{if not $app.IsOfficialDatabaseApp}}
+          <option value="start">Start</option>
+          <option value="stop">Stop</option>
+          <option value="update">Update</option>
+          <option value="delete">Delete</option>
+          {{end}}
+          {{if $.Data.IsBackupEnabled}}
+          <option value="backup">Backup</option>
+          {{end}}
+          <option value="download">Download</option>
+        </select>
+      </td>
+
+      {{end}}
+    </tr>
+
+    {{end}}
+    {{end}}
+
+  </tbody>
+</table>

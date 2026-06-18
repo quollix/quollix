@@ -1,0 +1,17 @@
+<h3>Profile</h3>
+<ul>
+    <li>Name: {{$.Data.Username}}</li>
+    <li>Email: {{$.Data.Email}}</li>
+    <li>Role: {{$.Data.Role}}</li>
+</ul>
+
+{{if not $.Auth.IsAdmin}}
+<p><strong>Note:</strong> Only the administrator can update usernames and email addresses. Please contact your administrator if you need to make changes.</p>
+{{end}}
+
+<h3>Change password</h3>
+<form class="horizontal-align">
+    <input type="password" id="current_password" name="oldPassword" placeholder="enter current password" required />
+    <input type="password" id="new_password" name="newPassword" placeholder="enter new password" required />
+    <button type="button" onclick="updatePassword(current_password.value, new_password.value)">Save</button>
+</form>
