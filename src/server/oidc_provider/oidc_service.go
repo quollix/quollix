@@ -283,6 +283,7 @@ func (s *OidcServiceImpl) Discovery() (*DiscoveryConfig, error) {
 			"openid",
 			"profile",
 			"email",
+			"groups",
 			"offline_access",
 		},
 	}, nil

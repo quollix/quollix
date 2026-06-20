@@ -62,7 +62,7 @@ func TestOIDC_Discovery(t *testing.T) {
 	assert.Equal(t, []string{"code"}, ctx.Config.ResponseTypesSupported)
 	assert.Equal(t, []string{"public"}, ctx.Config.SubjectTypesSupported)
 	assert.Equal(t, []string{"RS256"}, ctx.Config.IDTokenSigningAlgValuesSupported)
-	assert.Equal(t, []string{"openid", "profile", "email", "offline_access"}, ctx.Config.ScopesSupported)
+	assert.Equal(t, []string{"openid", "profile", "email", "groups", "offline_access"}, ctx.Config.ScopesSupported)
 	assert.Equal(t, []string{"client_secret_basic", "client_secret_post"}, ctx.Config.TokenEndpointAuthMethodsSupported)
 	assert.Equal(t, []string{"S256"}, ctx.Config.CodeChallengeMethodsSupported)
 }
