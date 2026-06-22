@@ -3,8 +3,8 @@ module ci-runner
 go 1.26.4
 
 require (
-	github.com/quollix/common v1.1.0
-	github.com/quollix/taskrunner v1.1.0
+	github.com/quollix/common v1.2.0
+	github.com/quollix/taskrunner v1.2.0
 	github.com/spf13/cobra v1.10.2
 )
 
@@ -21,7 +21,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.13 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/quollix/deepstack v1.1.0 // indirect
+	github.com/quollix/deepstack v1.2.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect

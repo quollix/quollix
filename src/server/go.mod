@@ -9,8 +9,8 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.12.3
 	github.com/moby/moby/client v0.4.1
-	github.com/quollix/common v1.1.0
-	github.com/quollix/deepstack v1.1.0
+	github.com/quollix/common v1.2.0
+	github.com/quollix/deepstack v1.2.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.53.0
 	golang.org/x/time v0.15.0
@@ -59,7 +59,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/quollix/taskrunner v1.1.0 // indirect
+	github.com/quollix/taskrunner v1.2.0 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
