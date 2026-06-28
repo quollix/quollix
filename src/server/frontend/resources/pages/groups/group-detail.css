@@ -1,0 +1,28 @@
+.group-detail-layout {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.group-detail-column {
+    flex: 1;
+}
+
+.group-detail-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.group-detail-header input {
+    width: 200px;
+}
+
+.group-detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 2.2rem;
+}
+
+.group-detail-checkbox-col {
+    width: 2rem;
+}

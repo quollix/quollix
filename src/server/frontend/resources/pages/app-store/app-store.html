@@ -1,0 +1,76 @@
+<h3>Search menu</h3>
+<form id="search-form" action="{{ $.Paths.FrontendStore }}" method="get">
+  {{if $.Data.ShowUnofficialToggle}}
+  <!-- keep this hidden in production for now; re-enable it there as soon as the app store is open to account registrations for anyone. -->
+  <div id="maintainer-wrap" class="field">
+    <label for="maintainer-input">Maintainer</label>
+    <input id="maintainer-input" name="maintainer_name" type="text" placeholder="enter maintainer"
+      value="{{$.Data.MaintainerSearchTerm}}">
+  </div>
+  {{end}}
+
+  <div class="field">
+    <label for="app-input">App Name</label>
+    <input id="app-input" name="app_name" type="text" placeholder="enter app name" value="{{$.Data.AppSearchTerm}}">
+  </div>
+
+  {{if $.Data.ShowUnofficialToggle}}
+  <div class="checkbox-group">
+    <input id="unofficial" name="show_unofficial" type="checkbox" value="true" {{if
+      $.Data.ShowUnofficialApps}}checked{{end}}>
+    <label for="unofficial">Search for unofficial apps</label>
+  </div>
+  {{end}}
+
+  <!-- The backend only runs a search when this button is used. The presence of `is_search=true` distinguishes an initial page visit from an explicit search request. -->
+  <button id="search-button" type="submit" name="is_search" value="true">Search</button>
+</form>
+
+<h3>Search results</h3>
+<table id="store-results-table">
+  <thead>
+    <tr>
+      <th>Maintainer</th>
+      <th>App</th>
+      <th>Version</th>
+      <th>Created</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="store-results-body">
+    {{if not $.Data.Apps}}
+    <tr id="store-no-results-row">
+      <td colspan="5" style="opacity:.7">No apps yet</td>
+    </tr>
+    {{else}}
+    {{range $.Data.Apps}}
+    {{$app := .}}
+    <tr class="store-result-row" data-maintainer="{{$app.Maintainer}}" data-app="{{$app.AppName}}">
+      <td class="store-result-maintainer">{{$app.Maintainer}}</td>
+      <td class="store-result-app">{{$app.AppName}}</td>
+      <td class="store-result-version">
+        <button type="button" class="version-button store-version-button lean"
+          onclick="goToVersions('{{$app.Maintainer}}','{{$app.AppName}}')">
+          {{$app.LatestVersionName}}
+        </button>
+      </td>
+      <td class="store-result-created-at">{{$app.LatestVersionCreationTimestamp}}</td>
+      <td class="store-result-actions">
+        <div class="actions-row">
+          <button type="button" class="lean icon-btn store-install-button" title="Install app"
+            aria-label="Install app"
+            onclick="installApp('{{$app.Maintainer}}','{{$app.AppName}}','{{$app.LatestVersionName}}')">
+            <i class="mdi mdi-download-box-outline" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="lean icon-btn store-download-button" title="Download app"
+            aria-label="Download app"
+            onclick="downloadVersionFromAppStore('{{$app.Maintainer}}','{{$app.AppName}}','{{$app.LatestVersionName}}')">
+            <i class="mdi mdi-download-outline" aria-hidden="true"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+    {{end}}
+    {{end}}
+  </tbody>
+</table>

@@ -1,0 +1,21 @@
+{
+	auto_https disable_redirects
+}
+
+quollix.oidc-provider.localhost {
+	tls internal
+	reverse_proxy https://oidc-provider-quollix:443 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}
+
+quollix.oidc-client.localhost {
+	tls internal
+	reverse_proxy https://oidc-client-quollix:443 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+}

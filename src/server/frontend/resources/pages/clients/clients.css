@@ -1,0 +1,9 @@
+.oidc-relying-party-row input {
+    width: 100%;
+    max-width: 250px;
+    margin-bottom: 0;
+}
+
+.oidc-relying-party-row .actions-row button {
+    margin-bottom: 0;
+}

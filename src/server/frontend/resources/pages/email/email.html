@@ -1,0 +1,141 @@
+<section>
+  <h3>SMTP server</h3>
+
+  <form id="email-config-form" onsubmit="return false;">
+    <div class="label-bar">
+      <label>
+        <strong>SMTP Host</strong>
+        <input id="email-smtp-host-input" type="text" name="emailSmtpHost" value="{{$.Data.EmailConfig.SMTPHost}}"
+          placeholder="enter SMTP host" required />
+      </label>
+
+      <label>
+        <strong>SMTP Port</strong>
+        <input id="email-smtp-port-input" type="number" min="0" name="emailSmtpPort"
+          value="{{$.Data.EmailConfig.SMTPPort}}" placeholder="enter SMTP port" required />
+      </label>
+
+      <label>
+        <strong>From Email Address</strong>
+        <input id="email-from-address-input" type="email" name="emailFromEmailAddress"
+          value="{{$.Data.EmailConfig.FromEmailAddress}}" placeholder="enter from email address" required />
+      </label>
+    </div>
+
+    <div class="label-bar">
+      <label>
+        <strong>Email Account Username</strong>
+        <input id="email-account-username-input" type="text" name="emailAccountUsername"
+          value="{{$.Data.EmailConfig.EmailAccountUsername}}" placeholder="enter account username"
+          autocomplete="username" />
+      </label>
+
+      <label>
+        <strong>Email Account Password</strong>
+        <input id="email-account-password-input" type="password" name="emailAccountPassword"
+          value="{{$.Data.EmailConfig.EmailAccountPassword}}" placeholder="enter account password"
+          autocomplete="current-password" />
+      </label>
+
+      <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"
+        onclick="togglePasswordVisibilityById('email-account-password-input', 'email-account-password-toggle')"
+        id="email-account-password-toggle">
+        <i class="mdi mdi-eye-outline"></i>
+      </button>
+
+      <button id="email-test-connection-button" type="button" onclick="testEmailConnection(
+        this.form.emailSmtpHost.value,
+        this.form.emailSmtpPort.value,
+        this.form.emailFromEmailAddress.value,
+        this.form.emailAccountUsername.value,
+        this.form.emailAccountPassword.value,
+        this.form.emailIsEnabled.checked
+      )">
+        Test Connection
+      </button>
+    </div>
+
+    <div class="label-bar">
+      <label>
+        <strong>Test Email Recipient</strong>
+        <input id="email-test-recipient-input" type="email" name="emailTestRecipient"
+          placeholder="enter recipient email" required />
+      </label>
+
+      <button id="email-send-test-button" type="button" onclick="sendTestEmail(
+                    this.form.emailSmtpHost.value,
+                    this.form.emailSmtpPort.value,
+                    this.form.emailFromEmailAddress.value,
+                    this.form.emailAccountUsername.value,
+                    this.form.emailAccountPassword.value,
+                    this.form.emailTestRecipient.value
+                  )">
+        Send Test Email
+      </button>
+    </div>
+
+    <div class="label-bar">
+      <label id="enable-email-config-label">
+        <strong>Enable Email</strong>
+        <input id="email-enabled-checkbox" type="checkbox" name="emailIsEnabled" {{if
+          .Data.EmailConfig.IsEnabled}}checked{{end}} />
+      </label>
+
+      <button id="email-save-config-button" class="enable-bar-button" type="button" onclick="saveEmailConfig(
+        this.form.emailSmtpHost.value,
+        this.form.emailSmtpPort.value,
+        this.form.emailFromEmailAddress.value,
+        this.form.emailAccountUsername.value,
+        this.form.emailAccountPassword.value,
+        this.form.emailIsEnabled.checked
+      )">
+        Save
+      </button>
+      <button id="email-reset-config-button" type="button" class="alert enable-bar-button"
+        onclick=" window.resetEmailConfigs()">
+        Reset
+      </button>
+    </div>
+  </form>
+</section>
+
+<hr />
+
+<section>
+  <h3>OIDC email exposure</h3>
+
+  <div class="label-bar">
+    <label id="expose-real-email-in-oidc-token-label">
+      <input id="expose-real-email-in-oidc-token-checkbox" type="checkbox" onchange="saveOidcEmailExposure(this)" {{if
+        .Data.ExposeRealEmailInOidcToken}}checked{{end}} />
+      <span>Expose real emails in OIDC tokens</span>
+    </label>
+  </div>
+</section>
+
+<hr />
+
+<section>
+  <h3>Invitation email template</h3>
+
+  <form id="email-template-form" onsubmit="return false;">
+    <label>
+      <textarea id="invitation-email-template-input" name="invitationEmailTemplate" rows="14"
+        placeholder="enter invitation email template" required>{{$.Data.InvitationEmailTemplate}}</textarea>
+    </label>
+
+    <p>Required placeholders: <code>{{"{{.Username}}"}}</code>, <code>{{"{{.InvitationLink}}"}}</code>,
+      <code>{{"{{.ExpirationDate}}"}}</code>, <code>{{"{{.ServerUrl}}"}}</code>
+    </p>
+
+    <div class="label-bar">
+      <button id="email-save-template-button" type="button"
+        onclick="saveInvitationEmailTemplate(this.form.invitationEmailTemplate.value)">
+        Save Template
+      </button>
+      <button id="email-reset-template-button" type="button" class="alert" onclick="resetInvitationEmailTemplate()">
+        Reset To Default
+      </button>
+    </div>
+  </form>
+</section>

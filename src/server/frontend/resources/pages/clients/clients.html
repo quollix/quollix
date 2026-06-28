@@ -1,0 +1,102 @@
+<section id="oidc-client-create-section">
+    <h3 id="oidc-client-create-heading">Create Client</h3>
+
+    <form id="oidc-client-create-form" onsubmit="return false;">
+        <div class="label-bar">
+            <label>
+                <strong>Name</strong>
+                <input id="oidc-client-name-input" type="text" name="clientName" placeholder="client name" required />
+            </label>
+
+            <label>
+                <strong>Domain</strong>
+                <input id="oidc-client-domain-input" type="text" name="domain" placeholder="client.example.com"
+                    required />
+            </label>
+
+            <button id="oidc-client-create-button" type="button" class="enable-bar-button"
+                title="Create client" onclick="createOidcClient()">
+                <i class="mdi mdi-plus"></i>
+            </button>
+        </div>
+    </form>
+</section>
+
+<section id="oidc-client-list-section">
+    <h3 id="oidc-client-list-heading">Clients</h3>
+
+    <table id="oidc-client-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Domain</th>
+                <th>Client ID</th>
+                <th>Client secret</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{if eq (len $.Data.Clients) 0}}
+            <tr>
+                <td colspan="5" style="opacity:.7">No OIDC clients configured</td>
+            </tr>
+            {{else}}
+            {{range $.Data.Clients}}
+            {{$client := .}}
+
+            <tr class="oidc-relying-party-row" data-client-record-id="{{$client.Id}}">
+                <td>
+                    <input class="oidc-client-name-edit" type="text" value="{{$client.Name}}" required />
+                </td>
+                <td>
+                    <input class="oidc-client-domain-edit" type="text" value="{{$client.Domain}}" required />
+                </td>
+                <td>
+                    <div class="actions-row">
+                        <span class="mono oidc-client-client-id-value">{{$client.ClientId}}</span>
+                        <button type="button" class="lean" title="Copy client ID"
+                            onclick="copyToClipboard('{{$client.ClientId}}','Client ID')">
+                            <i class="mdi mdi-clipboard-outline"></i>
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div class="actions-row">
+                        <input id="oidc-client-client-secret-{{$client.Id}}" class="oidc-client-client-secret-value"
+                            type="password" value="{{$client.ClientSecret}}" readonly />
+                        <button type="button" class="oidc-client-client-secret-toggle lean"
+                            title="Show client secret"
+                            onclick="togglePasswordVisibilityById('oidc-client-client-secret-{{$client.Id}}', 'oidc-client-client-secret-toggle-{{$client.Id}}')"
+                            id="oidc-client-client-secret-toggle-{{$client.Id}}">
+                            <i class="mdi mdi-eye-outline"></i>
+                        </button>
+                        <button type="button" class="lean" title="Copy client secret"
+                            onclick="copyToClipboard('{{$client.ClientSecret}}','Client secret')">
+                            <i class="mdi mdi-clipboard-outline"></i>
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div class="actions-row">
+                        <button type="button" class="oidc-client-save-button lean" title="Save client"
+                            onclick="updateOidcClient('{{$client.Id}}')">
+                            <i class="mdi mdi-content-save-outline"></i>
+                        </button>
+                        <button type="button" class="oidc-client-regenerate-button lean" title="Regenerate client credentials"
+                            onclick="regenerateOidcClientCredentials('{{$client.Id}}')">
+                            <i class="mdi mdi-refresh"></i>
+                        </button>
+                        <button type="button" class="alert oidc-client-delete-button lean" title="Delete client"
+                            onclick="deleteOidcClient('{{$client.Id}}')">
+                            <i class="mdi mdi-delete-outline"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+
+            {{end}}
+            {{end}}
+        </tbody>
+    </table>
+</section>

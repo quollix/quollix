@@ -1,0 +1,293 @@
+packages:
+  server/tools:
+    interfaces:
+      CommandRunner:
+        config:
+          filename: command_runner_mock.go
+          structname: CommandRunnerMock
+      TimezoneProvider:
+        config:
+          filename: timezone_provider_mock.go
+          structname: TimezoneProviderMock
+      DockerService:
+        config:
+          filename: docker_service_mock.go
+          structname: DockerServiceMock
+      DirectoryProvider:
+        config:
+          filename: directory_provider_mock.go
+          structname: DirectoryProviderMock
+      ResticContainerExecutor:
+        config:
+          filename: restic_container_executor_mock.go
+          structname: ResticContainerExecutorMock
+  github.com/quollix/common/utils:
+    interfaces:
+      AuthHelper:
+        config:
+          filename: auth_helper_mock.go
+          structname: AuthHelperMock
+          dir: ./tools
+          pkgname: tools
+      OsWrapper:
+        config:
+          filename: common_os_wrapper_mock.go
+          structname: CommonOsWrapperMock
+          dir: ./tools
+          pkgname: tools
+      EmailClient:
+        config:
+          filename: email_client_mock.go
+          structname: EmailClientMock
+          dir: ./email
+          pkgname: email
+  server/configs:
+    interfaces:
+      ConfigsRepository:
+        config:
+          filename: configs_repository_mock.go
+          structname: ConfigsRepositoryMock
+      ConfigsService:
+        config:
+          filename: configs_service_mock.go
+          structname: ConfigsServiceMock
+      MaintenanceRepository:
+        config:
+          filename: maintenance_repository_mock.go
+          structname: MaintenanceRepositoryMock
+      EmailRepository:
+        config:
+          filename: email_repository_mock.go
+          structname: EmailRepositoryMock
+  server/system_config_migrations:
+    interfaces:
+      SystemConfigMigrationsProvider:
+        config:
+          filename: system_config_migrations_provider_mock.go
+          structname: SystemConfigMigrationsProviderMock
+  server/apps_basic:
+    interfaces:
+      AppServiceHelper:
+        config:
+          filename: app_service_helper_mock.go
+          structname: AppServiceHelperMock
+      AppDetector:
+        config:
+          filename: app_detector_mock.go
+          structname: AppDetectorMock
+      Authorizer:
+        config:
+          filename: authorizer_mock.go
+          structname: AuthorizerMock
+      AppService:
+        config:
+          filename: app_service_mock.go
+          structname: AppServiceMock
+      AppRepository:
+        config:
+          filename: app_repository_mock.go
+          structname: AppRepositoryMock
+      AppRequestParser:
+        config:
+          filename: app_request_parser_mock.go
+          structname: AppRequestParserMock
+      AppReverseProxyFactory:
+        config:
+          filename: app_reverse_proxy_factory_mock.go
+          structname: AppReverseProxyFactoryMock
+      AppSessionService:
+        config:
+          filename: app_session_service_mock.go
+          structname: AppSessionServiceMock
+      ClientCredentialsGenerator:
+        config:
+          filename: client_credentials_generator_mock.go
+          structname: ClientCredentialsGeneratorMock
+  server/frontend/renderer:
+    interfaces:
+      TemplateService:
+        config:
+          filename: template_service_mock.go
+          structname: TemplateServiceMock
+      TemplateEngine:
+        config:
+          filename: template_engine_mock.go
+          structname: TemplateEngineMock
+  server/frontend/assets:
+    interfaces:
+      AssetStore:
+        config:
+          filename: store_mock.go
+          structname: AssetStoreMock
+      AssetTagBuilder:
+        config:
+          filename: tag_builder_mock.go
+          structname: AssetTagBuilderMock
+  server/groups:
+    interfaces:
+      GroupRepository:
+        config:
+          filename: group_repository_mock.go
+          structname: GroupRepositoryMock
+  server/users:
+    interfaces:
+      UserRepository:
+        config:
+          filename: user_repository_mock.go
+          structname: UserRepositoryMock
+      SessionRepository:
+        config:
+          filename: session_repository_mock.go
+          structname: SessionRepositoryMock
+      SessionService:
+        config:
+          filename: session_service_mock.go
+          structname: SessionServiceMock
+  server/oidc_client:
+    interfaces:
+      OidcUserResolver:
+        config:
+          filename: oidc_user_resolver_mock.go
+          structname: OidcUserResolverMock
+      OidcAuthProviderRepository:
+        config:
+          filename: oidc_auth_provider_repository_mock.go
+          structname: OidcAuthProviderRepositoryMock
+      UserAuthMethodRepository:
+        config:
+          filename: user_auth_method_repository_mock.go
+          structname: UserAuthMethodRepositoryMock
+      LoginService:
+        config:
+          filename: login_service_mock.go
+          structname: LoginServiceMock
+      OidcLoginStateCache:
+        config:
+          filename: oidc_login_state_cache_mock.go
+          structname: OidcLoginStateCacheMock
+      OidcProviderClient:
+        config:
+          filename: oidc_provider_client_mock.go
+          structname: OidcProviderClientMock
+      OidcAuthFlowService:
+        config:
+          filename: oidc_auth_flow_service_mock.go
+          structname: OidcAuthFlowServiceMock
+  server/backup_server:
+    interfaces:
+      ResticDockerImageService:
+        config:
+          filename: restic_docker_image_service_mock.go
+          structname: ResticDockerImageServiceMock
+      SshRepositoryService:
+        config:
+          filename: ssh_repository_service_mock.go
+          structname: SshRepositoryServiceMock
+      SshRepository:
+        config:
+          filename: ssh_repository_mock.go
+          structname: SshRepositoryMock
+      ResticService:
+        config:
+          filename: restic_service_mock.go
+          structname: ResticServiceMock
+  server/app_store:
+    interfaces:
+      AppStoreClientLean:
+        config:
+          filename: app_store_client_lean_mock.go
+          structname: AppStoreClientLeanMock
+      VersionVerifier:
+        config:
+          filename: version_verifier_mock.go
+          structname: VersionVerifierMock
+  github.com/quollix/common/validation:
+    interfaces:
+      VersionValidator:
+        config:
+          filename: version_validator_mock.go
+          structname: VersionValidatorMock
+          dir: ./app_store
+          pkgname: app_store
+  server/backups:
+    interfaces:
+      BackupService:
+        config:
+          filename: backup_service_mock.go
+          structname: BackupServiceMock
+  server/oidc_provider:
+    interfaces:
+      OidcCache:
+        config:
+          filename: oidc_cache_mock.go
+          structname: OidcCacheMock
+      IdTokenIssuer:
+        config:
+          filename: id_token_issuer_mock.go
+          structname: IdTokenIssuerMock
+      OidcClientService:
+        config:
+          filename: oidc_client_service_mock.go
+          structname: OidcClientServiceMock
+      OidcRelyingPartyRepository:
+        config:
+          filename: oidc_relying_party_repository_mock.go
+          structname: OidcRelyingPartyRepositoryMock
+      TokenIssuer:
+        config:
+          filename: token_issuer_mock.go
+          structname: TokenIssuerMock
+      Clock:
+        config:
+          filename: clock_mock.go
+          structname: ClockMock
+  server/maintenance/retention:
+    interfaces:
+      RetentionPolicyRepository:
+        config:
+          filename: retention_policy_repository_mock.go
+          structname: RetentionPolicyRepositoryMock
+      BackupRetentionSelector:
+        config:
+          filename: backup_retention_selector_mock.go
+          structname: BackupRetentionSelectorMock
+      BackupDeletionFinder:
+        config:
+          filename: backup_deletion_finder_mock.go
+          structname: BackupDeletionFinderMock
+  server/maintenance:
+    interfaces:
+      RandomProvider:
+        config:
+          filename: random_provider_mock.go
+          structname: RandomProviderMock
+      AgentHelper:
+        config:
+          filename: agent_helper_mock.go
+          structname: AgentHelperMock
+      MaintenanceService:
+        config:
+          filename: maintenance_service_mock.go
+          structname: MaintenanceServiceMock
+  server/certificates:
+    interfaces:
+      CertificateCache:
+        config:
+          filename: certificate_cache_mock.go
+          structname: CertificateCacheMock
+  server/ingress:
+    interfaces:
+      AppRequestPolicy:
+        config:
+          filename: app_request_policy_mock.go
+          structname: AppRequestPolicyMock
+      CertificateTools:
+        config:
+          filename: certificate_tools_mock.go
+          structname: CertificateToolsMock
+  server/apps_advanced:
+    interfaces:
+      AppsServiceAdvanced:
+        config:
+          filename: apps_service_advanced_mock.go
+          structname: AppsServiceAdvancedMock

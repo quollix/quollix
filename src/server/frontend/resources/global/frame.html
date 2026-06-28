@@ -1,0 +1,216 @@
+{{define "frame"}}
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{.PageTitle}}</title>
+
+    <link rel="stylesheet" href="{{.Paths.WebResourcesVendorCss}}/pico.min.{{.ApplicationVersion}}.css">
+    <link rel="stylesheet" href="{{.Paths.WebResourcesVendorCss}}/materialdesignicons.min.{{.ApplicationVersion}}.css">
+
+    {{.HeadAssets}}
+    <link rel="icon" href="{{.Paths.WebResourcesImages}}/logo.svg" type="image/svg">
+</head>
+
+<body>
+    <div id="layout">
+        <header id="app-header">
+            <a id="app-brand-link" href="https://quollix.{{.Host}}/">
+                <img id="app-logo" src="{{.Paths.WebResourcesImages}}/logo.svg" alt="">
+                <h5 id="app-brand">Quollix</h5>
+                <span style="display: none">sample-test-string</span>
+            </a>
+
+            <div id="header-right">
+
+                {{ if .Auth.IsAdmin }}
+                <span id="current-operation"></span>
+                <i id="request-indicator" class="mdi mdi-loading"></i>
+                {{ end }}
+
+                {{ if $.Config.ExposeDevelopmentRoutes }}
+                <button id="reset-test-state-button" class="lean" onclick="resetTestState()">Reset Test State</button>
+                {{ end }}
+
+                {{ if $.Config.ExposeDevelopmentRoutes }}
+                <button class="lean" onclick="reloadFrontend()">Reload Frontend</button>
+                {{ end }}
+                <a id="github-link" href="{{.Links.GitHubRepositories}}" target="_blank" rel="noopener noreferrer"
+                    title="Open GitHub">
+                    <i class="mdi mdi-github"></i>
+                </a>
+                <a id="website-link" href="{{.Links.Website}}" target="_blank" rel="noopener noreferrer"
+                    title="Open website">
+                    <i class="mdi mdi-web"></i>
+                </a>
+            </div>
+        </header>
+
+        <aside>
+            <div id="navigation-tab">
+                <h4>Navigation</h4>
+            </div>
+            <nav id="sidebar-nav">
+                <ul id="sidebar-list">
+                    <li>
+                        <details id="sidebar-group-apps">
+                            <summary><i class="mdi mdi-wrench-cog"></i>Apps</summary>
+                            <ul>
+                                <li><a id="sidebar-link-installed-apps" class="sub-item"
+                                        href="{{ $.Paths.FrontendInstalledApps }}"><i
+                                            class="mdi mdi-apps"></i>Installed</a></li>
+                                {{if .Auth.IsAdmin}}
+                                <li><a id="sidebar-link-store" class="sub-item" href="{{ $.Paths.FrontendStore }}"><i
+                                            class="mdi mdi-shopping-outline"></i>Store</a></li>
+                                <li><a id="sidebar-link-maintenance" class="sub-item"
+                                        href="{{ $.Paths.FrontendMaintenance }}"><i
+                                            class="mdi mdi-tools"></i>Maintenance</a></li>
+                                <li><a id="sidebar-link-app-sso" class="sub-item" href="{{ $.Paths.FrontendAppSso }}"><i
+                                            class="mdi mdi-shield-key-outline"></i>SSO</a></li>
+                                {{end}}
+                            </ul>
+                        </details>
+                    </li>
+
+                    {{if .Auth.IsAdmin}}
+                    <li>
+                        <details id="sidebar-group-identity">
+                            <summary><i class="mdi mdi-account-details-outline"></i>Identity</summary>
+                            <ul>
+                                <li><a id="sidebar-link-users" class="sub-item" href="{{ $.Paths.FrontendUsers }}"><i
+                                            class="mdi mdi-account-supervisor-outline"></i>Users</a></li>
+                                <li><a id="sidebar-link-groups" class="sub-item" href="{{ $.Paths.FrontendGroups }}"><i
+                                            class="mdi mdi-account-group-outline"></i>Groups</a></li>
+                            </ul>
+                        </details>
+                    </li>
+
+                    <li>
+                        <details id="sidebar-group-federation">
+                            <summary><i class="mdi mdi-account-switch-outline"></i>Federation</summary>
+                            <ul>
+                                <li><a id="sidebar-link-providers" class="sub-item"
+                                        href="{{ $.Paths.FrontendProviders }}"><i
+                                            class="mdi mdi-login-variant"></i>Providers</a></li>
+                                <li><a id="sidebar-link-clients" class="sub-item"
+                                        href="{{ $.Paths.FrontendClients }}"><i
+                                            class="mdi mdi-account-key-outline"></i>Clients</a></li>
+                            </ul>
+                        </details>
+                    </li>
+
+                    <!-- features being implemented in the future
+                <li>
+                    <details>
+                        <summary><i class="mdi mdi-chart-box-outline"></i>Monitoring</summary>
+                        <ul>
+                            <li><a class="sub-item" href="{{ $.Paths.FrontendLogs }}"><i class="mdi mdi-text-box-multiple-outline"></i>Logs</a></li>
+                            <li><a class="sub-item" href="{{ $.Paths.FrontendMetrics }}"><i class="mdi mdi-chart-line"></i>Metrics</a></li>
+                            <li><a class="sub-item" href="{{ $.Paths.FrontendReports }}"><i class="mdi mdi-clipboard-text-outline"></i>Reports</a></li>
+                        </ul>
+                    </details>
+                </li>
+
+                <li>
+                    <details>
+                        <summary><i class="mdi mdi-scale-balance"></i>Governance</summary>
+                        <ul>
+                            <li><a class="sub-item" href="{{ $.Paths.FrontendCompliance }}"><i class="mdi mdi-gavel"></i>Compliance</a></li>
+                        </ul>
+                    </details>
+                </li>
+                -->
+
+                    <li>
+                        <details id="sidebar-group-system">
+                            <summary><i class="mdi mdi-server-outline"></i>System</summary>
+                            <ul>
+                                <li><a id="sidebar-link-backups" class="sub-item"
+                                        href="{{ $.Paths.FrontendBackedUpApps }}"><i
+                                            class="mdi mdi-database-outline"></i>Backups</a></li>
+                                <li><a id="sidebar-link-terminal" class="sub-item"
+                                        href="{{ $.Paths.FrontendTerminalApps }}"><i
+                                            class="mdi mdi-console"></i>Terminal</a></li>
+                                <li><a id="sidebar-link-email" class="sub-item" href="{{ $.Paths.FrontendEmail }}"><i
+                                            class="mdi mdi-email"></i>Email</a></li>
+                                <li><a id="sidebar-link-settings" class="sub-item"
+                                        href="{{ $.Paths.FrontendSettings }}"><i
+                                            class="mdi mdi-cog-outline"></i>Settings</a></li>
+                            </ul>
+                        </details>
+                    </li>
+
+                    {{end}}
+                    {{if .Auth.Name}}
+                    <li id="sidebar-feedback-tab">
+                        <a id="sidebar-link-feedback" class="sidebar-top-link" href="{{.Links.FeedbackDocs}}"
+                            target="_blank" rel="noopener noreferrer"><i
+                                class="mdi mdi-message-text-outline"></i>Feedback</a>
+                    </li>
+                    <li id="sign-out-tab">
+                        <a class="sidebar-top-link" onclick="signOut(event)"><i class="mdi mdi-logout"></i>Sign out</a>
+                    </li>
+                    {{else}}
+                    <li id="sign-in-tab">
+                        <a class="sidebar-top-link" href="{{ $.Paths.FrontendSignIn }}"><i
+                                class="mdi mdi-login"></i>Sign in</a>
+                    </li>
+                    {{end}}
+                </ul>
+            </nav>
+            {{if .Auth.Name}}
+            <div id="sidebar-user">
+                <a href="{{ $.Paths.FrontendAccount }}" id="sidebar-user-link">
+                    <i class="mdi mdi-account-circle-outline"></i>
+                    <span id="sidebar-user-name">{{.Auth.Name}}</span>
+                </a>
+            </div>
+            {{end}}
+        </aside>
+
+        <main id="main">
+            <div id="outer-page-container">
+                <div id="inner-page-container">
+                    <div id="page-header">
+                        <h2 id="page-title">{{.PageTitle}}</h2>
+                        {{if .InfoIconRedirectUrl}}
+                        <a href="{{.InfoIconRedirectUrl}}" target="_blank" rel="noopener noreferrer" class="info-link">
+                            <i class="mdi mdi-information-outline"></i>
+                        </a>
+                        {{end}}
+                    </div>
+                    <br>
+                    {{block "content" .}}{{end}}
+                </div>
+            </div>
+
+            <div id="snackbar-container"></div>
+            <dialog id="confirm-dialog">
+                <form method="dialog" class="confirm">
+                    <p id="confirm-message"></p>
+                    <menu>
+                        <button id="cancel-button" value="cancel" autofocus>Cancel</button>
+                        <button id="confirm-button" value="ok" class="alert">Confirm</button>
+                    </menu>
+                </form>
+            </dialog>
+        </main>
+    </div>
+
+    <footer id="app-footer">
+        <span>Quollix {{.ApplicationVersion}}</span>
+    </footer>
+
+    {{ if .Auth.IsAdmin }}
+    <script>
+        window.addEventListener('load', () => {
+            window.startOperationIndicatorPolling()
+        })
+    </script>
+    {{ end }}
+
+</body>
+
+</html>
+{{end}}

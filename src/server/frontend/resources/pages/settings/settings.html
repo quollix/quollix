@@ -1,0 +1,340 @@
+<section>
+    <h3>Base domain</h3>
+    <form class="inline-form-row">
+        <input class="input-medium" type="text" id="base-domain" name="value" value="{{$.Host}}" required />
+        <button type="button" id="settings-base-domain-save-button" onclick="saveBaseDomain(this.form.elements.value.value)">Save</button>
+    </form>
+</section>
+
+<hr/>
+<section>
+    <h3>Certificate</h3>
+
+    <div class="inline-form-row">
+        <div>
+            <button type="button" onclick="uploadCertificate()">Upload</button>
+        </div>
+        <button type="button" onclick="downloadCertificate()">Download</button>
+        <button type="button" id="settings-certificate-reset-button" class="alert" onclick="resetCertificate()">Reset</button>
+    </div>
+
+    <h5>Generate certificate via DNS-01 challenge</h5>
+
+    <button type="button" id="settings-dns01-start-button" onclick="startDnsChallenge()">Start challenge</button>
+
+    <div id="dns01ChallengeResult" style="display:none;">
+        <p>Please create the following DNS TXT record to prove ownership of the domain:</p>
+        <div class="certificate-result-container">
+            <div class="certificate-result-div">
+                <textarea
+                    id="dns01ChallengeRecordName"
+                    class="certificate-textarea"
+                    rows="1"
+                ></textarea>
+                <button type="button" id="copyDns01NameButton" onclick="copyDns01NameToClipboard()">
+                    <i class="mdi mdi-clipboard-outline"></i>
+                </button>
+            </div>
+
+            <div class="certificate-result-div">
+                <textarea
+                      id="dns01ChallengeRecordValue"
+                      class="certificate-textarea"
+                      rows="1"
+                ></textarea>
+                <button type="button" id="copyDns01ValueButton" onclick="copyDns01ValueToClipboard()">
+                    <i class="mdi mdi-clipboard-outline"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="certificate-operation-indicator">
+        <i id="certificate-operation-icon" class="mdi"></i>
+        <i id="certificate-operation-spinner" class="mdi mdi-loading"></i>
+        <span id="certificate-operation-text"></span>
+    </div>
+
+</section>
+
+<hr/>
+
+<section>
+    <h3>Backup server</h3>
+
+    <form id="backupServerForm" onsubmit="return false;">
+        <div class="label-bar">
+            <label>
+                <strong>Host</strong>
+                <input
+                        type="text"
+                        name="backupServerHost"
+                        value="{{$.Data.BackupServer.Host}}"
+                        placeholder="enter backup server host"
+                        required
+                />
+            </label>
+
+            <label>
+                <strong>SSH Port</strong>
+                <input
+                        type="number"
+                        min="0"
+                        name="backupServerSshPort"
+                        value="{{$.Data.BackupServer.SshPort}}"
+                        placeholder="enter ssh port"
+                        required
+                />
+            </label>
+
+            <button
+                    id="backup-server-get-known-hosts-button"
+                    type="button"
+                    onclick="getKnownHosts(this.form.backupServerHost.value, this.form.backupServerSshPort.value)"
+            >
+                Get Known Hosts
+            </button>
+        </div>
+
+        <label>
+            <strong>SSH Known Hosts</strong>
+            <textarea
+                    id="backup-server-known-hosts"
+                    name="backupServerKnownHosts"
+                    placeholder="known_hosts entries"
+            >{{$.Data.BackupServer.SshKnownHosts}}</textarea>
+        </label>
+
+        <div class="label-bar">
+            <label>
+                <strong>SSH User</strong>
+                <input
+                        id="backup-server-ssh-user"
+                        type="text"
+                        name="backupServerSshUser"
+                        value="{{$.Data.BackupServer.SshUser}}"
+                        placeholder="enter ssh user"
+                        autocomplete="username"
+                />
+            </label>
+            <label>
+                <strong>SSH Password</strong>
+                <input
+                        id="backupServerSshPassword"
+                        type="password"
+                        name="backupServerSshPassword"
+                        value="{{$.Data.BackupServer.SshPassword}}"
+                        placeholder="enter ssh password"
+                        autocomplete="current-password"
+                />
+            </label>
+
+            <button
+                    type="button"
+                    class="password-toggle"
+                    aria-label="Show password"
+                    aria-pressed="false"
+                    onclick="togglePasswordVisibilityById('backupServerSshPassword', 'backupServerSshPasswordToggle')"
+                    id="backupServerSshPasswordToggle"
+            >
+                <i class="mdi mdi-eye-outline"></i>
+            </button>
+
+            <button
+                    id="backup-server-test-connection-button"
+                    type="button"
+                    onclick="testConnection(
+          this.form.backupServerHost.value,
+          this.form.backupServerSshPort.value,
+          this.form.backupServerSshUser.value,
+          this.form.backupServerSshPassword.value,
+          this.form.backupServerKnownHosts.value
+        )"
+            >
+                Test Connection
+            </button>
+            <button
+                    id="backup-server-purge-button"
+                    type="button"
+                    class="alert"
+                    onclick="purgeBackupServer(
+          this.form.backupServerHost.value,
+          this.form.backupServerSshPort.value,
+          this.form.backupServerSshUser.value,
+          this.form.backupServerSshPassword.value,
+          this.form.backupServerKnownHosts.value
+        )"
+            >
+                Purge backup server
+            </button>
+        </div>
+
+        <div class="label-bar">
+            <label>
+                <strong>Data Encryption Password</strong>
+                <input
+                        id="backupServerEncryptionPassword"
+                        type="password"
+                        name="backupServerEncryptionPassword"
+                        value="{{$.Data.BackupServer.EncryptionPassword}}"
+                        placeholder="enter encryption password"
+                        autocomplete="new-password"
+                />
+            </label>
+
+            <button
+                    type="button"
+                    class="password-toggle"
+                    aria-label="Show password"
+                    aria-pressed="false"
+                    onclick="togglePasswordVisibilityById('backupServerEncryptionPassword', 'backupServerEncryptionPasswordToggle')"
+                    id="backupServerEncryptionPasswordToggle"
+            >
+                <i class="mdi mdi-eye-outline"></i>
+            </button>
+
+            <label id="enable-backup-server-label">
+                <strong>Enable Backup Server</strong>
+                <input
+                        type="checkbox"
+                        id="backup-server-enabled-checkbox"
+                        name="backupServerIsEnabled"
+                        {{if .Data.BackupServer.IsEnabled}}checked{{end}}
+                />
+            </label>
+
+            <button
+                    id="backup-server-save-button"
+                    type="button"
+                    onclick="save(
+          this.form.backupServerHost.value,
+          this.form.backupServerSshPort.value,
+          this.form.backupServerSshUser.value,
+          this.form.backupServerSshPassword.value,
+          this.form.backupServerKnownHosts.value,
+          this.form.backupServerEncryptionPassword.value,
+          this.form.backupServerIsEnabled.checked
+        )"
+            >
+                Save
+            </button>
+            <button id="backup-server-reset-button" type="button" class="alert" onclick="resetBackupServerConfigs()">
+                Reset
+            </button>
+        </div>
+    </form>
+</section>
+
+<hr/>
+
+<section>
+    <h3>Maintenance</h3>
+    <h4>Schedule for updates and backups</h4>
+    <div class="label-bar">
+        <label>
+            <strong>Time zone</strong>
+            <input
+                    id="iana-timezone"
+                    name="ianaTimezone"
+                    list="ianaTimezoneOptions"
+                    value="{{$.Data.MaintenanceConfig.IanaTimezone}}"
+                    placeholder="Type to search (e.g. Europe/Berlin)"
+                    required
+            />
+            <datalist id="ianaTimezoneOptions">
+                {{range .Data.IanaTimezoneOptions}}
+                <option value="{{.}}"></option>
+                {{end}}
+            </datalist>
+        </label>
+
+        <label>
+            <strong>Start window</strong>
+            <select id="maintenance-window-start-hour">
+                {{range .Data.MaintenanceWindowOptions}}
+                <option value="{{.Value}}" {{if eq .Value $.Data.MaintenanceConfig.MaintenanceWindowStartHour}}selected{{end}}>
+                    {{.Label}}
+                </option>
+                {{end}}
+            </select>
+        </label>
+
+        <button
+                id="maintenance-save-button"
+                type="button"
+                onclick="saveMaintenanceConfig(
+            document.getElementById('maintenance-window-start-hour').value,
+            document.getElementById('iana-timezone').value
+        )"
+        >
+            Save
+        </button>
+    </div>
+
+    <div class="label-bar">
+        <div id="next-maintenance-execution">
+            <strong>Next maintenance execution</strong>
+            <p id="next-maintenance-execution-value">{{$.Data.NextMaintenanceAt}}</p>
+        </div>
+        <button type="button" onclick="runMaintenanceJobsNow()">
+            Run maintenance jobs now
+        </button>
+    </div>
+
+    <h4>Retention Policy</h4>
+    <p><strong>Keep backups:</strong></p>
+    <div class="label-bar">
+        <label class="retention-label">
+            <strong>Pre-update</strong>
+            <input
+                    id="retention-keep-pre-update"
+                    type="number"
+                    min="0"
+                    value="{{$.Data.RetentionPolicy.KeepPreUpdate}}"
+            />
+        </label>
+
+        <label class="retention-label">
+            <strong>Daily</strong>
+            <input
+                    id="retention-keep-daily"
+                    type="number"
+                    min="0"
+                    value="{{$.Data.RetentionPolicy.KeepDaily}}"
+            />
+        </label>
+
+        <label class="retention-label">
+            <strong>Weekly</strong>
+            <input
+                    id="retention-keep-weekly"
+                    type="number"
+                    min="0"
+                    value="{{$.Data.RetentionPolicy.KeepWeekly}}"
+            />
+        </label>
+
+        <label class="retention-label">
+            <strong>Monthly</strong>
+            <input
+                    id="retention-keep-monthly"
+                    type="number"
+                    min="0"
+                    value="{{$.Data.RetentionPolicy.KeepMonthly}}"
+            />
+        </label>
+
+        <label class="retention-label">
+            <strong>Yearly</strong>
+            <input
+                    id="retention-keep-yearly"
+                    type="number"
+                    min="0"
+                    value="{{$.Data.RetentionPolicy.KeepYearly}}"
+            />
+        </label>
+        <button id="retention-policy-save-button" type="button" onclick="saveRetentionPolicy()">
+            Save
+        </button>
+    </div>
+
+</section>

@@ -1,0 +1,30 @@
+<section class="local-sign-in-section">
+    <h3>Local sign-in</h3>
+    <form onsubmit="signIn(event, this.username.value, this.password.value)">
+        <div class="inline-form-row">
+            <div>
+                <label>Name</label>
+                <input id="username-input" class="input-medium" name="username" required>
+            </div>
+            <div class="sign-in-field">
+                <label>Password</label>
+                <input id="password-input" class="input-medium" name="password" type="password" required>
+            </div>
+        </div>
+        <button id="sign-in-button" type="submit">Sign in</button>
+    </form>
+</section>
+
+{{if gt (len $.Data.OidcAuthProviders) 0}}
+<hr>
+<section class="oidc-sign-in-section">
+    <h3>OIDC sign-in</h3>
+    <div class="oidc-provider-list">
+        {{range $.Data.OidcAuthProviders}}
+        <button type="button" class="oidc-provider-button" onclick="startOidcSignIn('{{.Id}}')">
+            {{.Name}}
+        </button>
+        {{end}}
+    </div>
+</section>
+{{end}}

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -eu
+
+changed_sql_files=$(git diff --cached --name-only --diff-filter=DMCRTUXB -- '*.sql')
+changed_system_config_migration_files=$(git diff --cached --name-only --diff-filter=DMCRTUXB -- 'src/server/system_config_migrations/[0-9][0-9][0-9][0-9]_*.go')
+
+if [ -n "$changed_sql_files" ]; then
+	echo "Existing SQL files must not be modified, deleted, copied, renamed, or type-changed." >&2
+	echo "Create a new migration file instead." >&2
+	echo "$changed_sql_files" >&2
+	exit 1
+fi
+
+if [ -n "$changed_system_config_migration_files" ]; then
+	echo "Existing system config migration files must not be modified, deleted, copied, renamed, or type-changed." >&2
+	echo "Create a new numbered migration file instead." >&2
+	echo "$changed_system_config_migration_files" >&2
+	exit 1
+fi
