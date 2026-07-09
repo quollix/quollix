@@ -1,0 +1,10 @@
+.auto-update-cell,
+.auto-backup-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.auto-update-header,
+.auto-backup-header {
+    text-align: center;
+}

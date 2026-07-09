@@ -1,0 +1,27 @@
+#enable-email-config-label {
+  align-self: start;
+}
+
+#enable-email-config-label input {
+  margin-top: 10px;
+  margin-left: 50px;
+}
+
+#expose-real-email-in-oidc-token-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-tight);
+}
+
+#expose-real-email-in-oidc-token-label input {
+  margin: 0;
+}
+
+#email-configs-save-button {
+  margin-left: 30px;
+  margin-top: 20px;
+}
+
+.enable-bar-button {
+  margin-top: 28px;
+}

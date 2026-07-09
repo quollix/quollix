@@ -1,0 +1,39 @@
+<link rel="stylesheet" href="{{.Paths.WebResourcesVendorCss}}/xterm.{{.ApplicationVersion}}.css" />
+<script src="{{.Paths.WebResourcesVendorJs}}/xterm.{{.ApplicationVersion}}.js"></script>
+<script src="{{.Paths.WebResourcesVendorJs}}/xterm-addon-fit.{{.ApplicationVersion}}.js"></script>
+
+<button type="button" id="terminal-view-back-button" class="lean" onclick="location.href='{{$.Paths.FrontendTerminalServices}}?maintainer={{$.Data.Maintainer}}&appName={{$.Data.AppName}}'">
+    Back
+</button>
+<br>
+<br>
+
+<ul>
+    <li id="terminal-view-maintainer">Maintainer: {{ $.Data.Maintainer }}</li>
+    <li id="terminal-view-app-name">App Name: {{ $.Data.AppName }}</li>
+    <li id="terminal-view-service-name">Service: {{ $.Data.ServiceName }}</li>
+</ul>
+
+
+<div id="terminal-container">
+    <button type="button"
+            id="terminal-copy-button"
+            class="lean"
+            title="Copy terminal"
+            aria-label="Copy terminal"
+            onclick="copyTerminalToClipboard()">
+        <i class="mdi mdi-content-copy"></i>
+    </button>
+    <div id="terminal"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        window.initTerminalViewPage(
+            location.host,
+            "{{$.Data.Maintainer}}",
+            "{{$.Data.AppName}}",
+            "{{$.Data.ServiceName}}",
+        );
+    });
+</script>

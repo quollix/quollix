@@ -1,0 +1,5 @@
+/* render-contract-css {{.ApplicationVersion}} */
+
+#render-contract-page {
+  border-top: 3px solid #135;
+}

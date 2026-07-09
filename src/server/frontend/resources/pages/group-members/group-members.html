@@ -1,0 +1,82 @@
+<link rel="stylesheet" href="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.css">
+<script src="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.js"></script>
+
+<button id="group-members-back-button" type="button" class="lean" onclick="location.href='{{$.Paths.FrontendGroups}}'">
+  Back
+</button>
+<br>
+<br>
+
+<p>Group name: {{ $.Data.GroupName }}</p>
+<br>
+
+<div class="group-detail-layout">
+  <section class="group-detail-column">
+    <div class="group-detail-header">
+      <h4>Non-members</h4>
+      <input id="nonMembersFilterInput" type="text" placeholder="Filter..."
+        oninput="filterTableByDataName('nonMembersFilterInput', 'nonMembersTableBody')">
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="group-detail-checkbox-col">
+            <input id="non-members-select-all-checkbox" type="checkbox"
+              onclick="toggleAllCheckboxes('nonMembersTableBody', 'member-checkbox', this.checked)">
+          </th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody id="nonMembersTableBody">
+        {{range $.Data.NotIn}}
+        <tr data-name="{{.Name}}">
+          <td class="group-detail-checkbox-col">
+            <input type="checkbox" class="member-checkbox" value="{{.Id}}">
+          </td>
+          <td>{{.Name}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="group-detail-actions">
+    <button id="group-members-add-button" type="button" class="lean" onclick="addSelectedMembers('{{$.Data.GroupId}}')">
+      Add →
+    </button>
+    <button id="group-members-remove-button" type="button" class="lean" onclick="removeSelectedMembers('{{$.Data.GroupId}}')">
+      ← Remove
+    </button>
+  </section>
+
+  <section class="group-detail-column">
+    <div class="group-detail-header">
+      <h4>Members</h4>
+      <input id="membersFilterInput" type="text" placeholder="Filter..."
+        oninput="filterTableByDataName('membersFilterInput', 'membersTableBody')">
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="group-detail-checkbox-col">
+            <input id="members-select-all-checkbox" type="checkbox"
+              onclick="toggleAllCheckboxes('membersTableBody', 'member-checkbox', this.checked)">
+          </th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody id="membersTableBody">
+        {{range $.Data.In}}
+        <tr data-name="{{.Name}}">
+          <td class="group-detail-checkbox-col">
+            <input type="checkbox" class="member-checkbox" value="{{.Id}}">
+          </td>
+          <td>{{.Name}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </section>
+</div>

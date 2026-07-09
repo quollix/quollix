@@ -1,0 +1,85 @@
+<link rel="stylesheet" href="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.css">
+<script src="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.js"></script>
+
+<button id="group-apps-back-button" type="button"
+        class="lean"
+        onclick="location.href='{{$.Paths.FrontendGroups}}'">
+    Back
+</button>
+<br>
+<br>
+
+<p>Group name: <strong>{{ $.Data.GroupName }}</strong></p>
+<br>
+
+<div class="group-detail-layout">
+    <section class="group-detail-column">
+        <div class="group-detail-header">
+            <h4>No access</h4>
+            <input id="noAccessFilterInput"
+                   type="text"
+                   placeholder="Filter..."
+                   oninput="filterTableByDataName('noAccessFilterInput', 'noAccessGrantedTableBody')">
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th class="group-detail-checkbox-col">
+                    <input id="group-apps-no-access-select-all-checkbox" type="checkbox" onclick="toggleAllCheckboxes('noAccessGrantedTableBody', 'app-checkbox', this.checked)">
+                </th>
+                <th>App</th>
+            </tr>
+            </thead>
+            <tbody id="noAccessGrantedTableBody">
+            {{range $.Data.AccessNotGrantedApps}}
+            <tr data-name="{{.}}">
+                <td class="group-detail-checkbox-col">
+                    <input type="checkbox" class="app-checkbox" value="{{.}}">
+                </td>
+                <td>{{.}}</td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="group-detail-actions">
+        <button id="group-apps-add-button" type="button" class="lean" onclick="grantSelectedApps('{{$.Data.GroupId}}')">
+            Add →
+        </button>
+        <button id="group-apps-remove-button" type="button" class="lean" onclick="revokeSelectedApps('{{$.Data.GroupId}}')">
+            ← Remove
+        </button>
+    </section>
+
+    <section class="group-detail-column">
+        <div class="group-detail-header">
+            <h4>Access granted</h4>
+            <input id="grantedFilterInput"
+                   type="text"
+                   placeholder="Filter..."
+                   oninput="filterTableByDataName('grantedFilterInput', 'accessGrantedTableBody')">
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th class="group-detail-checkbox-col">
+                    <input id="group-apps-access-granted-select-all-checkbox" type="checkbox" onclick="toggleAllCheckboxes('accessGrantedTableBody', 'app-checkbox', this.checked)">
+                </th>
+                <th>App</th>
+            </tr>
+            </thead>
+            <tbody id="accessGrantedTableBody">
+            {{range $.Data.AccessGrantedApps}}
+            <tr data-name="{{.}}">
+                <td class="group-detail-checkbox-col">
+                    <input type="checkbox" class="app-checkbox" value="{{.}}">
+                </td>
+                <td>{{.}}</td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+    </section>
+</div>

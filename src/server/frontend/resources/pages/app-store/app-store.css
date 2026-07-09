@@ -1,0 +1,54 @@
+#search-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5rem;
+    max-width: 1400px;
+    justify-content: flex-start !important;
+}
+
+.checkbox-group {
+    margin-bottom: 1.9rem;
+}
+
+#search-form .field {
+    min-width: 200px;
+    flex: 0 0 auto;
+}
+
+#search-form .field input {
+    width: 350px;
+}
+
+#search-form #search-button {
+    max-width: 200px;
+}
+
+.version-menu{
+    position:relative;
+    display:inline-block
+}
+.version-popover{
+    position:absolute;
+    min-width:150px;
+    overflow:auto;
+    border:1px solid var(--light-dark);
+}
+.version-list{
+    list-style:none;
+    margin:0;
+    padding:0
+}
+
+.version-option{
+    width:100%;
+    text-align:left;
+    border:0;
+    background:transparent;
+}
+.version-option:hover{
+    background: var(--light-dark);
+}
+.version-filter {
+    margin: 0 !important;
+    padding: 0 0 0 1rem !important;
+}

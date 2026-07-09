@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+
+FROM alpine:3.23.4 AS runtime
+RUN apk add --no-cache docker-cli docker-compose tzdata
+WORKDIR /opt/server
+COPY assets /opt/server/assets
+COPY frontend/resources /opt/server/frontend/resources
+
+FROM --platform=$BUILDPLATFORM golang:1.26.4-alpine AS builder
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+COPY . .
+ARG TARGETOS
+ARG TARGETARCH
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -o /out/server
+
+FROM runtime AS local
+COPY --from=builder /out/server /opt/server/server
+ENTRYPOINT ["/opt/server/server"]
+
+FROM runtime AS release
+COPY --from=builder /out/server /opt/server/server
+ENTRYPOINT ["/opt/server/server"]

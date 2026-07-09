@@ -1,0 +1,41 @@
+name: 'Setup and Build Environment'
+description: 'Sets up environment and builds the Go application'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: src/server/go.mod
+        cache: true
+        cache-dependency-path: |
+          src/server/go.sum
+          src/ci-runner/go.sum
+
+    - name: Set up Docker Compose
+      uses: docker/setup-compose-action@v1
+      with:
+        version: 'v2.24.6'
+
+    # Cache the Chromium binary downloaded by Rod. The cache key tracks the go-rod module version, so upgrading Rod automatically creates a new cache with the correct Chromium revision.
+    - name: Detect Rod version
+      shell: bash
+      run: |
+        cd src/server
+        echo "ROD_VERSION=$(go list -m -f '{{.Version}}' github.com/go-rod/rod)" >> $GITHUB_ENV
+
+    - name: Cache Rod browser
+      id: rod_cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/rod/browser
+        key: ${{ runner.os }}-${{ runner.arch }}-rod-${{ env.ROD_VERSION }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-rod-
+
+    - name: Rod cache status
+      shell: bash
+      run: echo "Rod cache hit? ${{ steps.rod_cache.outputs.cache-hit }}"

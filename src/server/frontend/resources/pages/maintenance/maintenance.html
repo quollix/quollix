@@ -1,0 +1,42 @@
+<table>
+    <thead>
+    <tr>
+        <th class="maintenance-maintainer-header">Maintainer</th>
+        <th class="maintenance-app-name-header">App</th>
+        <th class="auto-update-header">Automatic Updatesa via App Store</th>
+        <th class="auto-backup-header">Automatic Backups</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {{if eq (len $.Data.Apps) 0}}
+    <tr><td colspan="4" style="opacity:.7">No apps available</td></tr>
+    {{else}}
+    {{range $.Data.Apps}}
+    {{$app := .}}
+
+    <tr class="maintenance-row" data-app-name="{{$app.AppName}}">
+        <td class="maintenance-maintainer-cell">{{$app.Maintainer}}</td>
+        <td class="maintenance-app-name-cell">{{$app.AppName}}</td>
+
+        <td class="auto-update-cell">
+        {{ if $app.IsOfficialDatabaseApp }}
+        —
+        {{ else }}
+            <input type="checkbox"
+                   {{if $app.AutomaticUpdatesEnabled}}checked{{end}}
+                   onchange="updateAutoMaintenanceSettings(this, '{{ $app.AppId }}', {{ $app.IsOfficial }})">
+        {{ end }}
+        </td>
+
+        <td class="auto-backup-cell">
+            <input type="checkbox"
+                   {{if $app.AutomaticBackupsEnabled}}checked{{end}}
+                   onchange="updateAutoMaintenanceSettings(this, '{{ $app.AppId }}', {{ $app.IsOfficial }})">
+        </td>
+    </tr>
+
+    {{end}}
+    {{end}}
+    </tbody>
+</table>

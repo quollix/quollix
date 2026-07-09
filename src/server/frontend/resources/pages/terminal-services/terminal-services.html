@@ -1,0 +1,41 @@
+<button type="button"
+        id="terminal-services-back-button"
+        class="lean"
+        onclick="location.href='{{$.Paths.FrontendTerminalApps}}'">
+    Back
+</button>
+<br>
+<br>
+
+<ul>
+    <li id="terminal-services-maintainer">Maintainer: {{ $.Data.Maintainer }}</li>
+    <li id="terminal-services-app-name">App Name: {{ $.Data.AppName }}</li>
+</ul>
+
+<table>
+    <thead>
+    <tr>
+        <th>Service</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range $.Data.ServiceNames }}
+    {{ $serviceName := . }}
+    <tr class="terminal-service-row" data-service-name="{{ $serviceName }}">
+        <td class="terminal-service-name-cell">{{ $serviceName }}</td>
+        <td>
+            <div class="actions-row">
+            <button type="button"
+                    class="lean icon-btn terminal-open-button"
+                    title="Open terminal"
+                    aria-label="Open terminal"
+                    onclick="location.href='{{$.Paths.FrontendTerminalView}}?maintainer={{$.Data.Maintainer}}&appName={{$.Data.AppName}}&serviceName={{$serviceName}}'">
+                <i class="mdi mdi-console" aria-hidden="true"></i>
+            </button>
+            </div>
+        </td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>

@@ -1,0 +1,7 @@
+cloud
+server
+wire_gen.go
+coverage.*
+frontend/resources/**/*-injected.js
+**.pem
+cache

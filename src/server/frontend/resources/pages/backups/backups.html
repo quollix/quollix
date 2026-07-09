@@ -1,0 +1,16 @@
+<ul>
+    <li>Maintainer: <span id="backups-page-maintainer">{{$.Data.Maintainer}}</span></li>
+    <li>App Name: <span id="backups-page-app-name">{{$.Data.AppName}}</span></li>
+</ul>
+
+<button type="button"
+        id="backups-page-back-button"
+        class="lean"
+        onclick="location.href='{{$.Paths.FrontendBackedUpApps}}'">
+    Back
+</button>
+<br>
+<br>
+
+<p id="backups-loading-message">Loading backups...</p>
+<div id="backups-container"></div>

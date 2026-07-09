@@ -1,0 +1,191 @@
+#layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh
+}
+
+header,
+footer {
+  grid-column: 1/-1;
+}
+
+#app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+#app-brand-link {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  text-decoration: none;
+}
+
+#app-brand {
+  margin: 0;
+}
+
+#app-logo {
+  height: 38px;
+}
+
+#header-right {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding-right: 1rem;
+}
+
+#logged-in-as {
+  margin: 0;
+}
+
+#request-indicator {
+  display: none;
+  font-size: 1.25rem;
+  animation: spin 1s linear infinite;
+}
+
+#sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#sidebar-list i {
+  padding-right: 0.5rem;
+}
+
+#sidebar-list .sub-item {
+  display: flex;
+  align-items: center;
+  color: #ddd;
+  text-decoration: none;
+  background: var(--medium-dark);
+  padding: 0.5rem 0 0.5rem 1rem;
+  cursor: pointer;
+}
+
+#sidebar-list summary {
+  color: white;
+}
+
+#sidebar-list details {
+  margin-bottom: 1rem;
+}
+
+#sidebar-list details[open] {
+  margin-bottom: 0;
+}
+
+#sidebar-list a:hover {
+  background: var(--light-dark);
+  color: white;
+}
+
+#sidebar-list .sidebar-top-link {
+  background: none;
+  text-decoration: none;
+  cursor: pointer;
+  color: white;
+  margin-bottom: 5px;
+}
+
+#main {
+  flex: 1;
+}
+
+#page-header {
+  display: flex;
+  align-items: center;
+}
+
+#page-title {
+  margin: 0;
+}
+
+#outer-page-container {
+  background-color: var(--deep-dark);
+  padding: 1rem;
+  min-height: 100%
+}
+
+#inner-page-container {
+  background-color: var(--medium-dark);
+  padding: 1rem
+}
+
+#navigation-tab {
+  background-color: var(--light-dark);
+  padding-top: 0.5rem;
+  padding-left: 1rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+#navigation-tab h4 {
+  color: white;
+  margin: 0;
+}
+
+#cancel-button {
+  margin-right: 0.5rem;
+}
+
+#github-link i,
+#website-link i {
+  font-size: 1.6rem;
+}
+
+aside {
+  display: flex;
+  flex-direction: column;
+}
+
+#sidebar-user {
+  margin-top: auto;
+  border-top: 1px solid var(--light-dark);
+}
+
+#sidebar-user-link {
+  display: flex;
+  gap: .5rem;
+  color: #ddd;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+}
+
+#sidebar-user-link:hover {
+  background: var(--light-dark);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#app-footer {
+  text-align: center;
+  background-color: var(--light-dark);
+  height: 3rem;
+  padding: 0.7rem;
+}
+
+#confirm-dialog form {
+  width: 80vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#confirm-message {
+  max-width: 600px;
+}

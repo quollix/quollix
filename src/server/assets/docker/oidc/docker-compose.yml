@@ -1,0 +1,91 @@
+services:
+  oidc-provider-db:
+    image: postgres:17.5
+    container_name: quollix_provider_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=postgres
+    volumes:
+      - quollix_provider_data:/var/lib/postgresql/data
+    networks:
+      - quollix_oidc
+    restart: unless-stopped
+
+  oidc-client-db:
+    image: postgres:17.5
+    container_name: quollix_client_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_DB=postgres
+    volumes:
+      - quollix_client_data:/var/lib/postgresql/data
+    networks:
+      - quollix_oidc
+    restart: unless-stopped
+
+  oidc-provider-quollix:
+    image: quollix/quollix:local
+    container_name: quollix_provider_server
+    depends_on:
+      - oidc-provider-db
+    environment:
+      - PROFILE=DEV
+      - DATABASE_HOST_NAME=oidc-provider-db
+      - INITIAL_ADMIN_NAME=admin
+      - INITIAL_ADMIN_PASSWORD=password
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - quollix_oidc
+    restart: unless-stopped
+
+  oidc-client-quollix:
+    image: quollix/quollix:local
+    container_name: quollix_client_server
+    depends_on:
+      - oidc-client-db
+    environment:
+      - PROFILE=DEV
+      - DATABASE_HOST_NAME=oidc-client-db
+      - INITIAL_ADMIN_NAME=admin
+      - INITIAL_ADMIN_PASSWORD=password
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - quollix_oidc
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    container_name: quollix_oidc_proxy
+    depends_on:
+      - oidc-provider-quollix
+      - oidc-client-quollix
+    ports:
+      - "127.0.0.1:443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - quollix_proxy_data:/data
+      - quollix_proxy_config:/config
+    networks:
+      quollix_oidc:
+        aliases:
+          - quollix.oidc-provider.localhost
+          - quollix.oidc-client.localhost
+    restart: unless-stopped
+
+networks:
+  quollix_oidc:
+    name: quollix_oidc
+
+volumes:
+  quollix_provider_data:
+    name: quollix_provider_data
+  quollix_client_data:
+    name: quollix_client_data
+  quollix_proxy_data:
+    name: quollix_proxy_data
+  quollix_proxy_config:
+    name: quollix_proxy_config

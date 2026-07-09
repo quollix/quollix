@@ -1,0 +1,27 @@
+<button type="button" class="lean" onclick="location.href='{{$.Paths.FrontendUsers}}'">
+  Back
+</button>
+<br>
+<br>
+
+<p><strong>Username:</strong></p>
+<form class="inline-form-row">
+  <input id="change-username-input" class="input-medium" type="text" placeholder="Set new username"
+    value="{{ $.Data.User.Username }}" required>
+  <button type="button" id="change-username-save-button"
+    onclick="changeUsername('{{ $.Data.UserId }}', document.getElementById('change-username-input').value)">
+    Save
+  </button>
+</form>
+
+<br>
+
+<p><strong>Email:</strong></p>
+<form class="inline-form-row">
+  <input id="change-email-input" class="input-medium" type="email" placeholder="Set new email"
+    value="{{ $.Data.User.Email }}" required>
+  <button type="button" id="change-email-save-button"
+    onclick="changeEmail('{{ $.Data.UserId }}', document.getElementById('change-email-input').value)">
+    Save
+  </button>
+</form>

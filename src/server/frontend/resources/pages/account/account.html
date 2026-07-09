@@ -1,0 +1,32 @@
+<h3>Profile</h3>
+<ul>
+    <li>Name: {{$.Data.Username}}</li>
+    <li>Email: {{$.Data.Email}}</li>
+    <li>Role: {{$.Data.Role}}</li>
+</ul>
+
+{{if not $.Auth.IsAdmin}}
+<p><strong>Note:</strong> Only the administrator can update usernames and email addresses. Please contact your administrator if you need to make changes.</p>
+{{end}}
+
+{{if $.Data.IsPasswordSet}}
+<section id="change-password-section">
+    <h3>Change password</h3>
+    <form class="horizontal-align">
+        <input type="password" id="change-password-current-input" name="oldPassword" placeholder="enter current password" required />
+        <input type="password" id="change-password-new-input" name="newPassword" placeholder="enter new password" required />
+        <input type="password" id="change-password-confirm-input" name="confirmPassword" placeholder="confirm new password" required />
+        <button type="button" id="change-password-button" onclick="updatePassword(document.getElementById('change-password-current-input').value, document.getElementById('change-password-new-input').value, document.getElementById('change-password-confirm-input').value)">Save</button>
+    </form>
+</section>
+{{else}}
+<section id="set-password-section">
+    <h3>Set local password</h3>
+    <p>You do not have a local password set. Set one to also sign in with your username and password if your external sign-in provider is unavailable.</p>
+    <form class="horizontal-align">
+        <input type="password" id="set-password-new-input" name="newPassword" placeholder="enter new password" required />
+        <input type="password" id="set-password-confirm-input" name="confirmPassword" placeholder="confirm new password" required />
+        <button type="button" id="set-password-button" onclick="setPassword(document.getElementById('set-password-new-input').value, document.getElementById('set-password-confirm-input').value)">Save</button>
+    </form>
+</section>
+{{end}}

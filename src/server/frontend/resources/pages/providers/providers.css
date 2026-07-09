@@ -1,0 +1,9 @@
+.oidc-auth-provider-row input {
+    width: 100%;
+    max-width: 250px;
+    margin-bottom: 0;
+}
+
+.actions-row button {
+    margin-bottom: 0;
+}

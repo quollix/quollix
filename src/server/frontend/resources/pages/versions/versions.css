@@ -1,0 +1,13 @@
+#version-filter {
+    width: 200px;
+    margin-right: 0.5rem;
+}
+
+#version-filter-bar {
+    margin: 1rem 0;
+}
+
+#exact-version-span {
+    opacity: .7;
+    margin-left: .5rem;
+}

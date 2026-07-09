@@ -1,0 +1,119 @@
+<section id="oidc-provider-create-section">
+    <h3 id="oidc-provider-create-heading">Create Provider</h3>
+
+    <form id="oidc-provider-create-form" onsubmit="return false;">
+        <div class="label-bar">
+            <label>
+                <strong>Name</strong>
+                <input id="oidc-provider-name-input" type="text" name="providerName" placeholder="provider name"
+                    required />
+            </label>
+
+            <label>
+                <strong>Issuer domain path</strong>
+                <input id="oidc-provider-issuer-domain-path-input" type="text" name="issuerDomainPath"
+                    placeholder="issuer.example.com/realms/main" required />
+            </label>
+
+            <button id="oidc-provider-test-discovery-button" type="button" title="Test discovery"
+                onclick="testOidcAuthProviderDiscovery(this)">
+                <i class="mdi mdi-heart-pulse"></i>
+            </button>
+        </div>
+
+        <div class="label-bar">
+            <label>
+                <strong>Client ID</strong>
+                <input id="oidc-provider-client-id-input" type="text" name="clientId" placeholder="client id"
+                    required />
+            </label>
+
+            <label>
+                <strong>Client secret</strong>
+                <input id="oidc-provider-client-secret-input" type="password" name="clientSecret"
+                    placeholder="client secret" required />
+            </label>
+
+            <button type="button" class="password-toggle" title="Show client secret"
+                onclick="togglePasswordVisibilityById('oidc-provider-client-secret-input', 'oidc-provider-client-secret-toggle')"
+                id="oidc-provider-client-secret-toggle">
+                <i class="mdi mdi-eye-outline"></i>
+            </button>
+
+            <button id="oidc-provider-create-button" type="button" class="enable-bar-button" title="Create provider"
+                onclick="createOidcAuthProvider()">
+                <i class="mdi mdi-plus"></i>
+            </button>
+        </div>
+    </form>
+</section>
+
+<section id="oidc-provider-list-section">
+    <h3 id="oidc-provider-list-heading">Providers</h3>
+
+    <table id="oidc-provider-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Issuer domain path</th>
+                <th>Client ID</th>
+                <th>Client secret</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{if eq (len $.Data.AuthProviders) 0}}
+            <tr>
+                <td colspan="5" style="opacity:.7">No providers configured</td>
+            </tr>
+            {{else}}
+            {{range $.Data.AuthProviders}}
+            {{$provider := .}}
+
+            <tr class="oidc-auth-provider-row" data-provider-id="{{$provider.Id}}">
+                <td>
+                    <input class="oidc-provider-name-edit" type="text" value="{{$provider.Name}}" required />
+                </td>
+                <td>
+                    <input class="oidc-provider-issuer-domain-path-edit" type="text"
+                        value="{{$provider.IssuerDomainPath}}" required />
+                    <button type="button" class="oidc-provider-test-discovery-button lean" title="Test discovery"
+                        onclick="testOidcAuthProviderDiscovery(this)">
+                        <i class="mdi mdi-heart-pulse"></i>
+                    </button>
+                </td>
+                <td>
+                    <input class="oidc-provider-client-id-edit" type="text" value="{{$provider.ClientId}}" required />
+                </td>
+                <td>
+                    <div class="actions-row">
+                        <input id="oidc-provider-client-secret-{{$provider.Id}}"
+                            class="oidc-provider-client-secret-edit" type="password" value="{{$provider.ClientSecret}}"
+                            required />
+                        <button type="button" class="oidc-provider-client-secret-toggle lean" title="Show client secret"
+                            onclick="togglePasswordVisibilityById('oidc-provider-client-secret-{{$provider.Id}}', 'oidc-provider-client-secret-toggle-{{$provider.Id}}')"
+                            id="oidc-provider-client-secret-toggle-{{$provider.Id}}">
+                            <i class="mdi mdi-eye-outline"></i>
+                        </button>
+                    </div>
+                </td>
+                <td>
+                    <div class="actions-row">
+                        <button type="button" class="oidc-provider-save-button lean" title="Save provider"
+                            onclick="updateOidcAuthProvider('{{$provider.Id}}')">
+                            <i class="mdi mdi-content-save-outline"></i>
+                        </button>
+                        <button type="button" class="alert oidc-provider-delete-button lean" title="Delete provider"
+                            onclick="deleteOidcAuthProvider('{{$provider.Id}}')">
+                            <i class="mdi mdi-delete-outline"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+
+            {{end}}
+            {{end}}
+        </tbody>
+    </table>
+</section>
