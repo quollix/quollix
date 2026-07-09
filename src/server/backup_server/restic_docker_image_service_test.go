@@ -1,9 +1,10 @@
 package backup_server
 
 import (
+	"testing"
+
 	"server/configs"
 	"server/tools"
-	"testing"
 
 	"github.com/quollix/common/assert"
 )
@@ -136,6 +137,7 @@ func expectResticImageIsBuiltAndHashIsStored(testObjects resticDockerImageServic
 }
 
 func expectResticContainerDirectoriesArePrepared(testObjects resticDockerImageServiceTestObjects) {
-	testObjects.ResticContainerExecutor.EXPECT().ExecuteSimple("mkdir -p /root/.config/rclone").Return(&tools.CommandOutput{}, nil)
-	testObjects.ResticContainerExecutor.EXPECT().ExecuteSimple("mkdir -p /root/.ssh").Return(&tools.CommandOutput{}, nil)
+	var emptyStringSlice []string
+	testObjects.ResticContainerExecutor.EXPECT().Execute([]string{"mkdir", "-p", "/root/.config/rclone"}, emptyStringSlice, emptyStringSlice, "", "").Return(&tools.CommandOutput{}, nil)
+	testObjects.ResticContainerExecutor.EXPECT().Execute([]string{"mkdir", "-p", "/root/.ssh"}, emptyStringSlice, emptyStringSlice, "", "").Return(&tools.CommandOutput{}, nil)
 }

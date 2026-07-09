@@ -62,11 +62,11 @@ func (r *ResticDockerImageServiceImpl) UpdateResticDockerImage() error {
 }
 
 func (r *ResticDockerImageServiceImpl) prepareResticContainerDirectories() error {
-	_, err := r.ResticContainerExecutor.ExecuteSimple("mkdir -p /root/.config/rclone")
+	_, err := r.ResticContainerExecutor.Execute([]string{"mkdir", "-p", "/root/.config/rclone"}, nil, nil, "", "")
 	if err != nil {
 		return err
 	}
-	_, err = r.ResticContainerExecutor.ExecuteSimple("mkdir -p /root/.ssh")
+	_, err = r.ResticContainerExecutor.Execute([]string{"mkdir", "-p", "/root/.ssh"}, nil, nil, "", "")
 	if err != nil {
 		return err
 	}

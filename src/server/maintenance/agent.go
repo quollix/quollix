@@ -1,16 +1,17 @@
 package maintenance
 
 import (
+	"runtime/debug"
+	"time"
+
 	"server/apps_basic"
 	"server/backup_server"
 	"server/configs"
 	"server/oidc_client"
 	"server/users"
 
-	"runtime/debug"
 	"server/oidc_provider"
 	"server/tools"
-	"time"
 
 	u "github.com/quollix/common/utils"
 )
@@ -19,8 +20,6 @@ type MaintenanceAgent interface {
 	StartMaintenanceAgentDaemon()
 	RunMaintenanceJob()
 }
-
-const dockerImagePruneCommand = "docker image prune -af --filter label!=" + tools.ResticImageMaintenanceKeepLabel
 
 type MaintenanceAgentImpl struct {
 	Repository          configs.MaintenanceRepository
@@ -34,6 +33,10 @@ type MaintenanceAgentImpl struct {
 	OidcLoginStateCache oidc_client.OidcLoginStateCache
 	SessionRepo         users.SessionRepository
 	ResticImage         backup_server.ResticDockerImageService
+}
+
+func dockerImagePruneCommand() []string {
+	return []string{"image", "prune", "-af", "--filter", "label!=" + tools.ResticImageMaintenanceKeepLabel}
 }
 
 func (s *MaintenanceAgentImpl) StartMaintenanceAgentDaemon() {
@@ -100,7 +103,7 @@ func (s *MaintenanceAgentImpl) RunMaintenanceJob() {
 	}
 	if s.GlobalConfig.PruneDockerSystemDuringMaintenance {
 		// Never prune Docker networks here. Pruning networks can accidentally delete the Postgres app network while Postgres is temporarily stopped for backup or restore, which can make Quollix lose database connectivity.
-		if _, err := s.CommandRunner.RunCommand(dockerImagePruneCommand); err != nil {
+		if _, err := s.CommandRunner.RunCommand("docker", dockerImagePruneCommand()...); err != nil {
 			u.Logger.Error(err)
 		}
 	}

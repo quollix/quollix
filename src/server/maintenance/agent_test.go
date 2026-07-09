@@ -1,6 +1,9 @@
 package maintenance
 
 import (
+	"testing"
+	"time"
+
 	"server/backup_server"
 	"server/configs"
 	"server/oidc_client"
@@ -8,8 +11,6 @@ import (
 	"server/users"
 
 	"server/tools"
-	"testing"
-	"time"
 
 	"github.com/quollix/common/assert"
 	"github.com/stretchr/testify/mock"
@@ -108,7 +109,7 @@ func TestStartMaintenanceJob_HappyPath_RunsAndReschedules(t *testing.T) {
 	testObjects.OidcLoginStateCache.EXPECT().CleanupExpiredLoginStates()
 	testObjects.SessionRepo.EXPECT().DeleteExpiredSessions().Return(nil).Once()
 	testObjects.Agent.GlobalConfig.PruneDockerSystemDuringMaintenance = true
-	testObjects.CommandRunner.EXPECT().RunCommand(dockerImagePruneCommand).Return(&tools.CommandOutput{}, nil).Once()
+	testObjects.CommandRunner.EXPECT().RunCommand("docker", dockerImagePruneCommand()).Return(&tools.CommandOutput{}, nil).Once()
 
 	testObjects.Agent.considerRunningMaintenanceJob()
 }

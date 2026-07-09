@@ -23,7 +23,7 @@ type BackupServerConfigs struct {
 	SshUser            string `json:"user" validate:"default"`
 	SshPassword        string `json:"password" validate:"loose"`
 	SshKnownHosts      string `json:"known_hosts" validate:"known_hosts"`
-	EncryptionPassword string `json:"encryption_password" validate:"password"`
+	EncryptionPassword string `json:"encryption_password" validate:"loose"`
 }
 
 func (r *BackupServerConfigs) ConvertToSshConnectionTestRequest() *SshConnectionRequest {

@@ -87,6 +87,14 @@ var TestInitialAdminPasswordCmd = &cobra.Command{
 	},
 }
 
+var TestSpecialPasswordsCmd = &cobra.Command{
+	Use:   "special-passwords",
+	Short: "run component tests with loose-policy backup passwords",
+	Run: func(cmd *cobra.Command, args []string) {
+		TestSpecialPasswords()
+	},
+}
+
 var TestAcceptanceCmd = &cobra.Command{
 	Use:   "acceptance",
 	Short: "run acceptance tests",
@@ -128,6 +136,7 @@ func ConfigureTestCmd() {
 		TestBehindProxyCmd,
 		TestProdCmd,
 		TestInitialAdminPasswordCmd,
+		TestSpecialPasswordsCmd,
 		TestIntegrationCmd,
 		TestUnitCmd,
 		TestAcceptanceCmd,

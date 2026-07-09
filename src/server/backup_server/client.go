@@ -2,8 +2,9 @@ package backup_server
 
 import (
 	"fmt"
-	"server/tools"
 	"strings"
+
+	"server/tools"
 
 	u "github.com/quollix/common/utils"
 )
@@ -25,8 +26,7 @@ type SshClientImpl struct {
 }
 
 func (s *SshClientImpl) GetKnownHosts(host, port string) (string, error) {
-	command := fmt.Sprintf("ssh-keyscan -p %s %s", port, host)
-	output, err := s.ResticContainerExecutor.ExecuteSimple(command)
+	output, err := s.ResticContainerExecutor.Execute([]string{"ssh-keyscan", "-p", port, host}, nil, nil, "", "")
 	if output == nil {
 		return "", err
 	}
@@ -34,29 +34,64 @@ func (s *SshClientImpl) GetKnownHosts(host, port string) (string, error) {
 }
 
 func (s *SshClientImpl) TestWhetherSshAccessWorks(repo *tools.SshConnectionRequest) error {
-	mkdirCommand := fmt.Sprintf("mkdir -p %s", SshDirLocation)
-	if _, err := s.ResticContainerExecutor.ExecuteSimple(mkdirCommand); err != nil {
+	if _, err := s.ResticContainerExecutor.Execute([]string{"mkdir", "-p", SshDirLocation}, nil, nil, "", ""); err != nil {
 		return err
 	}
 
-	writeKnownHostsCommand := fmt.Sprintf("printf '%s' > %s", repo.SshKnownHosts, KnownHostsFileLocation)
-	if _, err := s.ResticContainerExecutor.ExecuteSimple(writeKnownHostsCommand); err != nil {
+	if _, err := s.ResticContainerExecutor.Execute(writeKnownHostsCommand(repo.SshKnownHosts), nil, nil, "", ""); err != nil {
 		return err
 	}
 
-	sshCommand := fmt.Sprintf(
-		"sshpass -p %s ssh -p %s %s@%s -o UserKnownHostsFile=%s -o StrictHostKeyChecking=yes -o PreferredAuthentications=password -o PasswordAuthentication=yes -o BatchMode=no -o ConnectTimeout=1 exit",
-		repo.SshPassword,
-		repo.SshPort,
-		repo.SshUser,
-		repo.Host,
-		KnownHostsFileLocation,
-	)
-	_, err := s.ResticContainerExecutor.ExecuteSimple(sshCommand)
+	sshCommand := []string{
+		"sshpass", "-p", repo.SshPassword,
+		"ssh", "-p", repo.SshPort, repo.SshUser + "@" + repo.Host,
+		"-o", "UserKnownHostsFile=" + KnownHostsFileLocation,
+		"-o", "StrictHostKeyChecking=yes",
+		"-o", "PreferredAuthentications=password",
+		"-o", "PasswordAuthentication=yes",
+		"-o", "BatchMode=no",
+		"-o", "ConnectTimeout=1",
+		"exit",
+	}
+	_, err := s.ResticContainerExecutor.Execute(sshCommand, nil, nil, "", "")
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func writeKnownHostsCommand(knownHosts string) []string {
+	return []string{
+		"sh",
+		"-c",
+		fmt.Sprintf(`printf '%%s' "$1" > %s`, KnownHostsFileLocation),
+		"sh",
+		knownHosts,
+	}
+}
+
+func rcloneConfigCreateCommand(repo *tools.SshConnectionRequest) []string {
+	return []string{
+		"rclone",
+		"config",
+		"create",
+		tools.SshConfigName,
+		"sftp",
+		"host=" + repo.Host,
+		"user=" + repo.SshUser,
+		"pass=" + repo.SshPassword,
+		"port=" + repo.SshPort,
+		"known_hosts_file=" + KnownHostsFileLocation,
+		"use_insecure_cipher=false",
+	}
+}
+
+func rclonePurgeCommand() []string {
+	return []string{
+		"rclone",
+		"purge",
+		fmt.Sprintf("%s:%s", tools.SshConfigName, tools.RelativeBackupRepoPathInResticContainer),
+	}
 }
 
 func GetSampleRemoteRepo() *tools.BackupServerConfigs {
@@ -76,13 +111,13 @@ func (r *SshClientImpl) PrepareBackupServer(repo *tools.BackupServerConfigs) err
 		return err
 	}
 
-	output, err := r.ResticContainerExecutor.ExecuteSimpleWithPassword("restic check", repo.EncryptionPassword)
+	output, err := r.ResticContainerExecutor.Execute([]string{"restic", "check"}, nil, nil, repo.EncryptionPassword, "")
 	if err != nil {
 		if output != nil && strings.Contains(output.Combined(), WrongEncryptionPasswordResticCommandOutputPattern) {
 			return u.Logger.NewError(WrongEncryptionPasswordErr)
 		}
 
-		_, err = r.ResticContainerExecutor.ExecuteSimpleWithPassword("restic init", repo.EncryptionPassword)
+		_, err = r.ResticContainerExecutor.Execute([]string{"restic", "init"}, nil, nil, repo.EncryptionPassword, "")
 		if err != nil {
 			return err
 		}
@@ -108,22 +143,12 @@ func (r *SshClientImpl) prepareConfigFilesShared(repo *tools.SshConnectionReques
 	// exposes the SFTP subsystem. Modern scp clients use SFTP internally by default,
 	// and rclone/restic expose SFTP as the supported reusable remote backend rather
 	// than the legacy SCP/RCP protocol.
-	rcloneSetupCmd := fmt.Sprintf(
-		"rclone config create %s sftp host=%s user=%s pass=%s port=%s known_hosts_file=%s use_insecure_cipher=false",
-		tools.SshConfigName,
-		repo.Host,
-		repo.SshUser,
-		repo.SshPassword,
-		repo.SshPort,
-		KnownHostsFileLocation,
-	)
-	_, err := r.ResticContainerExecutor.ExecuteSimpleWithPassword(rcloneSetupCmd, resticEncryptionPassword)
+	_, err := r.ResticContainerExecutor.Execute(rcloneConfigCreateCommand(repo), nil, nil, resticEncryptionPassword, "")
 	if err != nil {
 		return err
 	}
 
-	knownHostsFileCreationCmd := fmt.Sprintf("printf '%s' > %s", repo.SshKnownHosts, KnownHostsFileLocation)
-	_, err = r.ResticContainerExecutor.ExecuteSimpleWithPassword(knownHostsFileCreationCmd, resticEncryptionPassword)
+	_, err = r.ResticContainerExecutor.Execute(writeKnownHostsCommand(repo.SshKnownHosts), nil, nil, resticEncryptionPassword, "")
 	return err
 }
 
@@ -135,7 +160,6 @@ func (r *SshClientImpl) PurgeBackupServer(repo *tools.SshConnectionRequest) erro
 	if err := r.prepareConfigFilesShared(repo, ""); err != nil {
 		return err
 	}
-	purgeCmd := fmt.Sprintf("rclone purge %s:%s", tools.SshConfigName, tools.RelativeBackupRepoPathInResticContainer)
-	_, err := r.ResticContainerExecutor.ExecuteSimple(purgeCmd)
+	_, err := r.ResticContainerExecutor.Execute(rclonePurgeCommand(), nil, nil, "", "")
 	return err
 }

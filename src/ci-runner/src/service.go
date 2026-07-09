@@ -15,6 +15,9 @@ const (
 	AcceptanceBuildTag  = "acceptance"
 	OidcBuildTag        = "oidc"
 	ReleaseBuildTag     = "release"
+	SpecialPasswordsTag = "special_passwords"
+
+	specialPolicyPassword = "Aa09!@#$%^&*()_-+=.,:;/?[]{}|~<>"
 
 	KeepDbFlagName                  = "keep-db"
 	DisableInitialAdminEnvFlagName  = "disable-initial-admin-env"
@@ -76,12 +79,16 @@ func DeployLocalDatabase() {
 }
 
 func DeployLocalContainer(keepDb bool, envVars []string) {
+	deployLocalContainer(keepDb, envVars, "")
+}
+
+func deployLocalContainer(keepDb bool, envVars []string, sshPassword string) {
 	Tr.Cmd().AllowFail().Run("docker rm -f %s", BrandAppContainerName)
 	if !keepDb {
 		Tr.Cmd().AllowFail().Run("docker rm -f %s", OfficialDatabaseContainerName)
 		Tr.Cmd().AllowFail().Run("docker volume rm -f %s", OfficialDatabaseVolumeName)
 	}
-	StartSshTestContainer()
+	StartSshTestContainer(sshPassword)
 	BuildLocalDockerImage()
 	Tr.Cmd().Dir(ServerDir).Run("%s", getDockerCommand(envVars))
 	time.Sleep(500 * time.Millisecond)
@@ -98,6 +105,7 @@ func TestAll() {
 	TestInitialAdminPassword()
 	TestBehindProxyHttpMode()
 	TestOidc(false, false)
+	TestSpecialPasswords()
 	TestAcceptance(false, "", false)
 }
 
@@ -171,6 +179,14 @@ func TestBehindProxyHttpMode() {
 	runServerTests(BehindProxyBuildTag)
 }
 
+func TestSpecialPasswords() {
+	Tr.Log.TaskDescription("Running special-password component tests")
+	defer Tr.Cleanup()
+	BuildLocalSampleAppDockerImageIfNotPresent()
+	deployLocalContainer(false, containerEnv(true, false), specialPolicyPassword)
+	runServerTests(SpecialPasswordsTag)
+}
+
 func containerEnv(useDevProfile bool, disableInitialAdminEnv bool, extraEnv ...string) []string {
 	envVars := []string{}
 
@@ -215,9 +231,13 @@ func newTestCommand(dir string, extraTags ...string) *u.GoTestCommand {
 	return testCommand
 }
 
-func StartSshTestContainer() {
+func StartSshTestContainer(sshPassword string) {
 	Tr.Cmd().AllowFail().Run("docker network create quollix_postgres")
-	Tr.Cmd().Dir(dockerDir).Run("docker compose -f docker-compose.dummy-ssh.yml up -d")
+	cmd := Tr.Cmd().Dir(dockerDir)
+	if sshPassword != "" {
+		cmd.Env("DUMMY_SSH_PASSWORD", sshPassword)
+	}
+	cmd.Run("docker compose -f docker-compose.dummy-ssh.yml up -d")
 }
 
 func StopSshTestContainer() {

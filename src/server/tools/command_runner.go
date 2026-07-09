@@ -11,7 +11,7 @@ import (
 )
 
 type CommandRunner interface {
-	RunCommand(command string) (*CommandOutput, error)
+	RunCommand(command string, args ...string) (*CommandOutput, error)
 }
 
 type CommandOutput struct {
@@ -27,8 +27,8 @@ type CommandRunnerImpl struct {
 	Config *GlobalConfig
 }
 
-func (c *CommandRunnerImpl) RunCommand(command string) (*CommandOutput, error) {
-	cmd := exec.Command("sh", "-c", command) // #nosec G204: this helper is explicitly designed to run internal shell command strings
+func (c *CommandRunnerImpl) RunCommand(command string, args ...string) (*CommandOutput, error) {
+	cmd := exec.Command(command, args...) // #nosec G204: command and arguments are built from internal constants and validated config values.
 	var stdoutBuffer bytes.Buffer
 	var stderrBuffer bytes.Buffer
 	if c.Config.PrintCommandOutput {

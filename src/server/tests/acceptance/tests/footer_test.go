@@ -18,5 +18,5 @@ func TestFooterShowsApplicationVersion(t *testing.T) {
 	frame.Pages.GoToInstalledAppsPage()
 
 	footerText := strings.TrimSpace(frame.Page.MustElement("#app-footer").MustText())
-	assert.Equal(t, "Quollix "+tools.ApplicationVersion, footerText)
+	assert.Equal(t, "Powered by Quollix "+tools.ApplicationVersion, footerText)
 }

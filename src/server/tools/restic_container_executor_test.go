@@ -1,46 +1,71 @@
 package tools
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/quollix/common/assert"
 )
 
 func TestExecuteInResticContainer(t *testing.T) {
-	mountVolume := "-v /mnt/sample:/mnt/sample"
-	expectedCommand := fmt.Sprintf(`docker run --rm --label %s --network %s %s -v %s:%s -v sample-vol-1:/source/sample-vol-1 -v sample-vol-2:/source/sample-vol-2 -e RESTIC_REPOSITORY=rclone:%s:backups -e RESTIC_PASSWORD=restic-encryption-password --entrypoint "" -v %s:/root %s sh -c "some-restic-command --tag tag1 --tag tag2 "`, ResticCleanupLabel, OfficialDatabaseAppNetworkName, mountVolume, BackupDockerVolumeName, AbsoluteBackupRepoPathInResticContainer, SshConfigName, ResticContainerRootDirVolume, ResticImageName)
+	expectedArgs := []string{
+		"run", "--rm",
+		"--label", ResticCleanupLabel,
+		"--network", OfficialDatabaseAppNetworkName,
+		"-v", "/mnt/sample:/mnt/sample",
+		"-v", BackupDockerVolumeName + ":" + AbsoluteBackupRepoPathInResticContainer,
+		"-v", "sample-vol-1:/source/sample-vol-1",
+		"-v", "sample-vol-2:/source/sample-vol-2",
+		"-e", "RESTIC_REPOSITORY=rclone:" + SshConfigName + ":backups",
+		"-e", "RESTIC_PASSWORD=restic-encryption-password",
+		"--entrypoint", "",
+		"-v", ResticContainerRootDirVolume + ":/root",
+		ResticImageName,
+		"some-restic-command",
+		"--tag", "tag1",
+		"--tag", "tag2",
+	}
 
 	assertExecuteInResticContainer(
 		t,
-		"some-restic-command",
+		[]string{"some-restic-command"},
 		[]string{"sample-vol-1", "sample-vol-2"},
 		[]string{"tag1", "tag2"},
 		"restic-encryption-password",
 		"-v /mnt/sample:/mnt/sample",
-		expectedCommand,
+		expectedArgs,
 	)
 }
 
 func TestExecuteInResticContainer_NilInputs(t *testing.T) {
-	expectedCommand := fmt.Sprintf(`docker run --rm --label %s --network %s %s -v %s:%s -e RESTIC_REPOSITORY=rclone:%s:backups -e RESTIC_PASSWORD= --entrypoint "" -v %s:/root %s sh -c "some-restic-command "`, ResticCleanupLabel, OfficialDatabaseAppNetworkName, "", BackupDockerVolumeName, AbsoluteBackupRepoPathInResticContainer, SshConfigName, ResticContainerRootDirVolume, ResticImageName)
+	expectedArgs := []string{
+		"run", "--rm",
+		"--label", ResticCleanupLabel,
+		"--network", OfficialDatabaseAppNetworkName,
+		"-v", BackupDockerVolumeName + ":" + AbsoluteBackupRepoPathInResticContainer,
+		"-e", "RESTIC_REPOSITORY=rclone:" + SshConfigName + ":backups",
+		"-e", "RESTIC_PASSWORD=",
+		"--entrypoint", "",
+		"-v", ResticContainerRootDirVolume + ":/root",
+		ResticImageName,
+		"some-restic-command",
+	}
 
-	assertExecuteInResticContainer(t, "some-restic-command", nil, nil, "", "", expectedCommand)
+	assertExecuteInResticContainer(t, []string{"some-restic-command"}, nil, nil, "", "", expectedArgs)
 }
 
 func assertExecuteInResticContainer(
 	t *testing.T,
-	command string,
+	command []string,
 	appVolumes, resticTags []string,
 	resticEncryptionPassword, mountVolume string,
-	expectedCommand string,
+	expectedArgs []string,
 ) {
 	commandRunnerMock := &CommandRunnerMock{}
 	resticContainerAgent := ResticContainerExecutorImpl{
 		CommandRunner: commandRunnerMock,
 	}
 
-	commandRunnerMock.EXPECT().RunCommand(expectedCommand).Return(&CommandOutput{Stdout: "output"}, nil)
+	commandRunnerMock.EXPECT().RunCommand("docker", expectedArgs).Return(&CommandOutput{Stdout: "output"}, nil)
 
 	output, err := resticContainerAgent.Execute(command, appVolumes, resticTags, resticEncryptionPassword, mountVolume)
 	assert.Nil(t, err)

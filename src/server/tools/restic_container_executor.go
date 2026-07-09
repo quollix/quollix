@@ -1,7 +1,8 @@
 package tools
 
 import (
-	"fmt"
+	"slices"
+	"strings"
 )
 
 var (
@@ -15,40 +16,44 @@ var (
 
 type ResticContainerExecutor interface {
 	// The encryption password must be passed explicitly because during backup or restore of the database, it is temporarily shut down and the password can no longer be retrieved from it. Therefore, the password is kept in memory by the backup/restore logic and injected for these operations.
-	Execute(command string, appVolumes, resticTags []string, resticEncryptionPassword, mountVolume string) (*CommandOutput, error)
-	ExecuteSimple(command string) (*CommandOutput, error)
-	ExecuteSimpleWithPassword(command, resticEncryptionPassword string) (*CommandOutput, error)
+	Execute(command []string, appVolumes, resticTags []string, resticEncryptionPassword, mountVolume string) (*CommandOutput, error)
 }
 
 type ResticContainerExecutorImpl struct {
 	CommandRunner CommandRunner
 }
 
-func (r *ResticContainerExecutorImpl) ExecuteSimpleWithPassword(command, resticEncryptionPassword string) (*CommandOutput, error) {
-	return r.Execute(command, nil, nil, resticEncryptionPassword, "")
+func (r *ResticContainerExecutorImpl) Execute(command []string, appVolumes, resticTags []string, resticEncryptionPassword, mountVolume string) (*CommandOutput, error) {
+	args := r.buildDockerArgs(command, appVolumes, resticTags, resticEncryptionPassword, mountVolume)
+	return r.CommandRunner.RunCommand("docker", args...)
 }
 
-func (r *ResticContainerExecutorImpl) Execute(command string, appVolumes, resticTags []string, resticEncryptionPassword, mountVolume string) (*CommandOutput, error) {
-	wholeCommand := r.buildCommand(command, appVolumes, resticTags, resticEncryptionPassword, mountVolume)
-	return r.CommandRunner.RunCommand(wholeCommand)
-}
+func (r *ResticContainerExecutorImpl) buildDockerArgs(command []string, appVolumes, resticTags []string, resticEncryptionPassword, mountVolume string) []string {
+	args := []string{"run", "--rm"}
+	args = append(
+		args,
+		"--label", ResticCleanupLabel,
+		"--network", OfficialDatabaseAppNetworkName,
+	)
 
-func (r *ResticContainerExecutorImpl) buildCommand(command string, appVolumes, resticTags []string, resticEncryptionPassword, mountVolume string) string {
-	envFlags := fmt.Sprintf("-e RESTIC_REPOSITORY=rclone:%s:%s -e RESTIC_PASSWORD=%s ", SshConfigName, RelativeBackupRepoPathInResticContainer, resticEncryptionPassword)
-	resticTagsFlags := ""
-	for _, tag := range resticTags {
-		resticTagsFlags += `--tag ` + tag + ` `
-	}
-	volumeFlags := ""
+	args = append(args, strings.Fields(mountVolume)...)
+	args = append(args, "-v", BackupDockerVolumeName+":"+AbsoluteBackupRepoPathInResticContainer)
 	for _, volume := range appVolumes {
-		volumeFlags += `-v ` + volume + `:/source/` + volume + ` `
+		args = append(args, "-v", volume+":/source/"+volume)
+	}
+	args = append(
+		args,
+		"-e", "RESTIC_REPOSITORY=rclone:"+SshConfigName+":"+RelativeBackupRepoPathInResticContainer,
+		"-e", "RESTIC_PASSWORD="+resticEncryptionPassword,
+		"--entrypoint", "",
+		"-v", ResticContainerRootDirVolume+":/root",
+		ResticImageName,
+	)
+
+	commandWithTags := slices.Clone(command)
+	for _, tag := range resticTags {
+		commandWithTags = append(commandWithTags, "--tag", tag)
 	}
 
-	// the "--network" is only needed for testing during development as the dummy SSH container is running in the same network
-	wholeCommand := fmt.Sprintf(`docker run --rm --label %s --network %s %s -v %s:%s %s%s--entrypoint "" -v %s:/root %s sh -c "%s %s"`, ResticCleanupLabel, OfficialDatabaseAppNetworkName, mountVolume, BackupDockerVolumeName, AbsoluteBackupRepoPathInResticContainer, volumeFlags, envFlags, ResticContainerRootDirVolume, ResticImageName, command, resticTagsFlags)
-	return wholeCommand
-}
-
-func (r *ResticContainerExecutorImpl) ExecuteSimple(command string) (*CommandOutput, error) {
-	return r.Execute(command, nil, nil, "", "")
+	return append(args, commandWithTags...)
 }
