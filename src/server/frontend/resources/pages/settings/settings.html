@@ -1,7 +1,7 @@
 <section>
     <h3>Base domain</h3>
     <form class="inline-form-row">
-        <input class="input-medium" type="text" id="base-domain" name="value" value="{{$.Host}}" required />
+        <input class="input-medium" type="text" id="base-domain" name="value" value="{{.Globals.Host}}" required />
         <button type="button" id="settings-base-domain-save-button" onclick="saveBaseDomain(this.form.elements.value.value)">Save</button>
     </form>
 </section>
@@ -68,7 +68,7 @@
                 <input
                         type="text"
                         name="backupServerHost"
-                        value="{{$.Data.BackupServer.Host}}"
+                        value="{{$.Page.BackupServer.Host}}"
                         placeholder="enter backup server host"
                         required
                 />
@@ -80,7 +80,7 @@
                         type="number"
                         min="0"
                         name="backupServerSshPort"
-                        value="{{$.Data.BackupServer.SshPort}}"
+                        value="{{$.Page.BackupServer.SshPort}}"
                         placeholder="enter ssh port"
                         required
                 />
@@ -101,7 +101,7 @@
                     id="backup-server-known-hosts"
                     name="backupServerKnownHosts"
                     placeholder="known_hosts entries"
-            >{{$.Data.BackupServer.SshKnownHosts}}</textarea>
+            >{{$.Page.BackupServer.SshKnownHosts}}</textarea>
         </label>
 
         <div class="label-bar">
@@ -111,7 +111,7 @@
                         id="backup-server-ssh-user"
                         type="text"
                         name="backupServerSshUser"
-                        value="{{$.Data.BackupServer.SshUser}}"
+                        value="{{$.Page.BackupServer.SshUser}}"
                         placeholder="enter ssh user"
                         autocomplete="username"
                 />
@@ -122,7 +122,7 @@
                         id="backupServerSshPassword"
                         type="password"
                         name="backupServerSshPassword"
-                        value="{{$.Data.BackupServer.SshPassword}}"
+                        value="{{$.Page.BackupServer.SshPassword}}"
                         placeholder="enter ssh password"
                         autocomplete="current-password"
                 />
@@ -175,7 +175,7 @@
                         id="backupServerEncryptionPassword"
                         type="password"
                         name="backupServerEncryptionPassword"
-                        value="{{$.Data.BackupServer.EncryptionPassword}}"
+                        value="{{$.Page.BackupServer.EncryptionPassword}}"
                         placeholder="enter encryption password"
                         autocomplete="new-password"
                 />
@@ -198,7 +198,7 @@
                         type="checkbox"
                         id="backup-server-enabled-checkbox"
                         name="backupServerIsEnabled"
-                        {{if .Data.BackupServer.IsEnabled}}checked{{end}}
+                        {{if .Page.BackupServer.IsEnabled}}checked{{end}}
                 />
             </label>
 
@@ -236,12 +236,12 @@
                     id="iana-timezone"
                     name="ianaTimezone"
                     list="ianaTimezoneOptions"
-                    value="{{$.Data.MaintenanceConfig.IanaTimezone}}"
+                    value="{{$.Page.MaintenanceConfig.IanaTimezone}}"
                     placeholder="Type to search (e.g. Europe/Berlin)"
                     required
             />
             <datalist id="ianaTimezoneOptions">
-                {{range .Data.IanaTimezoneOptions}}
+                {{range .Page.IanaTimezoneOptions}}
                 <option value="{{.}}"></option>
                 {{end}}
             </datalist>
@@ -250,8 +250,8 @@
         <label>
             <strong>Start window</strong>
             <select id="maintenance-window-start-hour">
-                {{range .Data.MaintenanceWindowOptions}}
-                <option value="{{.Value}}" {{if eq .Value $.Data.MaintenanceConfig.MaintenanceWindowStartHour}}selected{{end}}>
+                {{range .Page.MaintenanceWindowOptions}}
+                <option value="{{.Value}}" {{if eq .Value $.Page.MaintenanceConfig.MaintenanceWindowStartHour}}selected{{end}}>
                     {{.Label}}
                 </option>
                 {{end}}
@@ -273,7 +273,7 @@
     <div class="label-bar">
         <div id="next-maintenance-execution">
             <strong>Next maintenance execution</strong>
-            <p id="next-maintenance-execution-value">{{$.Data.NextMaintenanceAt}}</p>
+            <p id="next-maintenance-execution-value">{{$.Page.NextMaintenanceAt}}</p>
         </div>
         <button type="button" onclick="runMaintenanceJobsNow()">
             Run maintenance jobs now
@@ -289,7 +289,7 @@
                     id="retention-keep-pre-update"
                     type="number"
                     min="0"
-                    value="{{$.Data.RetentionPolicy.KeepPreUpdate}}"
+                    value="{{$.Page.RetentionPolicy.KeepPreUpdate}}"
             />
         </label>
 
@@ -299,7 +299,7 @@
                     id="retention-keep-daily"
                     type="number"
                     min="0"
-                    value="{{$.Data.RetentionPolicy.KeepDaily}}"
+                    value="{{$.Page.RetentionPolicy.KeepDaily}}"
             />
         </label>
 
@@ -309,7 +309,7 @@
                     id="retention-keep-weekly"
                     type="number"
                     min="0"
-                    value="{{$.Data.RetentionPolicy.KeepWeekly}}"
+                    value="{{$.Page.RetentionPolicy.KeepWeekly}}"
             />
         </label>
 
@@ -319,7 +319,7 @@
                     id="retention-keep-monthly"
                     type="number"
                     min="0"
-                    value="{{$.Data.RetentionPolicy.KeepMonthly}}"
+                    value="{{$.Page.RetentionPolicy.KeepMonthly}}"
             />
         </label>
 
@@ -329,7 +329,7 @@
                     id="retention-keep-yearly"
                     type="number"
                     min="0"
-                    value="{{$.Data.RetentionPolicy.KeepYearly}}"
+                    value="{{$.Page.RetentionPolicy.KeepYearly}}"
             />
         </label>
         <button id="retention-policy-save-button" type="button" onclick="saveRetentionPolicy()">

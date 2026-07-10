@@ -1,15 +1,15 @@
-<link rel="stylesheet" href="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.css">
-<script src="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.js"></script>
+<link rel="stylesheet" href="{{ $.Static.Paths.WebResourcesGroupPagePath }}/group-detail.{{.Frontend.Version}}.css">
+<script src="{{ $.Static.Paths.WebResourcesGroupPagePath }}/group-detail.{{.Frontend.Version}}.js"></script>
 
 <button id="group-apps-back-button" type="button"
         class="lean"
-        onclick="location.href='{{$.Paths.FrontendGroups}}'">
+        onclick="location.href='{{$.Static.Paths.FrontendGroups}}'">
     Back
 </button>
 <br>
 <br>
 
-<p>Group name: <strong>{{ $.Data.GroupName }}</strong></p>
+<p>Group name: <strong>{{ $.Page.GroupName }}</strong></p>
 <br>
 
 <div class="group-detail-layout">
@@ -32,7 +32,7 @@
             </tr>
             </thead>
             <tbody id="noAccessGrantedTableBody">
-            {{range $.Data.AccessNotGrantedApps}}
+            {{range $.Page.AccessNotGrantedApps}}
             <tr data-name="{{.}}">
                 <td class="group-detail-checkbox-col">
                     <input type="checkbox" class="app-checkbox" value="{{.}}">
@@ -45,10 +45,10 @@
     </section>
 
     <section class="group-detail-actions">
-        <button id="group-apps-add-button" type="button" class="lean" onclick="grantSelectedApps('{{$.Data.GroupId}}')">
+        <button id="group-apps-add-button" type="button" class="lean" onclick="grantSelectedApps('{{$.Page.GroupId}}')">
             Add →
         </button>
-        <button id="group-apps-remove-button" type="button" class="lean" onclick="revokeSelectedApps('{{$.Data.GroupId}}')">
+        <button id="group-apps-remove-button" type="button" class="lean" onclick="revokeSelectedApps('{{$.Page.GroupId}}')">
             ← Remove
         </button>
     </section>
@@ -71,7 +71,7 @@
             </tr>
             </thead>
             <tbody id="accessGrantedTableBody">
-            {{range $.Data.AccessGrantedApps}}
+            {{range $.Page.AccessGrantedApps}}
             <tr data-name="{{.}}">
                 <td class="group-detail-checkbox-col">
                     <input type="checkbox" class="app-checkbox" value="{{.}}">

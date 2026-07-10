@@ -13,7 +13,7 @@
     </tr>
   </thead>
   <tbody>
-    {{range $.Data.Groups}}
+    {{range $.Page.Groups}}
     {{$group := .}}
     <tr class="group-row" data-group-id="{{$group.Id}}" data-group-name="{{$group.Name}}">
       <td class="group-name-cell">{{$group.Name}}</td>

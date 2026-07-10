@@ -1,17 +1,17 @@
-<script>window.host = '{{$.Host}}'</script>
+<script>window.host = '{{.Globals.Host}}'</script>
 <!-- A helpful development feature. When the development container is deployed locally, you can add new published apps or edit them, and load them directly into the installed apps page by clicking this button, making it easy to experiment with app configurations. To apply new docker compose yaml configurations, simply restart the app. -->
-{{ if and $.Config.ExposeDevelopmentRoutes $.Auth.IsAdmin }}
+{{ if and .Globals.Config.ExposeDevelopmentRoutes .Globals.Auth.IsAdmin }}
 <div class="actions-row">
   <button id="app-store-reload-button" type="button" onclick="reloadAppsIntoStoreMock()">
     Reload local store apps
   </button>
-  {{ if $.Auth.IsAdmin }}
+  {{ if .Globals.Auth.IsAdmin }}
   <button id="upload-app-button" type="button" onclick="uploadVersionFile()">
     Upload
   </button>
   {{end}}
 </div>
-{{else if $.Auth.IsAdmin }}
+{{else if .Globals.Auth.IsAdmin }}
 <div class="actions-row">
   <button id="upload-app-button" type="button" onclick="uploadVersionFile()">
     Upload
@@ -22,7 +22,7 @@
 <table id="installed-apps-table" class="vcenter">
   <thead>
     <tr>
-      {{if $.Auth.IsAdmin}}
+      {{if $.Globals.Auth.IsAdmin}}
       <th>Maintainer</th>
       <th>App</th>
       <th>Version</th>
@@ -31,7 +31,7 @@
       <th>App</th>
       {{end}}
       <th>Access</th>
-      {{if $.Auth.IsAdmin}}
+      {{if $.Globals.Auth.IsAdmin}}
       <th class="status-table-header">Status</th>
       <th class="access-policy-table-header">Access Policy</th>
       <th>Operations</th>
@@ -41,8 +41,8 @@
 
   <tbody id="installed-apps-tbody">
 
-    {{if eq (len $.Data.Apps) 0}}
-    {{if $.Auth.IsAdmin}}
+    {{if eq (len $.Page.Apps) 0}}
+    {{if .Globals.Auth.IsAdmin}}
     <tr>
       <td colspan="9" style="opacity:.7">No apps available for you, yet</td>
     </tr>
@@ -53,11 +53,11 @@
     {{end}}
     {{else}}
 
-    {{range $.Data.Apps}}
+    {{range $.Page.Apps}}
     {{$app := .}}
 
     <tr data-app-id="{{$app.AppId}}" data-app-name="{{$app.AppName}}">
-      {{if $.Auth.IsAdmin}}
+      {{if $.Globals.Auth.IsAdmin}}
       <td class="app-maintainer">{{$app.Maintainer}}</td>
       {{end}}
       <td class="app-cell">
@@ -68,7 +68,7 @@
         {{end}}
         <span class="app-name">{{$app.AppName}}</span>
       </td>
-      {{if $.Auth.IsAdmin}}
+      {{if $.Globals.Auth.IsAdmin}}
       <td class="app-version">{{$app.VersionName}}</td>
       {{if $app.IsOfficialDatabaseApp}}
       <td class="app-version-created">—</td>
@@ -85,15 +85,15 @@
         <button type="button" class="open-btn lean" onclick="openFromRow(
                         '{{$app.AppName}}',
                         '{{$app.AccessPolicy}}',
-                        '{{$.Policies.PublicAccessPolicy}}',
-                        '{{$.Host}}'                        )" {{if not $app.IsRunning }} disabled aria-disabled="true"
+                        '{{$.Static.Policies.PublicAccessPolicy}}',
+                        '{{$.Globals.Host}}'                        )" {{if not $app.IsRunning }} disabled aria-disabled="true"
           {{end}}>
           Open
         </button>
         {{end}}
       </td>
 
-      {{if $.Auth.IsAdmin}}
+      {{if $.Globals.Auth.IsAdmin}}
 
       <td class="app-status">{{if $app.IsRunning}}Running{{else}}Not running{{end}}</td>
 
@@ -103,14 +103,14 @@
         {{else}}
         <select class="vis-select lean" data-prev-access-policy="{{$app.AccessPolicy}}"
           onchange="changeAccessPolicy(this)">
-          <option value="{{ $.Policies.AdminOnlyAccessPolicy }}" {{if eq $app.AccessPolicy
-            $.Policies.AdminOnlyAccessPolicy}}selected{{end}}>Admin only</option>
-          <option value="{{ $.Policies.GroupRestrictedAccessPolicy }}" {{if eq $app.AccessPolicy
-            $.Policies.GroupRestrictedAccessPolicy}}selected{{end}}>Group restricted</option>
-          <option value="{{ $.Policies.AuthenticatedAccessPolicy }}" {{if eq $app.AccessPolicy
-            $.Policies.AuthenticatedAccessPolicy}}selected{{end}}>Authenticated</option>
-          <option value="{{ $.Policies.PublicAccessPolicy }}" {{if eq $app.AccessPolicy
-            $.Policies.PublicAccessPolicy}}selected{{end}}>Public</option>
+          <option value="{{ $.Static.Policies.AdminOnlyAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Static.Policies.AdminOnlyAccessPolicy}}selected{{end}}>Admin only</option>
+          <option value="{{ $.Static.Policies.GroupRestrictedAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Static.Policies.GroupRestrictedAccessPolicy}}selected{{end}}>Group restricted</option>
+          <option value="{{ $.Static.Policies.AuthenticatedAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Static.Policies.AuthenticatedAccessPolicy}}selected{{end}}>Authenticated</option>
+          <option value="{{ $.Static.Policies.PublicAccessPolicy }}" {{if eq $app.AccessPolicy
+            $.Static.Policies.PublicAccessPolicy}}selected{{end}}>Public</option>
         </select>
         {{end}}
       </td>
@@ -125,7 +125,7 @@
           <option value="update">Update</option>
           <option value="delete">Delete</option>
           {{end}}
-          {{if $.Data.IsBackupEnabled}}
+          {{if $.Page.IsBackupEnabled}}
           <option value="backup">Backup</option>
           {{end}}
           <option value="download">Download</option>

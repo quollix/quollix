@@ -66,7 +66,7 @@ async function executePostRequest(path, data, options = {}) {
         return [body, true]
     } catch (error) {
         if (networkChangedTolerant) {
-            console.log("error:", error, "| visit {{ .Links.Website }} and search for 'NETWORK_CHANGED' for more information")
+            console.log("error:", error, "| visit {{ .Static.Links.Website }} and search for 'NETWORK_CHANGED' for more information")
             return returnBody ? [null, true] : true
         }
 
@@ -111,7 +111,7 @@ window.loadAsyncPageData = function (buildUrl, renderData) {
 
             renderData(data)
         } catch (error) {
-            console.log("error:", error, "| visit {{ .Links.Website }} and search for 'NETWORK_CHANGED' for more information")
+            console.log("error:", error, "| visit {{ .Static.Links.Website }} and search for 'NETWORK_CHANGED' for more information")
             setTimeout(load, 200)
         }
     }
@@ -120,7 +120,7 @@ window.loadAsyncPageData = function (buildUrl, renderData) {
 }
 
 window.installApp = async (maintainer, app, version) => {
-    const ok = await apiPost('{{ $.Paths.BackendStoreVersionsInstall }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendStoreVersionsInstall }}', {
         Maintainer: maintainer,
         AppName: app,
         VersionName: version

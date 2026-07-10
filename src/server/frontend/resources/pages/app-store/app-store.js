@@ -29,11 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.goToVersions = async (maintainer, app) => {
     const params = new URLSearchParams({ maintainer, app })
-    window.location.href = `{{ $.Paths.FrontendVersions }}?${params.toString()}`
+    window.location.href = `{{ $.Static.Paths.FrontendVersions }}?${params.toString()}`
 }
 
 window.downloadVersionFromAppStore = async (maintainer, app, version) => {
-    await downloadFile('{{ $.Paths.BackendStoreVersionsDownload }}', {
+    await downloadFile('{{ $.Static.Paths.BackendStoreVersionsDownload }}', {
         Maintainer: maintainer,
         AppName: app,
         VersionName: version

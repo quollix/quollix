@@ -63,7 +63,7 @@ func prepareServer(deps *di.Dependencies) error {
 }
 
 func runServer(deps *di.Dependencies) error {
-	if err := deps.TemplateService.ReloadTemplateFromFileSystem(); err != nil {
+	if err := deps.FrontendEngine.Reload(); err != nil {
 		return err
 	}
 	deps.AppManager.StartAppsThatShouldBeRunning()

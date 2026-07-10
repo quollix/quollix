@@ -11,12 +11,12 @@
     </thead>
 
     <tbody>
-      {{if eq (len $.Data.Apps) 0}}
+      {{if eq (len $.Page.Apps) 0}}
       <tr>
         <td colspan="5" style="opacity:.7">No apps available</td>
       </tr>
       {{else}}
-      {{range $.Data.Apps}}
+      {{range $.Page.Apps}}
       {{$app := .}}
 
       <tr class="oidc-client-row" data-app-name="{{$app.AppName}}">

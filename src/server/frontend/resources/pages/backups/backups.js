@@ -3,19 +3,19 @@ window.restoreBackup = async (backupId, maintainer, app, version, backupCreation
   if (!confirmed) return
 
   if (app === 'postgres') {
-    const ok = await doNetworkChangedRequest('{{ $.Paths.BackendBackupsRestore }}', {
+    const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendBackupsRestore }}', {
       backup_id: backupId,
     })
 
     if (ok) {
       // Restoring an postgres backup usually invalidates the current admin session cookie, so he need to be redirected to the sign-in page. Also, the restore operation aborts prematurely due to the NETWORK_CHANGED error, so we have to add a delay before redirecting.
       showSnackbar('Backup restored successfully. Redirecting to sign-in...')
-      setTimeout(() => window.location.href = '{{ $.Paths.FrontendSignIn }}', 3000)
+      setTimeout(() => window.location.href = '{{ $.Static.Paths.FrontendSignIn }}', 3000)
     }
     return
   }
 
-  await doNetworkChangedRequest('{{ $.Paths.BackendBackupsRestore }}', {
+  await doNetworkChangedRequest('{{ $.Static.Paths.BackendBackupsRestore }}', {
     backup_id: backupId,
   })
 }
@@ -24,7 +24,7 @@ window.deleteBackup = async (backupId, maintainer, app, version) => {
   const confirmed = await confirmDialog(`Delete backup for ${maintainer}/${app} version ${version}? This cannot be undone.`)
   if (!confirmed) return
 
-  await doNetworkChangedRequest('{{ $.Paths.BackendBackupsDelete }}', {
+  await doNetworkChangedRequest('{{ $.Static.Paths.BackendBackupsDelete }}', {
     backup_ids: [backupId],
   })
 }
@@ -39,7 +39,7 @@ function buildBackupsPageDataUrl(isFirstLoad) {
   params.set('maintainer', backupsPageMaintainer);
   params.set('app', backupsPageApp);
   if (isFirstLoad) params.set('reload', 'true');
-  return '{{ $.Paths.BackendBackupsPage }}?' + params.toString();
+  return '{{ $.Static.Paths.BackendBackupsPage }}?' + params.toString();
 }
 
 function renderBackups(backups) {

@@ -103,26 +103,6 @@ packages:
         config:
           filename: client_credentials_generator_mock.go
           structname: ClientCredentialsGeneratorMock
-  server/frontend/renderer:
-    interfaces:
-      TemplateService:
-        config:
-          filename: template_service_mock.go
-          structname: TemplateServiceMock
-      TemplateEngine:
-        config:
-          filename: template_engine_mock.go
-          structname: TemplateEngineMock
-  server/frontend/assets:
-    interfaces:
-      AssetStore:
-        config:
-          filename: store_mock.go
-          structname: AssetStoreMock
-      AssetTagBuilder:
-        config:
-          filename: tag_builder_mock.go
-          structname: AssetTagBuilderMock
   server/groups:
     interfaces:
       GroupRepository:

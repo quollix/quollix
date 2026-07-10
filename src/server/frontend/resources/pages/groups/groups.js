@@ -4,21 +4,21 @@ window.createGroup = async (groupName) => {
         showSnackbar("Please enter a group name.")
         return
     }
-    const ok = await apiPost('{{ $.Paths.BackendGroupsCreate }}', { value: name })
+    const ok = await apiPost('{{ $.Static.Paths.BackendGroupsCreate }}', { value: name })
     if (ok) window.reloadPageAndShowSnackbar("Group created successfully.")
 }
 
 window.deleteGroup = async (groupId, groupName) => {
     const confirmed = await confirmDialog(`Delete group '${groupName}'? Group-based app access may change.`)
     if (!confirmed) return
-    const ok = await apiPost('{{ $.Paths.BackendGroupsDelete }}', { value: groupId })
+    const ok = await apiPost('{{ $.Static.Paths.BackendGroupsDelete }}', { value: groupId })
     if (ok) window.reloadPageAndShowSnackbar("Group deleted successfully.")
 }
 
 window.manageGroupMembers = (groupId) => {
-    window.location.href = `{{ $.Paths.FrontendGroupMembers }}?group-id=${encodeURIComponent(groupId)}`
+    window.location.href = `{{ $.Static.Paths.FrontendGroupMembers }}?group-id=${encodeURIComponent(groupId)}`
 }
 
 window.manageGroupApps = (groupId) => {
-    window.location.href = `{{ $.Paths.FrontendGroupApps }}?group-id=${encodeURIComponent(groupId)}`
+    window.location.href = `{{ $.Static.Paths.FrontendGroupApps }}?group-id=${encodeURIComponent(groupId)}`
 }

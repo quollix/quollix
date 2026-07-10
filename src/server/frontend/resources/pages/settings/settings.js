@@ -2,7 +2,7 @@ window.saveBaseDomain = async (baseDomain) => {
     const confirmed = await confirmDialog(`Change base domain to '${baseDomain}'? Apps may need a restart; certificates and DNS may need updates.`)
     if (!confirmed) return
 
-    const ok = await window.apiPost('{{ $.Paths.BackendSettingsBaseDomainSave }}', { value: baseDomain })
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendSettingsBaseDomainSave }}', { value: baseDomain })
     if (ok) window.reloadPageAndShowSnackbar('Base domain saved successfully.')
 }
 
@@ -10,7 +10,7 @@ window.uploadCertificate = async () => {
     const confirmed = await confirmDialog(`Replace TLS certificate? The current certificate will be overwritten.`)
     if (!confirmed) return
 
-    const ok = await selectAndUploadFile('{{ $.Paths.BackendSettingsCertificateUpload }}')
+    const ok = await selectAndUploadFile('{{ $.Static.Paths.BackendSettingsCertificateUpload }}')
     if (ok) showSnackbar('Certificate uploaded successfully.')
 }
 
@@ -18,7 +18,7 @@ window.downloadCertificate = async function() {
     const confirmed = await confirmDialog(`Download certificate with TLS private key? Anyone with this file can impersonate this instance.`)
     if (!confirmed) return
 
-    await window.downloadFile('{{ $.Paths.BackendSettingsCertificateDownload }}', null)
+    await window.downloadFile('{{ $.Static.Paths.BackendSettingsCertificateDownload }}', null)
     showSnackbar('Certificate downloaded.')
 }
 
@@ -26,7 +26,7 @@ window.resetCertificate = async function() {
     const confirmed = await confirmDialog(`Replace TLS certificate with a self-signed certificate? Browsers and clients may stop trusting this instance.`)
     if (!confirmed) return
 
-    const ok = await window.doNetworkChangedRequest('{{ $.Paths.BackendSettingsCertificateReset }}', {})
+    const ok = await window.doNetworkChangedRequest('{{ $.Static.Paths.BackendSettingsCertificateReset }}', {})
     if (ok) showSnackbar('Certificate has been reset to a self-signed certificate.')
 }
 
@@ -34,7 +34,7 @@ window.startDnsChallenge = async function() {
     const confirmed = await confirmDialog(`Request a Let's Encrypt certificate? You must be able to create DNS TXT records for the base domain.`)
     if (!confirmed) return
 
-    const response = await window.doRequest('{{ $.Paths.BackendSettingsStartDns01CertificateChallenge }}', null)
+    const response = await window.doRequest('{{ $.Static.Paths.BackendSettingsStartDns01CertificateChallenge }}', null)
 
     if (!response.ok) {
         const message = await response.text()
@@ -97,7 +97,7 @@ window.getKnownHosts = async function(backupServerHost, port) {
     const backupServerForm = document.getElementById('backupServerForm')
     const backupServerKnownHosts = backupServerForm?.elements?.backupServerKnownHosts
 
-    const [response, ok] = await window.doNetworkChangedRequestWithBody('{{ $.Paths.BackendSettingsGetSshKnownHosts }}', {
+    const [response, ok] = await window.doNetworkChangedRequestWithBody('{{ $.Static.Paths.BackendSettingsGetSshKnownHosts }}', {
         host: backupServerHost,
         port: String(port),
     })
@@ -123,7 +123,7 @@ window.testConnection = async function(
         known_hosts: knownHosts,
     }
 
-    const ok = await window.doNetworkChangedRequest('{{ $.Paths.BackendSettingsSshTestAccess }}', sshConnectionTestRequest)
+    const ok = await window.doNetworkChangedRequest('{{ $.Static.Paths.BackendSettingsSshTestAccess }}', sshConnectionTestRequest)
     if (ok) showSnackbar('Connection test successful.')
 }
 
@@ -146,12 +146,12 @@ window.save = async function(
         encryption_password: encryptionPassword,
     }
 
-    const ok = await window.doNetworkChangedRequest('{{ $.Paths.BackendSettingsSshSave }}', backupServer)
+    const ok = await window.doNetworkChangedRequest('{{ $.Static.Paths.BackendSettingsSshSave }}', backupServer)
     if (ok) window.showSnackbar('Backup server settings saved.')
 }
 
 window.saveMaintenanceConfig = async function(maintenanceWindowStartHourString, ianaTimezone) {
-    const ok = await apiPost('{{ $.Paths.BackendMaintenanceConfigsSave }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendMaintenanceConfigsSave }}', {
         iana_timezone: ianaTimezone,
         maintenance_window_start_hour: Number(maintenanceWindowStartHourString),
     })
@@ -170,7 +170,7 @@ window.saveRetentionPolicy = async function() {
     const keepMonthlyString = document.getElementById('retention-keep-monthly')?.value
     const keepYearlyString = document.getElementById('retention-keep-yearly')?.value
 
-    const ok = await apiPost('{{ $.Paths.BackendMaintenanceRetentionPolicySave }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendMaintenanceRetentionPolicySave }}', {
         keep_pre_update: Number(keepPreUpdateString),
         keep_daily: Number(keepDailyString),
         keep_weekly: Number(keepWeeklyString),
@@ -188,7 +188,7 @@ window.resetBackupServerConfigs = async function() {
     )
     if (!confirmed) return
 
-    const ok = await window.apiPost('{{ $.Paths.BackendSettingsSshConfigsReset }}', null)
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendSettingsSshConfigsReset }}', null)
     if (ok) window.reloadPageAndShowSnackbar('Backup server settings have been reset.')
 }
 
@@ -198,7 +198,7 @@ window.runMaintenanceJobsNow = async function() {
     )
     if (!confirmed) return
 
-    const ok = await window.doNetworkChangedRequest('{{ $.Paths.BackendMaintenanceTriggerMaintenanceJob }}', {})
+    const ok = await window.doNetworkChangedRequest('{{ $.Static.Paths.BackendMaintenanceTriggerMaintenanceJob }}', {})
     if (ok) showSnackbar('Maintenance jobs started.')
 }
 
@@ -249,7 +249,7 @@ window.startCertificateOperationIndicatorPolling = function() {
 
     const pollOnce = async () => {
         try {
-            const response = await window.doRequest('{{$.Paths.BackendSettingsCertificateOperationStatus}}')
+            const response = await window.doRequest('{{$.Static.Paths.BackendSettingsCertificateOperationStatus}}')
             if (!response.ok) {
                 render('idle', '')
             } else {
@@ -291,6 +291,6 @@ window.purgeBackupServer = async function(
         known_hosts: knownHosts,
     }
 
-    const ok = await window.apiPost('{{ $.Paths.BackendBackupsPurgeBackupServer }}', backupServer)
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendBackupsPurgeBackupServer }}', backupServer)
     if (ok) window.showSnackbar('Backup server has been purged.')
 }

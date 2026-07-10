@@ -79,7 +79,7 @@ window.initTerminalViewPage = function (host, maintainer, appName, serviceName) 
         `&appName=${encodeURIComponent(appName)}` +
         `&serviceName=${encodeURIComponent(serviceName)}`;
 
-    const websocketUrl = `wss://${host}{{$.Paths.BackendTerminal}}?${websocketQuery}`;
+    const websocketUrl = `wss://${host}{{$.Static.Paths.BackendTerminal}}?${websocketQuery}`;
 
     const { terminal, fitAddon } = createTerminal(terminalElement);
     attachTerminalAccessibilityId(terminalElement)

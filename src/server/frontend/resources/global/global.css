@@ -11,7 +11,7 @@
 
 @font-face {
     font-family: 'Material Design Icons';
-    src: url('{{.Paths.WebResourcesVendorFonts}}/materialdesignicons-webfont.{{.ApplicationVersion}}.woff2') format('woff2');
+    src: url('{{.Static.Paths.WebResourcesVendorFonts}}/materialdesignicons-webfont.{{.Frontend.Version}}.woff2') format('woff2');
     font-weight: normal;
     font-style: normal;
 }

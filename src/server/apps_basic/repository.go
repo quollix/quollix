@@ -2,7 +2,6 @@ package apps_basic
 
 import (
 	"database/sql"
-	"time"
 
 	"server/tools"
 
@@ -177,7 +176,7 @@ func appArgsNoId(app *RepoApp) []any {
 		app.Maintainer,
 		app.AppName,
 		app.VersionName,
-		app.VersionCreationTimestamp.UTC().Format(time.RFC3339),
+		app.VersionCreationTimestamp.UTC(),
 		app.VersionContent,
 		app.ShouldBeRunning,
 		app.AccessPolicy,

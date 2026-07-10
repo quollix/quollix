@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 window.downloadVersion = async (maintainer, app, version) => {
-    await downloadFile('{{ $.Paths.BackendStoreVersionsDownload }}', {
+    await downloadFile('{{ $.Static.Paths.BackendStoreVersionsDownload }}', {
         Maintainer: maintainer,
         AppName: app,
         VersionName: version

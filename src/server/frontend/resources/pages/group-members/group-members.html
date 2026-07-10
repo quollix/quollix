@@ -1,13 +1,13 @@
-<link rel="stylesheet" href="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.css">
-<script src="{{ $.Paths.WebResourcesGroupPagePath }}/group-detail.{{.ApplicationVersion}}.js"></script>
+<link rel="stylesheet" href="{{ $.Static.Paths.WebResourcesGroupPagePath }}/group-detail.{{.Frontend.Version}}.css">
+<script src="{{ $.Static.Paths.WebResourcesGroupPagePath }}/group-detail.{{.Frontend.Version}}.js"></script>
 
-<button id="group-members-back-button" type="button" class="lean" onclick="location.href='{{$.Paths.FrontendGroups}}'">
+<button id="group-members-back-button" type="button" class="lean" onclick="location.href='{{$.Static.Paths.FrontendGroups}}'">
   Back
 </button>
 <br>
 <br>
 
-<p>Group name: {{ $.Data.GroupName }}</p>
+<p>Group name: {{ $.Page.GroupName }}</p>
 <br>
 
 <div class="group-detail-layout">
@@ -29,7 +29,7 @@
         </tr>
       </thead>
       <tbody id="nonMembersTableBody">
-        {{range $.Data.NotIn}}
+        {{range $.Page.NotIn}}
         <tr data-name="{{.Name}}">
           <td class="group-detail-checkbox-col">
             <input type="checkbox" class="member-checkbox" value="{{.Id}}">
@@ -42,10 +42,10 @@
   </section>
 
   <section class="group-detail-actions">
-    <button id="group-members-add-button" type="button" class="lean" onclick="addSelectedMembers('{{$.Data.GroupId}}')">
+    <button id="group-members-add-button" type="button" class="lean" onclick="addSelectedMembers('{{$.Page.GroupId}}')">
       Add →
     </button>
-    <button id="group-members-remove-button" type="button" class="lean" onclick="removeSelectedMembers('{{$.Data.GroupId}}')">
+    <button id="group-members-remove-button" type="button" class="lean" onclick="removeSelectedMembers('{{$.Page.GroupId}}')">
       ← Remove
     </button>
   </section>
@@ -68,7 +68,7 @@
         </tr>
       </thead>
       <tbody id="membersTableBody">
-        {{range $.Data.In}}
+        {{range $.Page.In}}
         <tr data-name="{{.Name}}">
           <td class="group-detail-checkbox-col">
             <input type="checkbox" class="member-checkbox" value="{{.Id}}">

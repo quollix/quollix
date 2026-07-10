@@ -1,10 +1,11 @@
 package backups
 
 import (
+	"time"
+
 	"server/apps_basic"
 	"server/backup_server"
 	"server/tools"
-	"time"
 )
 
 type BackupCreationAssembler interface {
@@ -18,7 +19,7 @@ func (a *BackupCreationAssemblerImpl) BuildBackupCreation(app *apps_basic.RepoAp
 		Maintainer:               app.Maintainer,
 		AppName:                  app.AppName,
 		VersionName:              app.VersionName,
-		VersionCreationTimestamp: app.VersionCreationTimestamp.Format(time.RFC3339),
+		VersionCreationTimestamp: app.VersionCreationTimestamp.Format(time.RFC3339Nano),
 		Description:              description,
 		VersionContent:           app.VersionContent,
 	}

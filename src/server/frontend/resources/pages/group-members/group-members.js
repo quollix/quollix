@@ -5,7 +5,7 @@ window.addSelectedMembers = async (groupId) => {
         return
     }
 
-    const ok = await apiPost('{{ $.Paths.BackendGroupsAddUsers }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendGroupsAddUsers }}', {
         group_id: groupId,
         user_ids: userIds
     })
@@ -19,7 +19,7 @@ window.removeSelectedMembers = async (groupId) => {
         return
     }
 
-    const ok = await apiPost('{{ $.Paths.BackendGroupsRemoveUsers }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendGroupsRemoveUsers }}', {
         group_id: groupId,
         user_ids: userIds
     })

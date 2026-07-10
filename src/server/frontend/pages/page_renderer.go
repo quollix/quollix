@@ -2,10 +2,12 @@ package pages
 
 import (
 	"net/http"
+
 	"server/apps_basic"
-	"server/frontend/renderer"
+	"server/configs"
 	"server/tools"
 
+	"github.com/quollix/common/frontend"
 	u "github.com/quollix/common/utils"
 )
 
@@ -24,8 +26,28 @@ type PageRenderRequest struct {
 }
 
 type PageRendererImpl struct {
-	TemplateService   renderer.TemplateService
+	Config            *tools.GlobalConfig
+	ConfigsService    configs.ConfigsService
+	FrontendEngine    frontend.EngineService
 	OperationRegistry apps_basic.OperationRegistry
+}
+
+type Auth struct {
+	Name    string
+	IsAdmin bool
+}
+
+type PageGlobals struct {
+	Auth                Auth
+	Config              *tools.GlobalConfig
+	Host                string
+	InfoIconRedirectUrl string
+}
+
+type StaticTemplateGlobals struct {
+	Paths    tools.PathsType
+	Links    tools.LinksType
+	Policies any
 }
 
 func (p *PageRendererImpl) PageCreationFailed(w http.ResponseWriter, err error) {
@@ -37,7 +59,7 @@ func (p *PageRendererImpl) PageCreationFailed(w http.ResponseWriter, err error) 
 }
 
 func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
-	auth := renderer.Auth{}
+	auth := Auth{}
 	user, err := getAuthFromContext(request.Request)
 	if err == nil {
 		auth.Name = user.Username
@@ -46,12 +68,22 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 
 	p.OperationRegistry.ClearFinishedAppOperations()
 
-	renderedBytes, err := p.TemplateService.RenderPage(renderer.PageRenderRequest{
-		PageName:             request.PageName,
-		Content:              request.Content,
-		Auth:                 auth,
-		InfoIconRedirectPath: request.InfoIconRedirectPath,
-		PageTitle:            request.PageTitle,
+	host, err := p.ConfigsService.GetBaseDomain()
+	if err != nil {
+		p.PageCreationFailed(request.ResponseWriter, err)
+		return
+	}
+
+	renderedBytes, err := p.FrontendEngine.Render(frontend.RenderRequest{
+		PageName:  request.PageName,
+		PageTitle: request.PageTitle,
+		Globals: PageGlobals{
+			Auth:                auth,
+			Config:              p.Config,
+			Host:                host,
+			InfoIconRedirectUrl: infoIconRedirectUrl(request.InfoIconRedirectPath, auth.IsAdmin),
+		},
+		Page: request.Content,
 	})
 	if err != nil {
 		p.PageCreationFailed(request.ResponseWriter, err)
@@ -64,6 +96,13 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 	if err != nil {
 		u.Logger.Error(err)
 	}
+}
+
+func infoIconRedirectUrl(infoIconRedirectPath string, isAdmin bool) string {
+	if infoIconRedirectPath != "" && isAdmin {
+		return infoIconRedirectPath
+	}
+	return ""
 }
 
 func getAuthFromContext(r *http.Request) (*tools.User, error) {

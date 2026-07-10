@@ -6,7 +6,7 @@ window.createOidcClient = async () => {
         domain: form.domain.value,
     }
 
-    const ok = await apiPost('{{ $.Paths.BackendOidcRelyingPartiesCreate }}', client)
+    const ok = await apiPost('{{ $.Static.Paths.BackendOidcRelyingPartiesCreate }}', client)
     if (ok) reloadPageAndShowSnackbar('OIDC client created.')
 }
 
@@ -18,7 +18,7 @@ window.updateOidcClient = async (clientRecordId) => {
         domain: row.querySelector('.oidc-client-domain-edit').value,
     }
 
-    const ok = await apiPost('{{ $.Paths.BackendOidcRelyingPartiesUpdate }}', client)
+    const ok = await apiPost('{{ $.Static.Paths.BackendOidcRelyingPartiesUpdate }}', client)
     if (ok) reloadPageAndShowSnackbar('OIDC client saved.')
 }
 
@@ -28,7 +28,7 @@ window.deleteOidcClient = async (clientRecordId) => {
     const isConfirmed = await confirmDialog(`Delete client '${clientName}'? It will immediately lose access to Quollix as an OIDC provider.`)
     if (!isConfirmed) return
 
-    const ok = await apiPost('{{ $.Paths.BackendOidcRelyingPartiesDelete }}', { value: String(clientRecordId) })
+    const ok = await apiPost('{{ $.Static.Paths.BackendOidcRelyingPartiesDelete }}', { value: String(clientRecordId) })
     if (ok) reloadPageAndShowSnackbar('OIDC client deleted.')
 }
 
@@ -43,6 +43,6 @@ window.regenerateOidcClientCredentials = async (clientRecordId) => {
     const isConfirmed = await confirmDialog(`Regenerate OpenID Connect credentials for '${clientName}'? Existing client credentials will stop working.`)
     if (!isConfirmed) return
 
-    const ok = await apiPost('{{ $.Paths.BackendOidcRelyingPartiesRegenerate }}', { value: String(clientRecordId) })
+    const ok = await apiPost('{{ $.Static.Paths.BackendOidcRelyingPartiesRegenerate }}', { value: String(clientRecordId) })
     if (ok) reloadPageAndShowSnackbar('Credentials regenerated successfully.')
 }

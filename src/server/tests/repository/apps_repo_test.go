@@ -21,6 +21,7 @@ func TestAppCreateAndRead(t *testing.T) {
 	assert.Nil(t, err)
 
 	expectedApp := apps_basic.GetSampleApp()
+	expectedApp.VersionCreationTimestamp = time.Date(2026, time.July, 10, 12, 34, 56, 789123000, time.UTC)
 	expectedApp.AppId, err = AppRepo.CreateApp(expectedApp)
 	assert.Nil(t, err)
 
@@ -109,7 +110,7 @@ func TestUpdateApp(t *testing.T) {
 		"8080",
 		clientId,
 		clientSecret,
-		time.Date(2025, time.January, 1, 12, 0, 0, 0, time.UTC),
+		time.Date(2025, time.January, 1, 12, 0, 0, 987654000, time.UTC),
 		[]byte("updated-content"),
 		false,
 		false,

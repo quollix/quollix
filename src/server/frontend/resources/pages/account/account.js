@@ -4,7 +4,7 @@ window.updatePassword = async function (currentPassword, newPassword, confirmPas
         return
     }
 
-    const ok = await window.apiPost('{{ $.Paths.BackendUsersChangeOwnPassword }}', {current_password: currentPassword, new_password: newPassword})
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendUsersChangeOwnPassword }}', {current_password: currentPassword, new_password: newPassword})
     if (ok) reloadPageAndShowSnackbar('Password was updated successfully')
 }
 
@@ -14,6 +14,6 @@ window.setPassword = async function (newPassword, confirmPassword) {
         return
     }
 
-    const ok = await window.apiPost('{{ $.Paths.BackendUsersSetOwnPassword }}', {new_password: newPassword})
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendUsersSetOwnPassword }}', {new_password: newPassword})
     if (ok) reloadPageAndShowSnackbar('Password was set successfully')
 }

@@ -15,12 +15,12 @@
     </form>
 </section>
 
-{{if gt (len $.Data.OidcAuthProviders) 0}}
+{{if gt (len $.Page.OidcAuthProviders) 0}}
 <hr>
 <section class="oidc-sign-in-section">
     <h3>OIDC sign-in</h3>
     <div class="oidc-provider-list">
-        {{range $.Data.OidcAuthProviders}}
+        {{range $.Page.OidcAuthProviders}}
         <button type="button" class="oidc-provider-button" onclick="startOidcSignIn('{{.Id}}')">
             {{.Name}}
         </button>

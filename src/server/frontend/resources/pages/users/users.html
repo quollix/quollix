@@ -4,7 +4,7 @@
     required>
   <input id="create-user-email-input" class="input-medium" name="email" type="email" placeholder="Enter email" required>
   <button id="create-user-button" type="button" onclick="createUser(username.value, email.value)">Invite</button>
-  {{if $.Data.IsEmailEnabled}}
+  {{if $.Page.IsEmailEnabled}}
   <button id="create-user-via-email-button" type="button"
     onclick="createUserViaEmail(username.value, email.value)">Invite via Email</button>
   {{end}}
@@ -25,7 +25,7 @@
     </tr>
   </thead>
   <tbody>
-    {{range $.Data.Users}}
+    {{range $.Page.Users}}
     {{$user := .}}
     <tr class="user-row" data-username="{{$user.Username}}">
       <td class="user-name-cell">{{$user.Username}}</td>
@@ -41,14 +41,14 @@
         $user.SetPasswordTokenExpirationDate}}{{$user.SetPasswordTokenExpirationDate}}{{else}}—{{end}}</td>
       <td class="user-password-link-cell">
         {{if $user.SetPasswordLink}}
-        <span class="copy-to-clipboard-button" onclick="copyToClipboard('{{$user.SetPasswordLink}}', '{{$.Host}}')">
+        <span class="copy-to-clipboard-button" onclick="copyToClipboard('{{$user.SetPasswordLink}}', '{{$.Globals.Host}}')">
           <i class="mdi mdi-content-copy"></i>
         </span>
         {{else}}—{{end}}
       </td>
       <td class="user-actions-cell">
         <button type="button" class="lean user-edit-button" title="Edit user" aria-label="Edit user"
-          onclick="location.href='{{$.Paths.FrontendUserEdit}}?user-id={{$user.Id}}'">
+          onclick="location.href='{{$.Static.Paths.FrontendUserEdit}}?user-id={{$user.Id}}'">
           <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>
         </button>
 
@@ -57,7 +57,7 @@
           onclick="resetPassword('{{$user.Id}}','{{$user.Username}}')">
           <i class="mdi mdi-lock-reset" aria-hidden="true"></i>
         </button>
-        {{if $.Data.IsEmailEnabled}}
+        {{if $.Page.IsEmailEnabled}}
         <button type="button" class="lean user-send-password-reset-email-button" title="Send password reset email"
           aria-label="Send password reset email" onclick="sendPasswordResetEmail('{{$user.Id}}','{{$user.Username}}')">
           <i class="mdi mdi-email-fast-outline" aria-hidden="true"></i>

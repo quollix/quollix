@@ -15,7 +15,7 @@ window.testEmailConnection = async function (
         is_enabled: isEnabled,
     }
 
-    const ok = await window.apiPost('{{ $.Paths.BackendEmailTestConnection }}', emailConfig)
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailTestConnection }}', emailConfig)
     if (ok) showSnackbar('Email connection test successful.')
 }
 
@@ -36,7 +36,7 @@ window.saveEmailConfig = async function (
         is_enabled: isEnabled,
     }
 
-    const ok = await window.apiPost('{{ $.Paths.BackendEmailSaveConfig }}', emailConfig)
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailSaveConfig }}', emailConfig)
     if (ok) showSnackbar('Email settings saved.')
 }
 
@@ -60,7 +60,7 @@ window.sendTestEmail = async function (
         to_email: (toEmail || '').trim(),
     }
 
-    const ok = await window.apiPost('{{ $.Paths.BackendEmailSendTestEmail }}', requestBody)
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailSendTestEmail }}', requestBody)
     if (ok) showSnackbar('Test email sent.')
 }
 
@@ -70,7 +70,7 @@ window.resetEmailConfigs = async function () {
     )
     if (!confirmed) return
 
-    const ok = await window.apiPost('{{ $.Paths.BackendEmailResetConfig }}', {})
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailResetConfig }}', {})
     if (ok) window.reloadPageAndShowSnackbar('Email settings have been reset.')
 }
 
@@ -86,7 +86,7 @@ window.saveOidcEmailExposure = async function (checkbox) {
         }
     }
 
-    const ok = await window.apiPost('{{ $.Paths.BackendEmailSaveOidcEmailExposure }}', {
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailSaveOidcEmailExposure }}', {
         value: exposeRealEmail,
     })
     if (ok) {
@@ -97,7 +97,7 @@ window.saveOidcEmailExposure = async function (checkbox) {
 }
 
 window.saveInvitationEmailTemplate = async function (template) {
-    const ok = await window.apiPost('{{ $.Paths.BackendEmailSaveInvitationTemplate }}', { template })
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailSaveInvitationTemplate }}', { template })
     if (ok) showSnackbar('Invitation email template saved.')
 }
 
@@ -107,6 +107,6 @@ window.resetInvitationEmailTemplate = async function () {
     )
     if (!confirmed) return
 
-    const ok = await window.apiPost('{{ $.Paths.BackendEmailResetInvitationTemplate }}', null)
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailResetInvitationTemplate }}', null)
     if (ok) window.reloadPageAndShowSnackbar('Invitation email template has been reset.')
 }

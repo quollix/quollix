@@ -4,9 +4,9 @@ window.changeAccessPolicy = async (selectionMenu) => {
     const prevAccessPolicy = selectionMenu.dataset.prevAccessPolicy
 
     const warningByPolicy = {
-        "{{ $.Policies.PublicAccessPolicy }}": "Make this app public? Anyone, including anonymous users, can access it.",
-        "{{ $.Policies.AuthenticatedAccessPolicy }}": "Allow all signed-in users? Every authenticated user can access this app.",
-        "{{ $.Policies.GroupRestrictedAccessPolicy }}": "Restrict by group? Only users in assigned groups can access this app."
+        "{{ $.Static.Policies.PublicAccessPolicy }}": "Make this app public? Anyone, including anonymous users, can access it.",
+        "{{ $.Static.Policies.AuthenticatedAccessPolicy }}": "Allow all signed-in users? Every authenticated user can access this app.",
+        "{{ $.Static.Policies.GroupRestrictedAccessPolicy }}": "Restrict by group? Only users in assigned groups can access this app."
         // admin_only intentionally has no warning as it is the strictest/safest policy
     }
 
@@ -19,7 +19,7 @@ window.changeAccessPolicy = async (selectionMenu) => {
         }
     }
 
-    const ok = await apiPost('{{ $.Paths.BackendAppsChangeAccessPolicy }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendAppsChangeAccessPolicy }}', {
         app_id: appId,
         access_policy: nextAccessPolicy
     })
@@ -40,7 +40,7 @@ window.openFromRow = async (appName, appAccessPolicy, publicAccessPolicy, host) 
     if (isPublicAccessPolicy) {
         window.open(base, '_blank')
     } else {
-        const res = await window.doRequest("{{ $.Paths.BackendSecret }}", null)
+        const res = await window.doRequest("{{ $.Static.Paths.BackendSecret }}", null)
         const body = await res.text()
         if (!res.ok) {
             showSnackbar(body || 'Request failed')
@@ -58,37 +58,37 @@ window.handleOperationsSelectChange = async (selectionMenu, appId, appName) => {
     const confirm = (msg) => window.confirmDialog(msg)
 
     if (op === 'start') {
-        await doNetworkChangedRequest('{{ $.Paths.BackendAppsStart }}', { value: appId })
+        await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStart }}', { value: appId })
         return
     }
     if (op === 'stop') {
         const isConfirmed = await confirm(`Stop '${appName}'? Users will lose access until it is started again.`)
         if (!isConfirmed) return
-        await doNetworkChangedRequest('{{ $.Paths.BackendAppsStop }}', { value: appId })
+        await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStop }}', { value: appId })
         return
     }
     if (op === 'download') {
-        await window.downloadFile('{{ $.Paths.BackendAppDownloadFromApplication }}', { value: appId })
+        await window.downloadFile('{{ $.Static.Paths.BackendAppDownloadFromApplication }}', { value: appId })
         return
     }
     if (op === 'update') {
-        await doNetworkChangedRequest('{{ $.Paths.BackendAppsUpdate }}', { value: appId })
+        await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsUpdate }}', { value: appId })
         return
     }
     if (op === 'backup') {
-        await doNetworkChangedRequest('{{ $.Paths.BackendBackupsCreate }}', { value: appId })
+        await doNetworkChangedRequest('{{ $.Static.Paths.BackendBackupsCreate }}', { value: appId })
         return
     }
     if (op === 'delete') {
         const isConfirmed = await confirm(`Delete '${appName}'? App data will be removed; backups are kept.`)
         if (!isConfirmed) return
-        await doNetworkChangedRequest('{{ $.Paths.BackendAppsDelete }}', { value: appId })
+        await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsDelete }}', { value: appId })
         return
     }
 }
 
 window.reloadAppsIntoStoreMock = async () => {
-    const ok = await apiPost('{{ $.Paths.BackendStoreReloadPublishedApps }}', null)
+    const ok = await apiPost('{{ $.Static.Paths.BackendStoreReloadPublishedApps }}', null)
     if (ok) reloadPageAndShowSnackbar('Local store apps reloaded successfully')
 }
 
@@ -98,6 +98,6 @@ window.uploadVersionFile = async () => {
     if (!confirmed) {
         return
     }
-    const ok = await selectAndUploadFile('{{ $.Paths.BackendAppUploadToApplication }}')
+    const ok = await selectAndUploadFile('{{ $.Static.Paths.BackendAppUploadToApplication }}')
     if (ok) reloadPageAndShowSnackbar('Upload successful')
 }

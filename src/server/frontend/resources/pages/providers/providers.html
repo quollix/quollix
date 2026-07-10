@@ -63,12 +63,12 @@
         </thead>
 
         <tbody>
-            {{if eq (len $.Data.AuthProviders) 0}}
+            {{if eq (len $.Page.AuthProviders) 0}}
             <tr>
                 <td colspan="5" style="opacity:.7">No providers configured</td>
             </tr>
             {{else}}
-            {{range $.Data.AuthProviders}}
+            {{range $.Page.AuthProviders}}
             {{$provider := .}}
 
             <tr class="oidc-auth-provider-row" data-provider-id="{{$provider.Id}}">

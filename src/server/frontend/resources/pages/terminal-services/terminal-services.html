@@ -1,15 +1,15 @@
 <button type="button"
         id="terminal-services-back-button"
         class="lean"
-        onclick="location.href='{{$.Paths.FrontendTerminalApps}}'">
+        onclick="location.href='{{$.Static.Paths.FrontendTerminalApps}}'">
     Back
 </button>
 <br>
 <br>
 
 <ul>
-    <li id="terminal-services-maintainer">Maintainer: {{ $.Data.Maintainer }}</li>
-    <li id="terminal-services-app-name">App Name: {{ $.Data.AppName }}</li>
+    <li id="terminal-services-maintainer">Maintainer: {{ $.Page.Maintainer }}</li>
+    <li id="terminal-services-app-name">App Name: {{ $.Page.AppName }}</li>
 </ul>
 
 <table>
@@ -20,7 +20,7 @@
     </tr>
     </thead>
     <tbody>
-    {{ range $.Data.ServiceNames }}
+    {{ range $.Page.ServiceNames }}
     {{ $serviceName := . }}
     <tr class="terminal-service-row" data-service-name="{{ $serviceName }}">
         <td class="terminal-service-name-cell">{{ $serviceName }}</td>
@@ -30,7 +30,7 @@
                     class="lean icon-btn terminal-open-button"
                     title="Open terminal"
                     aria-label="Open terminal"
-                    onclick="location.href='{{$.Paths.FrontendTerminalView}}?maintainer={{$.Data.Maintainer}}&appName={{$.Data.AppName}}&serviceName={{$serviceName}}'">
+                    onclick="location.href='{{$.Static.Paths.FrontendTerminalView}}?maintainer={{$.Page.Maintainer}}&appName={{$.Page.AppName}}&serviceName={{$serviceName}}'">
                 <i class="mdi mdi-console" aria-hidden="true"></i>
             </button>
             </div>

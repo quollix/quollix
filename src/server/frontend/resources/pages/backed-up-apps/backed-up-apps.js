@@ -2,7 +2,7 @@ window.showBackups = function(maintainer, app) {
   const params = new URLSearchParams();
   params.set('maintainer', maintainer);
   params.set('app', app);
-  window.location.href = '{{ $.Paths.FrontendListBackups }}?' + params.toString();
+  window.location.href = '{{ $.Static.Paths.FrontendListBackups }}?' + params.toString();
 };
 
 const backedUpAppsLoadingMessage = document.getElementById('backed-up-apps-loading-message');
@@ -71,7 +71,7 @@ function renderBackedUpApps(apps) {
 
 if (backedUpAppsContainer) {
   window.loadAsyncPageData(
-    () => '{{ $.Paths.BackendBackedUpAppsPage }}',
+    () => '{{ $.Static.Paths.BackendBackedUpAppsPage }}',
     (data) => renderBackedUpApps(data.apps || []),
   );
 }

@@ -15,7 +15,7 @@ window.updateAutoMaintenanceSettings = async (checkbox, appId, isOfficial) => {
         }
     }
 
-    await apiPost('{{$.Paths.BackendAppAutomaticMaintenanceSettings}}', {
+    await apiPost('{{$.Static.Paths.BackendAppAutomaticMaintenanceSettings}}', {
         app_id: appId,
         automatic_updates_enabled: automaticUpdatesCheckbox.checked,
         automatic_backups_enabled: automaticBackupsCheckbox.checked

@@ -1,14 +1,14 @@
 <ul>
-    <li id="versions-maintainer">Maintainer: {{$.Data.Maintainer}}</li>
-    <li id="versions-app-name">App Name: {{$.Data.App}}</li>
+    <li id="versions-maintainer">Maintainer: {{$.Page.Maintainer}}</li>
+    <li id="versions-app-name">App Name: {{$.Page.App}}</li>
 </ul>
 
 <div id="version-filter-bar">
     <input id="version-filter" type="text" placeholder="Filter versions...">
     <button id="version-filter-install-button" type="button" class="lean"
-            onclick='installApp("{{ $.Data.Maintainer }}", "{{ $.Data.App }}", document.getElementById("version-filter").value)'>Install</button>
+            onclick='installApp("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", document.getElementById("version-filter").value)'>Install</button>
     <button id="version-filter-download-button" type="button" class="lean"
-            onclick='downloadVersion("{{ $.Data.Maintainer }}", "{{ $.Data.App }}", document.getElementById("version-filter").value)'>Download</button>
+            onclick='downloadVersion("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", document.getElementById("version-filter").value)'>Download</button>
     <span id="exact-version-span">(this exact version)</span>
 </div>
 
@@ -21,7 +21,7 @@
     </tr>
     </thead>
     <tbody id="versions-results-body">
-    {{range $.Data.Versions}}
+    {{range $.Page.Versions}}
     {{$version := .}}
     <tr class="version-row" data-version-name="{{$version.Name}}" data-created-at="{{$version.CreationTimestamp}}" data-created-at-pretty="{{$version.CreationTimestamp.Format "2006-01-02 15:04:05"}}">
         <td class="version-name">{{$version.Name}}</td>
@@ -31,13 +31,13 @@
                 <button type="button" class="lean icon-btn version-install-button"
                         title="Install version"
                         aria-label="Install version"
-                        onclick='installApp("{{ $.Data.Maintainer }}", "{{ $.Data.App }}", "{{$version.Name}}")'>
+                        onclick='installApp("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", "{{$version.Name}}")'>
                     <i class="mdi mdi-download-box-outline" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="lean icon-btn version-download-button"
                         title="Download version"
                         aria-label="Download version"
-                        onclick='downloadVersion("{{ $.Data.Maintainer }}", "{{ $.Data.App }}", "{{$version.Name}}")'>
+                        onclick='downloadVersion("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", "{{$version.Name}}")'>
                     <i class="mdi mdi-download-outline" aria-hidden="true"></i>
                 </button>
             </div>

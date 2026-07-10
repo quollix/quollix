@@ -37,12 +37,12 @@
         </thead>
 
         <tbody>
-            {{if eq (len $.Data.Clients) 0}}
+            {{if eq (len $.Page.Clients) 0}}
             <tr>
                 <td colspan="5" style="opacity:.7">No OIDC clients configured</td>
             </tr>
             {{else}}
-            {{range $.Data.Clients}}
+            {{range $.Page.Clients}}
             {{$client := .}}
 
             <tr class="oidc-relying-party-row" data-client-record-id="{{$client.Id}}">

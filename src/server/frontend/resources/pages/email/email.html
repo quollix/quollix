@@ -5,20 +5,20 @@
     <div class="label-bar">
       <label>
         <strong>SMTP Host</strong>
-        <input id="email-smtp-host-input" type="text" name="emailSmtpHost" value="{{$.Data.EmailConfig.SMTPHost}}"
+        <input id="email-smtp-host-input" type="text" name="emailSmtpHost" value="{{$.Page.EmailConfig.SMTPHost}}"
           placeholder="enter SMTP host" required />
       </label>
 
       <label>
         <strong>SMTP Port</strong>
         <input id="email-smtp-port-input" type="number" min="0" name="emailSmtpPort"
-          value="{{$.Data.EmailConfig.SMTPPort}}" placeholder="enter SMTP port" required />
+          value="{{$.Page.EmailConfig.SMTPPort}}" placeholder="enter SMTP port" required />
       </label>
 
       <label>
         <strong>From Email Address</strong>
         <input id="email-from-address-input" type="email" name="emailFromEmailAddress"
-          value="{{$.Data.EmailConfig.FromEmailAddress}}" placeholder="enter from email address" required />
+          value="{{$.Page.EmailConfig.FromEmailAddress}}" placeholder="enter from email address" required />
       </label>
     </div>
 
@@ -26,14 +26,14 @@
       <label>
         <strong>Email Account Username</strong>
         <input id="email-account-username-input" type="text" name="emailAccountUsername"
-          value="{{$.Data.EmailConfig.EmailAccountUsername}}" placeholder="enter account username"
+          value="{{$.Page.EmailConfig.EmailAccountUsername}}" placeholder="enter account username"
           autocomplete="username" />
       </label>
 
       <label>
         <strong>Email Account Password</strong>
         <input id="email-account-password-input" type="password" name="emailAccountPassword"
-          value="{{$.Data.EmailConfig.EmailAccountPassword}}" placeholder="enter account password"
+          value="{{$.Page.EmailConfig.EmailAccountPassword}}" placeholder="enter account password"
           autocomplete="current-password" />
       </label>
 
@@ -78,7 +78,7 @@
       <label id="enable-email-config-label">
         <strong>Enable Email</strong>
         <input id="email-enabled-checkbox" type="checkbox" name="emailIsEnabled" {{if
-          .Data.EmailConfig.IsEnabled}}checked{{end}} />
+          .Page.EmailConfig.IsEnabled}}checked{{end}} />
       </label>
 
       <button id="email-save-config-button" class="enable-bar-button" type="button" onclick="saveEmailConfig(
@@ -107,7 +107,7 @@
   <div class="label-bar">
     <label id="expose-real-email-in-oidc-token-label">
       <input id="expose-real-email-in-oidc-token-checkbox" type="checkbox" onchange="saveOidcEmailExposure(this)" {{if
-        .Data.ExposeRealEmailInOidcToken}}checked{{end}} />
+        .Page.ExposeRealEmailInOidcToken}}checked{{end}} />
       <span>Expose real emails in OIDC tokens</span>
     </label>
   </div>
@@ -121,7 +121,7 @@
   <form id="email-template-form" onsubmit="return false;">
     <label>
       <textarea id="invitation-email-template-input" name="invitationEmailTemplate" rows="14"
-        placeholder="enter invitation email template" required>{{$.Data.InvitationEmailTemplate}}</textarea>
+        placeholder="enter invitation email template" required>{{$.Page.InvitationEmailTemplate}}</textarea>
     </label>
 
     <p>Required placeholders: <code>{{"{{.Username}}"}}</code>, <code>{{"{{.InvitationLink}}"}}</code>,

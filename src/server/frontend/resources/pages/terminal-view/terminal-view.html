@@ -1,17 +1,17 @@
-<link rel="stylesheet" href="{{.Paths.WebResourcesVendorCss}}/xterm.{{.ApplicationVersion}}.css" />
-<script src="{{.Paths.WebResourcesVendorJs}}/xterm.{{.ApplicationVersion}}.js"></script>
-<script src="{{.Paths.WebResourcesVendorJs}}/xterm-addon-fit.{{.ApplicationVersion}}.js"></script>
+<link rel="stylesheet" href="{{.Static.Paths.WebResourcesVendorCss}}/xterm.{{.Frontend.Version}}.css" />
+<script src="{{.Static.Paths.WebResourcesVendorJs}}/xterm.{{.Frontend.Version}}.js"></script>
+<script src="{{.Static.Paths.WebResourcesVendorJs}}/xterm-addon-fit.{{.Frontend.Version}}.js"></script>
 
-<button type="button" id="terminal-view-back-button" class="lean" onclick="location.href='{{$.Paths.FrontendTerminalServices}}?maintainer={{$.Data.Maintainer}}&appName={{$.Data.AppName}}'">
+<button type="button" id="terminal-view-back-button" class="lean" onclick="location.href='{{$.Static.Paths.FrontendTerminalServices}}?maintainer={{$.Page.Maintainer}}&appName={{$.Page.AppName}}'">
     Back
 </button>
 <br>
 <br>
 
 <ul>
-    <li id="terminal-view-maintainer">Maintainer: {{ $.Data.Maintainer }}</li>
-    <li id="terminal-view-app-name">App Name: {{ $.Data.AppName }}</li>
-    <li id="terminal-view-service-name">Service: {{ $.Data.ServiceName }}</li>
+    <li id="terminal-view-maintainer">Maintainer: {{ $.Page.Maintainer }}</li>
+    <li id="terminal-view-app-name">App Name: {{ $.Page.AppName }}</li>
+    <li id="terminal-view-service-name">Service: {{ $.Page.ServiceName }}</li>
 </ul>
 
 
@@ -31,9 +31,9 @@
     document.addEventListener("DOMContentLoaded", () => {
         window.initTerminalViewPage(
             location.host,
-            "{{$.Data.Maintainer}}",
-            "{{$.Data.AppName}}",
-            "{{$.Data.ServiceName}}",
+            "{{$.Page.Maintainer}}",
+            "{{$.Page.AppName}}",
+            "{{$.Page.ServiceName}}",
         );
     });
 </script>

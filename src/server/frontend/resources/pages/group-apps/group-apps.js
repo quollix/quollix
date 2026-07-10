@@ -5,7 +5,7 @@ window.grantSelectedApps = async (groupId) => {
         return
     }
 
-    const ok = await apiPost('{{ $.Paths.BackendGroupsGrantGroupAccessToApps }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendGroupsGrantGroupAccessToApps }}', {
         group_id: groupId,
         app_names: appNames
     })
@@ -19,7 +19,7 @@ window.revokeSelectedApps = async (groupId) => {
         return
     }
 
-    const ok = await apiPost('{{ $.Paths.BackendGroupsRevokeGroupAccessToApps }}', {
+    const ok = await apiPost('{{ $.Static.Paths.BackendGroupsRevokeGroupAccessToApps }}', {
         group_id: groupId,
         app_names: appNames
     })

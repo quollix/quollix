@@ -1,23 +1,23 @@
 <h3>Search menu</h3>
-<form id="search-form" action="{{ $.Paths.FrontendStore }}" method="get">
-  {{if $.Data.ShowUnofficialToggle}}
+<form id="search-form" action="{{ $.Static.Paths.FrontendStore }}" method="get">
+  {{if $.Page.ShowUnofficialToggle}}
   <!-- keep this hidden in production for now; re-enable it there as soon as the app store is open to account registrations for anyone. -->
   <div id="maintainer-wrap" class="field">
     <label for="maintainer-input">Maintainer</label>
     <input id="maintainer-input" name="maintainer_name" type="text" placeholder="enter maintainer"
-      value="{{$.Data.MaintainerSearchTerm}}">
+      value="{{$.Page.MaintainerSearchTerm}}">
   </div>
   {{end}}
 
   <div class="field">
     <label for="app-input">App Name</label>
-    <input id="app-input" name="app_name" type="text" placeholder="enter app name" value="{{$.Data.AppSearchTerm}}">
+    <input id="app-input" name="app_name" type="text" placeholder="enter app name" value="{{$.Page.AppSearchTerm}}">
   </div>
 
-  {{if $.Data.ShowUnofficialToggle}}
+  {{if $.Page.ShowUnofficialToggle}}
   <div class="checkbox-group">
     <input id="unofficial" name="show_unofficial" type="checkbox" value="true" {{if
-      $.Data.ShowUnofficialApps}}checked{{end}}>
+      $.Page.ShowUnofficialApps}}checked{{end}}>
     <label for="unofficial">Search for unofficial apps</label>
   </div>
   {{end}}
@@ -38,12 +38,12 @@
     </tr>
   </thead>
   <tbody id="store-results-body">
-    {{if not $.Data.Apps}}
+    {{if not $.Page.Apps}}
     <tr id="store-no-results-row">
       <td colspan="5" style="opacity:.7">No apps yet</td>
     </tr>
     {{else}}
-    {{range $.Data.Apps}}
+    {{range $.Page.Apps}}
     {{$app := .}}
     <tr class="store-result-row" data-maintainer="{{$app.Maintainer}}" data-app="{{$app.AppName}}">
       <td class="store-result-maintainer">{{$app.Maintainer}}</td>

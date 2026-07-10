@@ -1,1 +1,1 @@
-window.renderContractVersion = "{{.ApplicationVersion}}"
+window.renderContractVersion = "{{.Frontend.Version}}"

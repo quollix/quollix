@@ -1,8 +1,6 @@
 package di
 
 import (
-	"io/fs"
-
 	"server/app_store"
 	"server/apps_advanced"
 	"server/apps_basic"
@@ -11,10 +9,8 @@ import (
 	certificates2 "server/certificates"
 	"server/configs"
 	"server/email"
-	"server/frontend"
-	"server/frontend/assets"
+	serverfrontend "server/frontend"
 	frontendpages "server/frontend/pages"
-	"server/frontend/renderer"
 	"server/groups"
 	"server/ingress"
 	"server/maintenance"
@@ -30,6 +26,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/wire"
 	"github.com/moby/moby/client"
+	"github.com/quollix/common/frontend"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
@@ -49,7 +46,7 @@ type Dependencies struct {
 	DirectoryProvider           tools.DirectoryProvider
 	AppStoreClientLean          app_store.AppStoreClientLean
 	Config                      *tools.GlobalConfig
-	TemplateService             renderer.TemplateService
+	FrontendEngine              frontend.EngineService
 	OidcService                 oidc_provider.OidcService
 	ConfigRepo                  configs.ConfigsRepository
 	TimezoneProvider            tools.TimezoneProvider
@@ -92,9 +89,6 @@ var SharedSet = wire.NewSet(
 	NewEmailClient,
 	NewDockerClient,
 	NewDatabaseSnapshotRepo,
-	wire.InterfaceValue(new(fs.FS), tools.FrontendResourceFilesystem),
-	wire.Value(map[string][]byte{}),
-
 	wire.Struct(new(apps_basic.OperationRegistryImpl)),
 	wire.Struct(new(ingress.AppRequestPolicyImpl), "*"),
 	wire.Struct(new(setup.CliToolInstallationVerifier), "*"),
@@ -139,9 +133,9 @@ var SharedSet = wire.NewSet(
 	wire.Struct(new(setup.HandlerRegisterer), "*"),
 	wire.Struct(new(tools.CommandRunnerImpl), "*"),
 	wire.Struct(new(tools.ResticContainerExecutorImpl), "*"),
-	wire.Struct(new(frontend.TemplateHandlerImpl), "*"),
-	wire.Struct(new(frontend.BackedUpAppsLoaderHandler), "*"),
-	wire.Struct(new(frontend.BackupsPageLoaderHandler), "*"),
+	wire.Struct(new(serverfrontend.TemplateHandlerImpl), "*"),
+	wire.Struct(new(serverfrontend.BackedUpAppsLoaderHandler), "*"),
+	wire.Struct(new(serverfrontend.BackupsPageLoaderHandler), "*"),
 	wire.Struct(new(frontendpages.PageRendererImpl), "*"),
 	wire.Struct(new(backup_server.SshRepositoryServiceImpl), "*"),
 	wire.Struct(new(backup_server.SshRepositoryImpl), "*"),
@@ -163,11 +157,8 @@ var SharedSet = wire.NewSet(
 	wire.Struct(new(apps_basic.AuthorizerImpl), "*"),
 	wire.Struct(new(apps_basic.AppServiceHelperImpl), "*"),
 	wire.Struct(new(apps_basic.AppDetectorImpl), "*"),
-	wire.Struct(new(assets.AssetStoreImpl), "*"),
-	wire.Struct(new(assets.AssetTagBuilderImpl), "*"),
-	wire.Struct(new(renderer.TemplateEngineImpl), "*"),
-	wire.Struct(new(renderer.TemplateServiceImpl), "*"),
-	wire.Struct(new(frontend.FrontendPageDataBuilderImpl), "*"),
+	serverfrontend.NewFrontendEngine,
+	wire.Struct(new(serverfrontend.FrontendPageDataBuilderImpl), "*"),
 	wire.Struct(new(oidc_provider.IdTokenIssuerImpl), "*"),
 	wire.Struct(new(oidc_provider.OidcServiceImpl), "*"),
 	wire.Struct(new(oidc_provider.TokenIssuerImpl), "*"),
@@ -250,10 +241,7 @@ var SharedSet = wire.NewSet(
 	wire.Bind(new(oidc_provider.OidcRelyingPartyService), new(*oidc_provider.OidcRelyingPartyServiceImpl)),
 	wire.Bind(new(oidc_provider.TokenIssuer), new(*oidc_provider.TokenIssuerImpl)),
 	wire.Bind(new(oidc_provider.OidcService), new(*oidc_provider.OidcServiceImpl)),
-	wire.Bind(new(frontend.FrontendPageDataBuilder), new(*frontend.FrontendPageDataBuilderImpl)),
-	wire.Bind(new(renderer.TemplateEngine), new(*renderer.TemplateEngineImpl)),
-	wire.Bind(new(renderer.TemplateService), new(*renderer.TemplateServiceImpl)),
-	wire.Bind(new(assets.AssetTagBuilder), new(*assets.AssetTagBuilderImpl)),
+	wire.Bind(new(serverfrontend.FrontendPageDataBuilder), new(*serverfrontend.FrontendPageDataBuilderImpl)),
 	wire.Bind(new(apps_basic.AppDetector), new(*apps_basic.AppDetectorImpl)),
 	wire.Bind(new(apps_basic.OperationRegistry), new(*apps_basic.OperationRegistryImpl)),
 	wire.Bind(new(apps_basic.AppServiceHelper), new(*apps_basic.AppServiceHelperImpl)),
@@ -306,7 +294,6 @@ var SharedSet = wire.NewSet(
 	wire.Bind(new(oidc_client.LoginService), new(*oidc_client.LoginServiceImpl)),
 	wire.Bind(new(oidc_client.OidcAuthFlowService), new(*oidc_client.OidcAuthFlowServiceImpl)),
 	wire.Bind(new(oidc_client.OidcAuthProviderService), new(*oidc_client.OidcAuthProviderServiceImpl)),
-	wire.Bind(new(assets.AssetStore), new(*assets.AssetStoreImpl)),
 )
 
 var DependenciesSet = wire.NewSet(

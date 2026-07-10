@@ -1,11 +1,11 @@
 window.signOut = async (event) => {
   event.preventDefault();
-  const ok = await window.apiPost('{{ $.Paths.BackendUsersSignOut }}', null);
-  if (ok) window.location.href = '{{ $.Paths.FrontendInstalledApps }}';
+  const ok = await window.apiPost('{{ $.Static.Paths.BackendUsersSignOut }}', null);
+  if (ok) window.location.href = '{{ $.Static.Paths.FrontendInstalledApps }}';
 }
 
 window.reloadFrontend = async () => {
-  const ok = await window.apiPost('{{ $.Paths.BackendReloadFrontendTemplatesFromFileSystem }}', null);
+  const ok = await window.apiPost('{{ $.Static.Paths.BackendReloadFrontendTemplatesFromFileSystem }}', null);
   if (ok) window.reloadPageAndShowSnackbar("Frontend templates reloaded successfully.");
 }
 
@@ -13,7 +13,7 @@ window.resetTestState = async () => {
   const confirmed = await window.confirmDialog("Reset test state to snapshot? This removes current test data.")
   if (!confirmed) return
 
-  const ok = await window.apiPost('{{ $.Paths.BackendResetTestState }}', null)
+  const ok = await window.apiPost('{{ $.Static.Paths.BackendResetTestState }}', null)
   if (ok) window.reloadPageAndShowSnackbar("Test state reset successfully.")
 }
 
@@ -23,7 +23,7 @@ window.updateOperationIndicator = async function() {
   if (!requestIndicatorElement || !currentOperationElement) return
 
   try {
-    const response = await window.doRequest('{{$.Paths.BackendAppOperationInfo}}')
+    const response = await window.doRequest('{{$.Static.Paths.BackendAppOperationInfo}}')
     if (!response.ok) return
     const data = await response.json()
 
@@ -37,8 +37,8 @@ window.updateOperationIndicator = async function() {
 
     const finishedAppOperations = data.app_operations_finished || []
     const shouldReloadForFinishedOperation =
-      window.location.pathname === '{{ $.Paths.FrontendInstalledApps }}' ||
-      window.location.pathname === '{{ $.Paths.FrontendListBackups }}'
+      window.location.pathname === '{{ $.Static.Paths.FrontendInstalledApps }}' ||
+      window.location.pathname === '{{ $.Static.Paths.FrontendListBackups }}'
 
     if (finishedAppOperations.length > 0 && shouldReloadForFinishedOperation) {
       window.location.reload()

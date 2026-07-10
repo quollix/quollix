@@ -9,22 +9,20 @@ import (
 	"time"
 
 	"server/apps_basic"
-	"server/frontend/assets"
 	frontendpages "server/frontend/pages"
-	"server/frontend/renderer"
 	"server/tools"
 	"server/users"
 
+	"github.com/quollix/common/frontend"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
 
 type TemplateHandlerImpl struct {
-	TemplateService           renderer.TemplateService
+	FrontendEngine            frontend.EngineService
 	PageRenderer              frontendpages.PageRenderer
 	PageDataBuilder           FrontendPageDataBuilder
 	AppsHandler               *apps_basic.AppsHandler
-	AssetStore                assets.AssetStore
 	BackedUpAppsLoaderHandler *BackedUpAppsLoaderHandler
 }
 
@@ -426,7 +424,7 @@ func (t *TemplateHandlerImpl) OidcClientsHandler(w http.ResponseWriter, r *http.
 }
 
 func (t *TemplateHandlerImpl) ReloadFrontendTemplatesFromFileSystemHandler(w http.ResponseWriter, r *http.Request) {
-	err := t.TemplateService.ReloadTemplateFromFileSystem()
+	err := t.FrontendEngine.Reload()
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
@@ -453,20 +451,29 @@ func (t *TemplateHandlerImpl) PageNotFoundHandler(w http.ResponseWriter, r *http
 }
 
 func (t *TemplateHandlerImpl) WebResourcesProviderHandler(w http.ResponseWriter, r *http.Request) {
-	fileServer := http.StripPrefix(tools.FrontendResourcesPathWithSlash, http.FileServer(http.FS(tools.FrontendResourceFilesystem)))
-
 	if contentType := mime.TypeByExtension(path.Ext(r.URL.Path)); contentType != "" {
 		w.Header().Set("Content-Type", contentType)
 	}
 
-	if contentBytes, ok := t.AssetStore.Get(r.URL.Path); ok {
+	if contentBytes, ok := t.FrontendEngine.Asset(r.URL.Path); ok {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		http.ServeContent(w, r, r.URL.Path, time.Time{}, bytes.NewReader(contentBytes))
 		return
 	}
 
+	contentBytes, ok, err := t.FrontendEngine.RawAsset(r.URL.Path)
+	if err != nil {
+		u.Logger.Error(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
 	w.Header().Set("Cache-Control", "no-cache")
-	fileServer.ServeHTTP(w, r)
+	http.ServeContent(w, r, r.URL.Path, time.Time{}, bytes.NewReader(contentBytes))
 }
 
 func (t *TemplateHandlerImpl) AccountPageHandler(w http.ResponseWriter, r *http.Request) {

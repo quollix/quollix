@@ -1,15 +1,15 @@
 <h3>Profile</h3>
 <ul>
-    <li>Name: {{$.Data.Username}}</li>
-    <li>Email: {{$.Data.Email}}</li>
-    <li>Role: {{$.Data.Role}}</li>
+    <li>Name: {{$.Page.Username}}</li>
+    <li>Email: {{$.Page.Email}}</li>
+    <li>Role: {{$.Page.Role}}</li>
 </ul>
 
-{{if not $.Auth.IsAdmin}}
+{{if not .Globals.Auth.IsAdmin}}
 <p><strong>Note:</strong> Only the administrator can update usernames and email addresses. Please contact your administrator if you need to make changes.</p>
 {{end}}
 
-{{if $.Data.IsPasswordSet}}
+{{if $.Page.IsPasswordSet}}
 <section id="change-password-section">
     <h3>Change password</h3>
     <form class="horizontal-align">
