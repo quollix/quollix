@@ -3,10 +3,11 @@ package frontend_pages
 import (
 	"fmt"
 	"net/url"
-	"server/apps_basic"
-	"server/tools"
 	"strings"
 	"time"
+
+	"server/apps_basic"
+	"server/tools"
 
 	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
@@ -310,7 +311,8 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 	const appName = "sampleapp"
 	waitForNewTab := i.Frame.Page.MustWaitOpen()
 	i.ClickOpenButton(appName)
-	newTab := waitForNewTab().Timeout(defaultTimeout)
+	newTab := waitForNewTab().Timeout(browserTimeout)
+	defer newTab.CancelTimeout()
 	defer func() {
 		assert.Nil(i.Frame.T, newTab.Close())
 	}()
@@ -318,7 +320,9 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 	// After app start, Docker/network handover can briefly surface Chrome's transient ERR_NETWORK_CHANGED page
 	// even though the backend operation already finished. Retry until the tab shows the actual app content.
 	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
-		newTab.MustWaitLoad()
+		if err := newTab.WaitLoad(); err != nil {
+			return err
+		}
 		info, err := newTab.Info()
 		if err != nil {
 			return err
