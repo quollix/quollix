@@ -44,6 +44,7 @@ type PathsType struct {
 	BackendSignIn         string
 	BackendResetTestState string
 	BackendCheckAuth      string
+	BackendHealth         string
 
 	BackendUsers                      string
 	BackendUsersSignOut               string
@@ -212,6 +213,7 @@ var Paths = func() PathsType {
 	p.BackendSignIn = p.BackendApi + "/sign-in"
 	p.BackendResetTestState = p.BackendApi + "/reset-test-state"
 	p.BackendCheckAuth = p.BackendApi + "/check-auth"
+	p.BackendHealth = p.BackendApi + "/health"
 
 	p.BackendUsers = p.BackendApi + "/users"
 	p.BackendUsersSignOut = p.BackendUsers + "/sign-out"

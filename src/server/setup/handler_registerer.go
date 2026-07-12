@@ -24,6 +24,7 @@ import (
 	"server/users"
 
 	"github.com/go-chi/chi/v5"
+	u "github.com/quollix/common/utils"
 )
 
 type HandlerRegisterer struct {
@@ -92,6 +93,7 @@ func (h *HandlerRegisterer) anonymousRoutes() []users.Route {
 		{Path: tools.Paths.BackendAppsList, HandlerFunc: h.AppsHandler.AppListHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: tools.Paths.BackendSignIn, HandlerFunc: h.UserHandler.SignInHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: tools.Paths.BackendCheckAuth, HandlerFunc: h.UserHandler.CheckAuthHandler, AccessLevel: tools.AnonymousLevel},
+		{Path: tools.Paths.BackendHealth, HandlerFunc: HealthHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: tools.Paths.BackendUsersSetPassword, HandlerFunc: h.UserHandler.AcceptNewPasswordViaTokenHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: tools.Paths.BackendOidcWellKnown, HandlerFunc: h.OidcHandler.HandleDiscovery, AccessLevel: tools.AnonymousLevel},
 		{Path: tools.Paths.BackendOidcJwks, HandlerFunc: h.OidcHandler.HandleJWKS, AccessLevel: tools.AnonymousLevel},
@@ -339,4 +341,8 @@ func (h *HandlerRegisterer) registerMimeTypes() error {
 
 func EndpointDoesNotExistHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "endpoint does not exist, please inform the developers about this problem", http.StatusNotFound)
+}
+
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	u.SendJsonResponse(w, map[string]string{"status": "ok"})
 }
