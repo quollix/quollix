@@ -36,10 +36,10 @@ source $HOME/.bashrc
 echo "Configuring Go toolchain auto-upgrade"
 go env -w GOTOOLCHAIN=go${goVersion}+auto
 
-echo "Configuring Linux user namespace settings for sandboxed browser acceptance tests"
-# Rod acceptance tests launch Chromium with sandbox enabled. On some Ubuntu/AppArmor setups,
+echo "Configuring Linux user namespace settings for sandboxed browser frontend tests"
+# Rod frontend tests launch Chromium with sandbox enabled. On some Ubuntu/AppArmor setups,
 # unprivileged user namespaces are blocked by default, which causes Chromium startup to fail with
-# "No usable sandbox". This configuration is required for local developer acceptance tests.
+# "No usable sandbox". This configuration is required for local developer frontend tests.
 # Review this against your organization security policy before using in hardened environments.
 sudo tee /etc/sysctl.d/99-quollix-browser-sandbox.conf >/dev/null <<'EOF'
 kernel.unprivileged_userns_clone=1

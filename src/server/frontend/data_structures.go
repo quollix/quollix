@@ -137,6 +137,7 @@ type StoreAppDto struct {
 	AppName                        string
 	LatestVersionName              string
 	LatestVersionCreationTimestamp string
+	IsInstalled                    bool
 }
 
 type UsersPageContent struct {

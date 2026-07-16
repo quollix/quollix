@@ -33,11 +33,10 @@ func TestPruningApp(t *testing.T) {
 func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
-	_, err := InstallSample(t, client, "2.0")
+	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 
 	app := GetInstalledSample(t, client)
-	assert.Nil(t, client.Apps.Start(app.AppId))
 	appClient := GetAppClient(t, client)
 
 	serverURL, err := ReadSampleAppEnvValue(appClient, "SERVER_URL")
@@ -79,6 +78,9 @@ func TestStartingAndStoppingApps(t *testing.T) {
 	assert.Nil(t, client.Apps.Start(sampleApp.AppId))
 	sampleApp = GetInstalledSample(t, client)
 	assert.True(t, sampleApp.IsRunning)
+	assert.Nil(t, client.Apps.Stop(sampleApp.AppId))
+	sampleApp = GetInstalledSample(t, client)
+	assert.False(t, sampleApp.IsRunning)
 }
 
 func TestStopAppNotExisting(t *testing.T) {
@@ -250,7 +252,7 @@ func TestAppOperation(t *testing.T) {
 	assert.False(t, isOngoing)
 	assert.Equal(t, []string{}, operations)
 
-	app, err := InstallSample(t, client, "2.0")
+	app, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 	configureBackupRepo(t, client)
 	go func() {
@@ -366,7 +368,7 @@ func TestUploadingAppAlreadyExistingUpdatesIt(t *testing.T) {
 	defer client.Test.ResetTestState()
 	configureBackupRepo(t, client)
 
-	sampleAppOld, err := InstallSample(t, client, "1.0")
+	sampleAppOld, err := InstallAndStartSample(t, client, "1.0")
 	assert.Nil(t, err)
 	assert.Equal(t, tools.SampleAppVersion1Name, sampleAppOld.VersionName)
 	assert.Equal(t, tools.SampleAppVersion1CreationTimestamp, sampleAppOld.VersionCreationTimestamp)
@@ -465,8 +467,8 @@ func TestUpdatesAndPreUpdateBackupCreation(t *testing.T) {
 
 	appBeforeUpdate, err := InstallSample(t, client, "1.0")
 	assert.Nil(t, err)
-
 	assert.Nil(t, client.Apps.Start(appBeforeUpdate.AppId))
+
 	appClient := GetAppClient(t, client)
 	assert.Nil(t, AssertSampleAppContent(appClient, "this is version 1.0"))
 	assert.Nil(t, StoreStringInSampleApp(appClient, "persisted before update"))

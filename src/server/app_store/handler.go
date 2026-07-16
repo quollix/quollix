@@ -2,7 +2,6 @@ package app_store
 
 import (
 	"net/http"
-	"server/apps_basic"
 
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
@@ -20,8 +19,6 @@ var expectedPublishedAppsReloadErrors = u.MapOf(
 
 type AppStoreHandler struct {
 	AppStoreService AppStoreService
-	AppService      apps_basic.AppService
-	AppRepo         apps_basic.AppRepository
 	AppStoreClient  AppStoreClientLean
 }
 

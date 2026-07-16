@@ -57,11 +57,18 @@
       <td class="store-result-created-at">{{$app.LatestVersionCreationTimestamp}}</td>
       <td class="store-result-actions">
         <div class="actions-row">
-          <button type="button" class="lean icon-btn store-install-button" title="Install app"
-            aria-label="Install app"
-            onclick="installApp('{{$app.Maintainer}}','{{$app.AppName}}','{{$app.LatestVersionName}}')">
+          {{if $app.IsInstalled}}
+          <button type="button" class="lean icon-btn store-install-button" title="Already installed"
+            aria-label="Already installed" disabled aria-disabled="true">
             <i class="mdi mdi-download-box-outline" aria-hidden="true"></i>
           </button>
+          {{else}}
+          <button type="button" class="lean icon-btn store-install-button" title="Install app"
+            aria-label="Install app"
+            onclick="installAppFromStore('{{$app.Maintainer}}','{{$app.AppName}}','{{$app.LatestVersionName}}')">
+            <i class="mdi mdi-download-box-outline" aria-hidden="true"></i>
+          </button>
+          {{end}}
           <button type="button" class="lean icon-btn store-download-button" title="Download app"
             aria-label="Download app"
             onclick="downloadVersionFromAppStore('{{$app.Maintainer}}','{{$app.AppName}}','{{$app.LatestVersionName}}')">

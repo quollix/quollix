@@ -91,6 +91,24 @@ func (l *StorePage) InstallFromResult(maintainer, appName string) *StorePage {
 	return l
 }
 
+func (l *StorePage) AssertInstallButtonEnabled(maintainer, appName string) *StorePage {
+	installButton := l.findInstallButton(maintainer, appName)
+	disabled, err := installButton.Property("disabled")
+	assert.Nil(l.Frame.T, err)
+	assert.False(l.Frame.T, disabled.Bool())
+	l.assertInstallButtonTitle(installButton, "Install app")
+	return l
+}
+
+func (l *StorePage) AssertInstallButtonDisabledAsInstalled(maintainer, appName string) *StorePage {
+	installButton := l.findInstallButton(maintainer, appName)
+	disabled, err := installButton.Property("disabled")
+	assert.Nil(l.Frame.T, err)
+	assert.True(l.Frame.T, disabled.Bool())
+	l.assertInstallButtonTitle(installButton, "Already installed")
+	return l
+}
+
 func (l *StorePage) OpenVersionsFromResult(maintainer, appName string) *VersionsPage {
 	row := l.findSearchResultRow(maintainer, appName)
 	versionButton, err := row.Element("button.store-version-button")
@@ -126,6 +144,23 @@ func (l *StorePage) searchApps() []storeSearchResult {
 		})
 	}
 	return out
+}
+
+func (l *StorePage) findInstallButton(maintainer, appName string) *rod.Element {
+	row := l.findSearchResultRow(maintainer, appName)
+	installButton, err := row.Element("button.store-install-button")
+	assert.Nil(l.Frame.T, err)
+	return installButton
+}
+
+func (l *StorePage) assertInstallButtonTitle(installButton *rod.Element, expectedTitle string) {
+	title := installButton.MustAttribute("title")
+	assert.NotNil(l.Frame.T, title)
+	assert.Equal(l.Frame.T, expectedTitle, *title)
+
+	ariaLabel := installButton.MustAttribute("aria-label")
+	assert.NotNil(l.Frame.T, ariaLabel)
+	assert.Equal(l.Frame.T, expectedTitle, *ariaLabel)
 }
 
 func (l *StorePage) findSearchResultRow(maintainer, appName string) *rod.Element {

@@ -22,6 +22,7 @@ import (
 type frontendBuilderTestObjects struct {
 	Builder                    *FrontendPageDataBuilderImpl
 	AppService                 *apps_basic.AppServiceMock
+	AppRepo                    *apps_basic.AppRepositoryMock
 	UserRepo                   *users.UserRepositoryMock
 	ConfigsRepo                *configs.ConfigsRepositoryMock
 	ConfigsService             *configs.ConfigsServiceMock
@@ -39,6 +40,7 @@ type frontendBuilderTestObjects struct {
 
 func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 	appService := apps_basic.NewAppServiceMock(t)
+	appRepo := apps_basic.NewAppRepositoryMock(t)
 	userRepo := users.NewUserRepositoryMock(t)
 	configsRepo := configs.NewConfigsRepositoryMock(t)
 	configsService := configs.NewConfigsServiceMock(t)
@@ -56,6 +58,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 
 	builder := &FrontendPageDataBuilderImpl{
 		AppService:                 appService,
+		AppRepo:                    appRepo,
 		UserRepo:                   userRepo,
 		ConfigsRepo:                configsRepo,
 		ConfigsService:             configsService,
@@ -76,6 +79,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 	return frontendBuilderTestObjects{
 		Builder:                    builder,
 		AppService:                 appService,
+		AppRepo:                    appRepo,
 		UserRepo:                   userRepo,
 		ConfigsRepo:                configsRepo,
 		ConfigsService:             configsService,
@@ -407,6 +411,9 @@ func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) 
 			testObjects.AppStoreClient.EXPECT().
 				SearchForApps(testCase.expectedMaintainerQuery, "app", testCase.showUnofficialApps).
 				Return(appsToDisplay, nil)
+			testObjects.AppRepo.EXPECT().
+				ListApps().
+				Return(nil, nil)
 
 			pageContent, err := testObjects.Builder.BuildStorePage("maintainer", "app", testCase.showUnofficialApps, true)
 			assert.Nil(t, err)
@@ -420,8 +427,44 @@ func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) 
 			assert.Equal(t, "a1", pageContent.Apps[0].AppName)
 			assert.Equal(t, "1.2.3", pageContent.Apps[0].LatestVersionName)
 			assert.Equal(t, "2026-01-02 10:00:00", pageContent.Apps[0].LatestVersionCreationTimestamp)
+			assert.False(t, pageContent.Apps[0].IsInstalled)
 		})
 	}
+}
+
+func TestBuildStorePage_WhenSearch_MarksInstalledApps(t *testing.T) {
+	testObjects := getTestObjects(t)
+	testObjects.Builder.GlobalConfig.ShowUnofficialAppsSearch = true
+	creationTimestamp := time.Date(2026, time.January, 2, 10, 0, 0, 0, time.UTC)
+
+	testObjects.AppStoreClient.EXPECT().
+		SearchForApps("", "app", true).
+		Return([]store.AppWithLatestVersion{
+			{
+				Maintainer:                     "m1",
+				AppName:                        "installed-app",
+				LatestVersionName:              "1.2.3",
+				LatestVersionCreationTimestamp: creationTimestamp,
+			},
+			{
+				Maintainer:                     "m2",
+				AppName:                        "not-installed-app",
+				LatestVersionName:              "2.3.4",
+				LatestVersionCreationTimestamp: creationTimestamp,
+			},
+		}, nil)
+	testObjects.AppRepo.EXPECT().
+		ListApps().
+		Return([]apps_basic.RepoApp{
+			{AppName: "installed-app"},
+		}, nil)
+
+	pageContent, err := testObjects.Builder.BuildStorePage("maintainer", "app", true, true)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 2, len(pageContent.Apps))
+	assert.True(t, pageContent.Apps[0].IsInstalled)
+	assert.False(t, pageContent.Apps[1].IsInstalled)
 }
 
 func TestBuildStorePage_WhenSearchFails_ReturnsError(t *testing.T) {

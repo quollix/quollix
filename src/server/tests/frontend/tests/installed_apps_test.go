@@ -1,6 +1,6 @@
-//go:build acceptance
+//go:build frontend
 
-package acceptance
+package frontend
 
 import (
 	"server/tests/component"
@@ -16,7 +16,7 @@ func TestInstalledAppPage(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 
-	_, err := component.InstallSample(t, frame.Client, "2.0")
+	_, err := component.InstallAndStartSample(t, frame.Client, "2.0")
 	assert.Nil(t, err)
 
 	installedAppsPage := frame.Pages.OpenInstalledAppsPage().AssertHeaderColumnCount(8)
@@ -35,14 +35,14 @@ func TestInstalledAppPage(t *testing.T) {
 	assertFrontendRelativeTimeSet(t, sampleApp.VersionCreated)
 	installedAppsPage.AssertVersionCreatedTooltip("sampleapp", tools.SampleAppVersion2CreationTimestamp.Format(tools.PrettyFrontendTimeLayout))
 	assert.True(t, sampleApp.OpenButtonPresent)
-	assert.False(t, sampleApp.OpenButtonEnabled)
-	assert.False(t, sampleApp.IsRunning)
-	assert.Equal(t, "Not running", sampleApp.Status)
+	assert.True(t, sampleApp.OpenButtonEnabled)
+	assert.True(t, sampleApp.IsRunning)
+	assert.Equal(t, "Running", sampleApp.Status)
 
-	installedAppsPage.StartAppViaOperations("sampleapp").
-		AssertAppStatusAndOpenButtonEventually("sampleapp", true, true).
-		StopAppViaOperations("sampleapp").
-		AssertAppStatusAndOpenButtonEventually("sampleapp", false, false)
+	installedAppsPage.StopAppViaOperations("sampleapp").
+		AssertAppStatusAndOpenButtonEventually("sampleapp", false, false).
+		StartAppViaOperations("sampleapp").
+		AssertAppStatusAndOpenButtonEventually("sampleapp", true, true)
 }
 
 func TestSampleAppUpdateViaGui(t *testing.T) {
@@ -64,7 +64,7 @@ func TestSampleAppDeleteViaGui(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 
-	_, err := component.InstallSample(t, frame.Client, "2.0")
+	_, err := component.InstallAndStartSample(t, frame.Client, "2.0")
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(component.ListInstalledApps(t, frame.Client)))
 
@@ -77,7 +77,7 @@ func TestInstalledAppsTableColumnsByRole(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 
-	_, err := component.InstallSample(t, frame.Client, "2.0")
+	_, err := component.InstallAndStartSample(t, frame.Client, "2.0")
 	assert.Nil(t, err)
 
 	installedAppsPage := frame.Pages.OpenInstalledAppsPage().AssertHeaderColumnCount(8)

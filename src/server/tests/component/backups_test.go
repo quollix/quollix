@@ -23,7 +23,7 @@ func TestBackupLifecycle(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	_, err := InstallSample(t, client, "2.0")
+	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 	configureBackupRepo(t, client)
 
@@ -62,7 +62,6 @@ func TestBackupOperationsRequireRepoConfigured(t *testing.T) {
 
 	app, err := InstallSample(t, client, "2.0")
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.Start(app.AppId))
 
 	err = client.Backups.Create(app.AppId)
 	u.AssertDeepStackErrorFromRequest(t, err, backup_server.ErrBackupRepoNotConfigured)
@@ -84,7 +83,7 @@ func TestAppListingInBackupRepo(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	_, err := InstallSample(t, client, "2.0")
+	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 
 	configureBackupRepo(t, client)
@@ -237,9 +236,8 @@ type SampleAppBackupFixture struct {
 func createSampleAppWithBackupAndDeleteIt(t *testing.T, beforeBackup func(client *api_client.QuollixClient, app *apps_basic.AppDto)) SampleAppBackupFixture {
 	client := prepareSshRemoteServerSetup(t)
 
-	app, err := InstallSample(t, client, "2.0")
+	app, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.Start(app.AppId))
 
 	if beforeBackup != nil {
 		beforeBackup(client, app)
@@ -285,7 +283,7 @@ func TestDeletionOfTwoBackupsAtOnce(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	_, err := InstallSample(t, client, "2.0")
+	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 	configureBackupRepo(t, client)
 

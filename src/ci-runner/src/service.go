@@ -12,7 +12,7 @@ const (
 	ProdProfileBuildTag = "prod_profile"
 	BehindProxyBuildTag = "behind_proxy"
 	IntegrationBuildTag = "integration"
-	AcceptanceBuildTag  = "acceptance"
+	FrontendBuildTag    = "frontend"
 	OidcBuildTag        = "oidc"
 	ReleaseBuildTag     = "release"
 	SpecialPasswordsTag = "special_passwords"
@@ -22,11 +22,11 @@ const (
 	KeepDbFlagName                  = "keep-db"
 	DisableInitialAdminEnvFlagName  = "disable-initial-admin-env"
 	DisableInitialAdminEnvFlagShort = "a"
-	AcceptanceKeepSetupFlagName     = "keep-setup"
-	AcceptanceKeepSetupFlagShort    = "k"
-	AcceptanceTestFilterFlagName    = "test-filter"
-	AcceptanceTestFilterFlagShort   = "f"
-	AcceptanceWithGuiFlagName       = "with-gui"
+	FrontendKeepSetupFlagName       = "keep-setup"
+	FrontendKeepSetupFlagShort      = "k"
+	FrontendTestFilterFlagName      = "test-filter"
+	FrontendTestFilterFlagShort     = "f"
+	FrontendWithGuiFlagName         = "with-gui"
 	OidcKeepDatabasesFlagName       = "keep-databases"
 	OidcKeepDatabasesFlagShort      = "d"
 	OidcKeepContainersFlagName      = "keep-containers"
@@ -106,15 +106,15 @@ func TestAll() {
 	TestBehindProxyHttpMode()
 	TestOidc(false, false)
 	TestSpecialPasswords()
-	TestAcceptance(false, "", false)
+	TestFrontend(false, "", false)
 }
 
-func TestAcceptance(keepSetup bool, testFilter string, headful bool) {
-	Tr.Log.TaskDescription("Running acceptance tests")
+func TestFrontend(keepSetup bool, testFilter string, headful bool) {
+	Tr.Log.TaskDescription("Running frontend tests")
 	BuildLocalSampleAppDockerImageIfNotPresent()
 	if keepSetup {
 		Tr.Config.CleanupFunc = nil
-		Tr.Log.Info("Keep-setup enabled, reusing acceptance environment when possible")
+		Tr.Log.Info("Keep-setup enabled, reusing frontend environment when possible")
 		if !isContainerRunning(BrandAppContainerName) {
 			DeployLocalContainer(false, containerEnv(true, false))
 		}
@@ -124,7 +124,7 @@ func TestAcceptance(keepSetup bool, testFilter string, headful bool) {
 		DeployLocalContainer(false, containerEnv(true, false))
 	}
 
-	runAcceptanceTests(testFilter, headful)
+	runFrontendTests(testFilter, headful)
 }
 
 func TestOidc(keepDatabases bool, keepContainers bool) {
@@ -201,18 +201,18 @@ func containerEnv(useDevProfile bool, disableInitialAdminEnv bool, extraEnv ...s
 	return append(envVars, extraEnv...)
 }
 
-func runAcceptanceTests(testFilter string, headful bool) {
-	testCommand := newTestCommand(serverTestsDir, AcceptanceBuildTag)
-	runAcceptanceTestCommand(testCommand, testFilter, headful)
+func runFrontendTests(testFilter string, headful bool) {
+	testCommand := newTestCommand(serverTestsDir, FrontendBuildTag)
+	runFrontendTestCommand(testCommand, testFilter, headful)
 }
 
-func runAcceptanceTestCommand(testCommand *u.GoTestCommand, testFilter string, headful bool) {
+func runFrontendTestCommand(testCommand *u.GoTestCommand, testFilter string, headful bool) {
 	if headful {
 		testCommand.Env("HEADFUL", "true")
 	}
 
 	if testFilter != "" {
-		Tr.Log.Info("Running acceptance tests matching '%s'", testFilter)
+		Tr.Log.Info("Running frontend tests matching '%s'", testFilter)
 		testCommand.Filter(testFilter)
 	}
 

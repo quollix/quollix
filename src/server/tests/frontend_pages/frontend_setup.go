@@ -1,4 +1,4 @@
-//go:build acceptance
+//go:build frontend
 
 package frontend_pages
 
@@ -36,7 +36,7 @@ func Setup(t *testing.T) *FrameType {
 	frame.Session.SignInAsAdminViaClient()
 
 	if !wasFrontendReloadedDuringThisRun {
-		// this means, we can make changes to frontend and simply re-run the acceptance tests with latest changes, without having to re-redeploy the quollix container
+		// this means, we can make changes to frontend and simply re-run the frontend tests with latest changes, without having to re-redeploy the quollix container
 		frame.Client.Frontend.Reload()
 		wasFrontendReloadedDuringThisRun = true
 	}

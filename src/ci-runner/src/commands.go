@@ -95,14 +95,14 @@ var TestSpecialPasswordsCmd = &cobra.Command{
 	},
 }
 
-var TestAcceptanceCmd = &cobra.Command{
-	Use:   "acceptance",
-	Short: "run acceptance tests",
+var TestFrontendCmd = &cobra.Command{
+	Use:   "frontend",
+	Short: "run frontend tests",
 	Run: func(cmd *cobra.Command, args []string) {
-		keepSetup := getBoolFlag(cmd, AcceptanceKeepSetupFlagName)
-		testFilter := getStringFlag(cmd, AcceptanceTestFilterFlagName)
-		withGui := getBoolFlag(cmd, AcceptanceWithGuiFlagName)
-		TestAcceptance(keepSetup, testFilter, withGui)
+		keepSetup := getBoolFlag(cmd, FrontendKeepSetupFlagName)
+		testFilter := getStringFlag(cmd, FrontendTestFilterFlagName)
+		withGui := getBoolFlag(cmd, FrontendWithGuiFlagName)
+		TestFrontend(keepSetup, testFilter, withGui)
 	},
 }
 
@@ -125,9 +125,9 @@ var TestReleaseCmd = &cobra.Command{
 }
 
 func ConfigureTestCmd() {
-	TestAcceptanceCmd.Flags().BoolP(AcceptanceKeepSetupFlagName, AcceptanceKeepSetupFlagShort, false, "reuse acceptance setup and skip cleanup")
-	TestAcceptanceCmd.Flags().StringP(AcceptanceTestFilterFlagName, AcceptanceTestFilterFlagShort, "", "run only acceptance tests matching regex")
-	TestAcceptanceCmd.Flags().BoolP(AcceptanceWithGuiFlagName, "g", false, "run acceptance tests with visible browser window")
+	TestFrontendCmd.Flags().BoolP(FrontendKeepSetupFlagName, FrontendKeepSetupFlagShort, false, "reuse frontend setup and skip cleanup")
+	TestFrontendCmd.Flags().StringP(FrontendTestFilterFlagName, FrontendTestFilterFlagShort, "", "run only frontend tests matching regex")
+	TestFrontendCmd.Flags().BoolP(FrontendWithGuiFlagName, "g", false, "run frontend tests with visible browser window")
 	TestOidcCmd.Flags().BoolP(OidcKeepDatabasesFlagName, OidcKeepDatabasesFlagShort, false, "keep OIDC database volumes after the test")
 	TestOidcCmd.Flags().BoolP(OidcKeepContainersFlagName, OidcKeepContainersFlagShort, false, "keep OIDC containers and database volumes after the test")
 	TestCmd.AddCommand(
@@ -139,7 +139,7 @@ func ConfigureTestCmd() {
 		TestSpecialPasswordsCmd,
 		TestIntegrationCmd,
 		TestUnitCmd,
-		TestAcceptanceCmd,
+		TestFrontendCmd,
 		TestOidcCmd,
 		TestReleaseCmd,
 	)

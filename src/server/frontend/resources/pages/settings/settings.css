@@ -1,71 +1,77 @@
 hr {
-  height: 3px;
-  background-color: var(--light-dark);
+    height: 3px;
+    background-color: var(--light-dark);
 }
 
 .certificate-result-div {
-  display: flex;
-  gap: var(--space-unit);
+    display: flex;
+    gap: var(--space-unit);
 }
 
 .certificate-textarea {
-  width: 600px;
-  resize: none;
-  font-family: monospace !important;
+    width: 600px;
+    resize: none;
+    font-family: monospace !important;
 }
 
 #copyDns01ValueButton {
-  align-self: center;
+    align-self: center;
 }
 
 input[list]:hover::-webkit-calendar-picker-indicator,
 input[list]:focus::-webkit-calendar-picker-indicator {
-  display: none !important;
+    display: none !important;
 }
 
 .retention-label {
-  max-width: 180px;
+    max-width: 180px;
 }
 
 #iana-timezone {
-  min-width: 370px;
+    min-width: 370px;
 }
 
 #maintenance-window-start-hour {
-  width: 200px;
+    width: 200px;
 }
 
 #backup-server-known-hosts {
-  max-width: 800px;
-  height: 70px;
+    max-width: 800px;
+    height: 70px;
+}
+
+.backup-server-warning {
+    max-width: 900px;
+    padding: var(--space-unit);
+    color: white;
 }
 
 #enable-backup-server-label {
-  align-self: start;
+    align-self: start;
 }
 
 #enable-backup-server-label input {
-  margin-top: 25px;
-  margin-left: 100px;
+    margin-top: 25px;
+    margin-left: 100px;
 }
 
 #next-maintenance-execution {
-  display: grid;
-  align-self: start;
-  padding-right: 20px;
+    display: grid;
+    align-self: start;
+    padding-right: 20px;
 }
 
 #certificate-operation-indicator {
-  display: none;
-  align-items: center;
-  gap: var(--space-tight);
+    display: none;
+    align-items: center;
+    gap: var(--space-tight);
 }
 
 #certificate-operation-icon,
 #certificate-operation-spinner {
-  display: none;
+    display: none;
 }
 
 #certificate-operation-spinner {
-  animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
 }

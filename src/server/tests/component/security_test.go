@@ -81,9 +81,8 @@ func TestCookieValidation(t *testing.T) {
 func TestSecretIsDeletedAfterExchangeAgainstCookie(t *testing.T) {
 	cloud := GetClientAndLogin(t)
 	defer cloud.Test.ResetTestState()
-	app, err := InstallSample(t, cloud, "2.0")
+	_, err := InstallAndStartSample(t, cloud, "2.0")
 	assert.Nil(t, err)
-	assert.Nil(t, cloud.Apps.Start(app.AppId))
 	secret, err := cloud.AppAccess.GetSecret()
 	assert.Nil(t, err)
 	err = AssertSampleAppContentUsingSecret(cloud, secret)
@@ -99,9 +98,8 @@ func TestSecretValidation(t *testing.T) {
 	cloud := GetClientAndLogin(t)
 	defer cloud.Test.ResetTestState()
 
-	app, err := InstallSample(t, cloud, "2.0")
+	_, err := InstallSample(t, cloud, "2.0")
 	assert.Nil(t, err)
-	assert.Nil(t, cloud.Apps.Start(app.AppId))
 
 	randomSecret := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 	err = AssertSampleAppContentUsingSecret(cloud, randomSecret)
@@ -202,7 +200,8 @@ func TestSecureCookieFlagsPresence(t *testing.T) {
 
 	assertSecureCookieFlags(t, client.Parent.Cookie)
 
-	InstallAndStartSample(t, client, "2.0")
+	_, err := InstallSample(t, client, "2.0")
+	assert.Nil(t, err)
 	secret, err := client.AppAccess.GetSecret()
 	assert.Nil(t, err)
 	client.Parent.Cookie = nil
@@ -309,8 +308,7 @@ func TestPasswordResetInvalidatesQuollixAndAppSessions(t *testing.T) {
 }
 
 func prepareAuthenticatedSampleApp(t *testing.T, client *api_client.QuollixClient) {
-	app, err := InstallSample(t, client, "2.0")
+	app, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.Start(app.AppId))
 	assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, tools.Policies.AuthenticatedAccessPolicy))
 }

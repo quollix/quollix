@@ -184,7 +184,7 @@ window.saveRetentionPolicy = async function() {
 
 window.resetBackupServerConfigs = async function() {
     const confirmed = await confirmDialog(
-        `Reset backup server settings? Existing backups may become inaccessible.`
+        `Reset backup server settings? Existing backups may become inaccessible unless you kept a separate copy of the backup server settings and encryption password.`
     )
     if (!confirmed) return
 

@@ -19,7 +19,7 @@ func TestBackupServerWithLoosePolicyPasswords(t *testing.T) {
 	client := component.GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	_, err := component.InstallSample(t, client, "2.0")
+	_, err := component.InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 
 	repo := backup_server.GetSampleRemoteRepo()

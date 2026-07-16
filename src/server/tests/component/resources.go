@@ -147,11 +147,15 @@ func InstallSample(t *testing.T, client *api_client.QuollixClient, version strin
 	return GetInstalledSample(t, client), nil
 }
 
-func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, version string) *apps_basic.AppDto {
+func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, version string) (*apps_basic.AppDto, error) {
 	app, err := InstallSample(t, client, version)
-	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.Start(app.AppId))
-	return app
+	if err != nil {
+		return nil, err
+	}
+	if err := client.Apps.Start(app.AppId); err != nil {
+		return nil, err
+	}
+	return GetInstalledSample(t, client), nil
 }
 
 func GetInstalledSample(t *testing.T, client *api_client.QuollixClient) *apps_basic.AppDto {

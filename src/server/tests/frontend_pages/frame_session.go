@@ -61,7 +61,7 @@ func (s *FrameSession) GetAuthCookie() *http.Cookie {
 	cookies := s.Frame.Page.MustCookies(s.Frame.BaseUrl)
 	for _, cookie := range cookies {
 		if cookie.Name == tools.BrandAppAuthCookieName {
-			return &http.Cookie{ // #nosec G124: acceptance tests reconstruct the browser cookie only for local test replay
+			return &http.Cookie{ // #nosec G124: frontend tests reconstruct the browser cookie only for local test replay
 				Name:     cookie.Name,
 				Value:    cookie.Value,
 				Path:     cookie.Path,

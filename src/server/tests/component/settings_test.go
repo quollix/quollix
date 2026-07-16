@@ -13,11 +13,9 @@ import (
 func TestAssertSampleAppContentUsingHttps(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
-	_, err := InstallSample(t, client, "2.0")
+	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
-	app := GetInstalledSample(t, client)
 
-	assert.Nil(t, client.Apps.Start(app.AppId))
 	appClient := GetAppClient(t, client)
 	assert.Nil(t, AssertSampleAppContent(appClient, "this is version 2.0"))
 

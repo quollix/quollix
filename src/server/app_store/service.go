@@ -87,7 +87,6 @@ func (a *AppStoreServiceImpl) DownloadAndInstallVersion(versionTree *store.Versi
 	if err != nil {
 		return u.Logger.NewError(err.Error())
 	}
-
 	return nil
 }
 

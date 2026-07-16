@@ -13,7 +13,8 @@ import (
 
 func TestBehindProxyDeploymentAllowsHttpAndForwardsHttpProto(t *testing.T) {
 	client := component.GetClientAndLogin(t)
-	component.InstallAndStartSample(t, client, "2.0")
+	_, err := component.InstallAndStartSample(t, client, "2.0")
+	assert.Nil(t, err)
 	secret, err := client.AppAccess.GetSecret()
 	assert.Nil(t, err)
 	assert.Nil(t, component.ExchangeAppAccessSecretForCookieWithUrl(client, secret, "http://sampleapp.localhost/"))

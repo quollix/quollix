@@ -445,6 +445,11 @@ func (b *FrontendPageDataBuilderImpl) BuildStorePage(maintainerName string, appN
 			return nil, err
 		}
 
+		installedAppNames, err := b.installedAppNames()
+		if err != nil {
+			return nil, err
+		}
+
 		appsToDisplay = make([]StoreAppDto, 0, len(foundApps))
 		for _, app := range foundApps {
 			appsToDisplay = append(appsToDisplay, StoreAppDto{
@@ -452,6 +457,7 @@ func (b *FrontendPageDataBuilderImpl) BuildStorePage(maintainerName string, appN
 				AppName:                        app.AppName,
 				LatestVersionName:              app.LatestVersionName,
 				LatestVersionCreationTimestamp: app.LatestVersionCreationTimestamp.UTC().Format(tools.PrettyFrontendTimeLayout),
+				IsInstalled:                    installedAppNames[app.AppName],
 			})
 		}
 	}
@@ -463,6 +469,19 @@ func (b *FrontendPageDataBuilderImpl) BuildStorePage(maintainerName string, appN
 		ShowUnofficialToggle: b.GlobalConfig.ShowUnofficialAppsSearch,
 		Apps:                 appsToDisplay,
 	}, nil
+}
+
+func (b *FrontendPageDataBuilderImpl) installedAppNames() (map[string]bool, error) {
+	installedApps, err := b.AppRepo.ListApps()
+	if err != nil {
+		return nil, err
+	}
+
+	installedAppNames := make(map[string]bool, len(installedApps))
+	for _, app := range installedApps {
+		installedAppNames[app.AppName] = true
+	}
+	return installedAppNames, nil
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildVersionsPage(maintainer string, app string) (*VersionsPageContent, error) {

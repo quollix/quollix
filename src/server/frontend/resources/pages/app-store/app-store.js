@@ -32,6 +32,25 @@ window.goToVersions = async (maintainer, app) => {
     window.location.href = `{{ $.Static.Paths.FrontendVersions }}?${params.toString()}`
 }
 
+window.installAppFromStore = async (maintainer, app, version) => {
+    const ok = await installApp(maintainer, app, version)
+    if (!ok) return
+    disableInstallButtonsForApp(app)
+}
+
+function disableInstallButtonsForApp(app) {
+    const rows = document.querySelectorAll(`#store-results-body tr.store-result-row[data-app="${CSS.escape(app)}"]`)
+    for (const row of rows) {
+        const installButton = row.querySelector("button.store-install-button")
+        if (!installButton) continue
+        installButton.disabled = true
+        installButton.setAttribute("aria-disabled", "true")
+        installButton.setAttribute("title", "Already installed")
+        installButton.setAttribute("aria-label", "Already installed")
+        installButton.removeAttribute("onclick")
+    }
+}
+
 window.downloadVersionFromAppStore = async (maintainer, app, version) => {
     await downloadFile('{{ $.Static.Paths.BackendStoreVersionsDownload }}', {
         Maintainer: maintainer,

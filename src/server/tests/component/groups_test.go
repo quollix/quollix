@@ -125,9 +125,8 @@ func TestQuollixClient_FullAccessViaGroupFlow(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	app, err := InstallSample(t, client, "2.0")
+	app, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.Start(app.AppId))
 
 	assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, tools.Policies.GroupRestrictedAccessPolicy))
 

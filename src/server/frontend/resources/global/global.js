@@ -126,6 +126,7 @@ window.installApp = async (maintainer, app, version) => {
         VersionName: version
     })
     if (ok) showSnackbar('Installation successful')
+    return ok
 }
 
 function base64ToBytes(base64String) {

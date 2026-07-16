@@ -1,6 +1,6 @@
-//go:build acceptance
+//go:build frontend
 
-package acceptance
+package frontend
 
 import (
 	"fmt"
