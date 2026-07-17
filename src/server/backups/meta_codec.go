@@ -6,6 +6,7 @@ import (
 	"server/tools"
 	"time"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"gopkg.in/yaml.v3"
 )
@@ -31,8 +32,8 @@ type MetaCodecImpl struct {
 }
 
 func (c *MetaCodecImpl) Load(path string) (*MetaData, error) {
-	meta := NewMetaData("", "", tools.Policies.AdminOnlyAccessPolicy, "80", tools.DefaultTime, true, true) // default values for unexpected fallback
-	data, err := os.ReadFile(path)                                                                         // #nosec G304 G703: path is the trusted backup metadata file selected by application workflow
+	meta := NewMetaData("", "", api.Policies.AdminOnlyAccessPolicy, "80", tools.DefaultTime, true, true) // default values for unexpected fallback
+	data, err := os.ReadFile(path)                                                                       // #nosec G304 G703: path is the trusted backup metadata file selected by application workflow
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}

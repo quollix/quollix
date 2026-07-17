@@ -10,6 +10,7 @@ import (
 	"server/users"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -51,8 +52,8 @@ func TestOidcAccountPage_SetLocalPasswordShowsChangePasswordForm(t *testing.T) {
 }
 
 func signInViaOidcInBrowser(frame *frontend_pages.FrameType) {
-	frame.Page.MustNavigate(frame.BaseUrl + tools.Paths.FrontendSignIn).MustWaitLoad()
-	frame.Page.MustElementR(".oidc-provider-button", OidcProviderName).MustClick()
+	frame.Page.MustNavigate(frame.BaseUrl + api.Paths.FrontendSignIn)
+	frame.Page.MustElementMatchingText(".oidc-provider-button", OidcProviderName).MustClick()
 	frame.Assert.HostEventually("quollix." + ProviderHost)
 
 	loginViaBrowser(frame, ProviderAdminUsername, tools.DefaultAdminPassword)
@@ -64,7 +65,7 @@ func openAccountPage(frame *frontend_pages.FrameType) {
 	frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		frame.Page.MustElement("#sidebar-user-link").MustClick()
 	})
-	frame.Assert.PathEventually(tools.Paths.FrontendAccount)
+	frame.Assert.PathEventually(api.Paths.FrontendAccount)
 }
 
 func loginViaBrowser(frame *frontend_pages.FrameType, username string, password string) {

@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"server/tests/api_client"
-	"server/tools"
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 )
@@ -15,7 +15,7 @@ import (
 func TestHealthEndpoint(t *testing.T) {
 	client := api_client.NewQuollixClient()
 
-	responseBody, err := client.Parent.DoRequest(tools.Paths.BackendHealth, nil)
+	responseBody, err := client.Parent.DoRequest(api.Paths.BackendHealth, nil)
 	assert.Nil(t, err)
 
 	var healthResponse map[string]string

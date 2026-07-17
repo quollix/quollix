@@ -1,10 +1,9 @@
 package frontend_pages
 
 import (
-	"server/tools"
-
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 )
 
 type StorePage struct {
@@ -12,7 +11,7 @@ type StorePage struct {
 }
 
 func (l *StorePage) InstallSampleApp() *StorePage {
-	l.Frame.Assert.PagePath(tools.Paths.FrontendStore)
+	l.Frame.Assert.PagePath(api.Paths.FrontendStore)
 	l.EnableUnofficialSearchAndConfirm().
 		SetMaintainerFilter("samplemaintainer").
 		SetSearchAppName("sampleapp").
@@ -146,14 +145,14 @@ func (l *StorePage) searchApps() []storeSearchResult {
 	return out
 }
 
-func (l *StorePage) findInstallButton(maintainer, appName string) *rod.Element {
+func (l *StorePage) findInstallButton(maintainer, appName string) *browsertest.Element {
 	row := l.findSearchResultRow(maintainer, appName)
 	installButton, err := row.Element("button.store-install-button")
 	assert.Nil(l.Frame.T, err)
 	return installButton
 }
 
-func (l *StorePage) assertInstallButtonTitle(installButton *rod.Element, expectedTitle string) {
+func (l *StorePage) assertInstallButtonTitle(installButton *browsertest.Element, expectedTitle string) {
 	title := installButton.MustAttribute("title")
 	assert.NotNil(l.Frame.T, title)
 	assert.Equal(l.Frame.T, expectedTitle, *title)
@@ -163,7 +162,7 @@ func (l *StorePage) assertInstallButtonTitle(installButton *rod.Element, expecte
 	assert.Equal(l.Frame.T, expectedTitle, *ariaLabel)
 }
 
-func (l *StorePage) findSearchResultRow(maintainer, appName string) *rod.Element {
+func (l *StorePage) findSearchResultRow(maintainer, appName string) *browsertest.Element {
 	rows := l.Frame.Page.MustElements(`#store-results-body tr.store-result-row`)
 	for _, row := range rows {
 		rowMaintainer := row.MustAttribute("data-maintainer")

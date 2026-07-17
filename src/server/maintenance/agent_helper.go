@@ -10,6 +10,7 @@ import (
 	"server/tools"
 	"time"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -128,7 +129,7 @@ func (m *AgentHelperImpl) RetentBackupsForAllAppsIfConfigured() {
 		func() {
 			defer handle.Done()
 
-			maintainerAndApp := tools.MaintainerAndApp{
+			maintainerAndApp := api.MaintainerAndApp{
 				Maintainer: backedUpApp.Maintainer,
 				AppName:    backedUpApp.AppName,
 			}

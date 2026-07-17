@@ -3,10 +3,10 @@ package oidc_client
 import (
 	"net/http"
 	"server/configs"
-	"server/tools"
 	"strings"
 	"time"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -104,14 +104,14 @@ func (s *OidcAuthFlowServiceImpl) callbackUrl() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "https://quollix." + host + tools.Paths.BackendOidcCallback, nil
+	return "https://quollix." + host + api.Paths.BackendOidcCallback, nil
 }
 
 func newOidcLoginStateCookie(state string, expiresAt time.Time) *http.Cookie {
 	return &http.Cookie{
 		Name:     oidcSignInStateCookieName,
 		Value:    state,
-		Path:     tools.Paths.BackendOidcCallback,
+		Path:     api.Paths.BackendOidcCallback,
 		Expires:  expiresAt,
 		MaxAge:   int(oidcLoginStateTtl.Seconds()),
 		HttpOnly: true,
@@ -124,7 +124,7 @@ func clearOidcLoginStateCookie() *http.Cookie {
 	return &http.Cookie{
 		Name:     oidcSignInStateCookieName,
 		Value:    "",
-		Path:     tools.Paths.BackendOidcCallback,
+		Path:     api.Paths.BackendOidcCallback,
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,

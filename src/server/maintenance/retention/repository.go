@@ -5,19 +5,21 @@ import (
 	"server/configs"
 	"server/tools"
 	"strconv"
+
+	api "github.com/quollix/common/quollix/api"
 )
 
 type RetentionPolicyRepository interface {
-	GetRetentionPolicy() (*RetentionPolicy, error)
+	GetRetentionPolicy() (*api.RetentionPolicy, error)
 	IsRetentionPolicySet() (bool, error)
-	SetRetentionPolicy(*RetentionPolicy) error
+	SetRetentionPolicy(*api.RetentionPolicy) error
 }
 
 type RetentionPolicyRepositoryImpl struct {
 	DatabaseConnector tools.DatabaseConnector
 }
 
-func (r *RetentionPolicyRepositoryImpl) GetRetentionPolicy() (*RetentionPolicy, error) {
+func (r *RetentionPolicyRepositoryImpl) GetRetentionPolicy() (*api.RetentionPolicy, error) {
 	var preUpdateRetentionString string
 	var dailyRetentionString string
 	var weeklyRetentionString string
@@ -69,7 +71,7 @@ SELECT
 		return nil, err
 	}
 
-	return &RetentionPolicy{
+	return &api.RetentionPolicy{
 		KeepPreUpdate: preUpdateRetentionCount,
 		KeepDaily:     dailyRetentionCount,
 		KeepWeekly:    weeklyRetentionCount,
@@ -96,7 +98,7 @@ WHERE key IN ($1, $2, $3, $4, $5);
 	return count == 5, nil
 }
 
-func (r *RetentionPolicyRepositoryImpl) SetRetentionPolicy(policy *RetentionPolicy) error {
+func (r *RetentionPolicyRepositoryImpl) SetRetentionPolicy(policy *api.RetentionPolicy) error {
 	_, err := r.DatabaseConnector.GetDB().Exec(`
 INSERT INTO configs (key, value)
 VALUES
@@ -117,8 +119,8 @@ SET value = EXCLUDED.value;
 	return err
 }
 
-func GetDefaultRetentionPolicy() *RetentionPolicy {
-	return &RetentionPolicy{
+func GetDefaultRetentionPolicy() *api.RetentionPolicy {
+	return &api.RetentionPolicy{
 		KeepPreUpdate: 5,
 		KeepDaily:     7,
 		KeepWeekly:    4,

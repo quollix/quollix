@@ -6,26 +6,21 @@ import (
 	"strconv"
 	"time"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
-type MaintenanceConfig struct {
-	IanaTimezone               string
-	MaintenanceWindowStartHour int
-	NextMaintenanceAt          time.Time
-}
-
 type MaintenanceRepository interface {
-	GetMaintenanceConfig() (*MaintenanceConfig, error)
+	GetMaintenanceConfig() (*api.MaintenanceConfig, error)
 	IsMaintenanceConfigSet() (bool, error)
-	SetMaintenanceConfig(*MaintenanceConfig) error
+	SetMaintenanceConfig(*api.MaintenanceConfig) error
 }
 
 type MaintenanceRepositoryImpl struct {
 	DatabaseConnector tools.DatabaseConnector
 }
 
-func (r *MaintenanceRepositoryImpl) GetMaintenanceConfig() (*MaintenanceConfig, error) {
+func (r *MaintenanceRepositoryImpl) GetMaintenanceConfig() (*api.MaintenanceConfig, error) {
 	var ianaTimeZone string
 	var maintenanceWindowStartHourString string
 	var nextMaintenanceAtUtcString string
@@ -58,7 +53,7 @@ SELECT
 		return nil, u.Logger.NewError(err.Error())
 	}
 
-	return &MaintenanceConfig{
+	return &api.MaintenanceConfig{
 		MaintenanceWindowStartHour: maintenanceWindowStartHour,
 		NextMaintenanceAt:          nextMaintenanceAtUtc.UTC(),
 		IanaTimezone:               ianaTimeZone,
@@ -81,7 +76,7 @@ WHERE key IN ($1, $2, $3);
 	return count == 3, nil
 }
 
-func (r *MaintenanceRepositoryImpl) SetMaintenanceConfig(config *MaintenanceConfig) error {
+func (r *MaintenanceRepositoryImpl) SetMaintenanceConfig(config *api.MaintenanceConfig) error {
 	_, err := r.DatabaseConnector.GetDB().Exec(`
 INSERT INTO configs (key, value)
 VALUES

@@ -14,6 +14,7 @@ import (
 	"server/users"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/stretchr/testify/mock"
 )
@@ -118,7 +119,7 @@ func TestOidcServiceImpl_Authorize_HappyPath(t *testing.T) {
 	in := authorizeInput()
 
 	testObjects.ClientService.EXPECT().CheckClientIdAndRedirectUri(in.ClientID, in.RedirectURI).Return(nil)
-	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&tools.User{Id: in.UserID}, nil)
+	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&api.User{Id: in.UserID}, nil)
 	testObjects.AuthHelper.EXPECT().GenerateSecret().Return("code-123", nil)
 	testObjects.Clock.EXPECT().Now().Return(sampleTime)
 
@@ -582,10 +583,10 @@ func TestDiscovery_ReturnsCorrectDiscoveryConfig(t *testing.T) {
 
 	expectedIssuer := "https://quollix.example.com"
 	assert.Equal(t, expectedIssuer, res.Issuer)
-	assert.Equal(t, expectedIssuer+tools.Paths.BackendOidcAuthorize, res.AuthorizationEndpoint)
-	assert.Equal(t, expectedIssuer+tools.Paths.BackendOidcToken, res.TokenEndpoint)
-	assert.Equal(t, expectedIssuer+tools.Paths.BackendOidcJwks, res.JwksURI)
-	assert.Equal(t, expectedIssuer+tools.Paths.BackendOidcUserinfo, res.UserinfoEndpoint)
+	assert.Equal(t, expectedIssuer+api.Paths.BackendOidcAuthorize, res.AuthorizationEndpoint)
+	assert.Equal(t, expectedIssuer+api.Paths.BackendOidcToken, res.TokenEndpoint)
+	assert.Equal(t, expectedIssuer+api.Paths.BackendOidcJwks, res.JwksURI)
+	assert.Equal(t, expectedIssuer+api.Paths.BackendOidcUserinfo, res.UserinfoEndpoint)
 	assert.Equal(t, []string{"client_secret_basic", "client_secret_post"}, res.TokenEndpointAuthMethodsSupported)
 	assert.Equal(t, []string{"S256"}, res.CodeChallengeMethodsSupported)
 }
@@ -607,7 +608,7 @@ func TestOidcServiceImpl_Authorize_WhenCodeChallengeMethodEmpty_AllowsAuthorize(
 	in.CodeChallengeMethod = ""
 
 	testObjects.ClientService.EXPECT().CheckClientIdAndRedirectUri(in.ClientID, in.RedirectURI).Return(nil)
-	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&tools.User{Id: in.UserID}, nil)
+	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&api.User{Id: in.UserID}, nil)
 	testObjects.AuthHelper.EXPECT().GenerateSecret().Return("code-123", nil)
 	testObjects.Cache.EXPECT().StoreAuthCode(mock.Anything)
 	testObjects.Clock.EXPECT().Now().Return(sampleTime)

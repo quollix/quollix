@@ -6,6 +6,7 @@ import (
 	"server/tools"
 	"strings"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -35,7 +36,7 @@ func (p *AppRequestPolicyImpl) ValidateRequestOrigin(requestHost, originHost, ba
 }
 
 func (p *AppRequestPolicyImpl) isOriginHostAllowed(originHost string, baseDomain string) bool {
-	return originHost == tools.BrandAppDomainPrefix+baseDomain
+	return originHost == api.BrandAppDomainPrefix+baseDomain
 }
 
 func (p *AppRequestPolicyImpl) isCrossOriginRequest(requestHost, originHost string) bool {

@@ -3,9 +3,8 @@ package test_tools
 import (
 	"testing"
 
-	"server/oidc_provider"
-
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 const (
@@ -13,8 +12,8 @@ const (
 	OidcClientSecretLength = 64
 )
 
-func GetSampleOidcRelyingParty() *oidc_provider.OidcRelyingPartyDto {
-	return &oidc_provider.OidcRelyingPartyDto{
+func GetSampleOidcRelyingParty() *api.OidcRelyingPartyDto {
+	return &api.OidcRelyingPartyDto{
 		Name:         "Corporate-Client",
 		Domain:       "client.example.com",
 		ClientId:     "client-id",
@@ -22,8 +21,8 @@ func GetSampleOidcRelyingParty() *oidc_provider.OidcRelyingPartyDto {
 	}
 }
 
-func GetUpdatedSampleOidcRelyingParty() *oidc_provider.OidcRelyingPartyDto {
-	return &oidc_provider.OidcRelyingPartyDto{
+func GetUpdatedSampleOidcRelyingParty() *api.OidcRelyingPartyDto {
+	return &api.OidcRelyingPartyDto{
 		Name:         "Updated-Client",
 		Domain:       "updated-client.example.com",
 		ClientId:     "updated-client-id",

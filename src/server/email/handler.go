@@ -3,10 +3,10 @@ package email
 import (
 	"net/http"
 	"server/configs"
-	"server/tools"
 	"server/users"
 	"strconv"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -55,13 +55,8 @@ func (e *EmailHandler) TestEmailServerConnection(w http.ResponseWriter, r *http.
 	}
 }
 
-type TestEmailRequest struct {
-	EmailConfig u.EmailConfig `json:"email_config"`
-	ToEmail     string        `json:"to_email" validate:"email"`
-}
-
 func (e *EmailHandler) SendTestEmail(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[TestEmailRequest](w, r)
+	request, ok := validation.ReadBody[api.TestEmailRequest](w, r)
 	if !ok {
 		return
 	}
@@ -84,11 +79,11 @@ func (e *EmailHandler) ReadOidcEmailExposureConfig(w http.ResponseWriter, r *htt
 		u.WriteResponseError(w, nil, err)
 		return
 	}
-	u.SendJsonResponse(w, tools.SingleBool{Value: exposeRealEmail})
+	u.SendJsonResponse(w, api.SingleBool{Value: exposeRealEmail})
 }
 
 func (e *EmailHandler) SaveOidcEmailExposureConfig(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[tools.SingleBool](w, r)
+	request, ok := validation.ReadBody[api.SingleBool](w, r)
 	if !ok {
 		return
 	}
@@ -98,26 +93,17 @@ func (e *EmailHandler) SaveOidcEmailExposureConfig(w http.ResponseWriter, r *htt
 	}
 }
 
-type InvitationEmailTemplateRequest struct {
-	Template string `json:"template" validate:"ignore"`
-}
-
-type InviteUserRequest struct {
-	Username string `json:"username" validate:"username"`
-	Email    string `json:"email" validate:"email"`
-}
-
 func (e *EmailHandler) ReadInvitationTemplate(w http.ResponseWriter, r *http.Request) {
 	template, err := e.ConfigsRepo.GetConfig(configs.ConfigKeys.InvitationEmailTemplate)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
 	}
-	u.SendJsonResponse(w, InvitationEmailTemplateRequest{Template: template})
+	u.SendJsonResponse(w, api.InvitationEmailTemplateRequest{Template: template})
 }
 
 func (e *EmailHandler) SaveInvitationTemplate(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[InvitationEmailTemplateRequest](w, r)
+	request, ok := validation.ReadBody[api.InvitationEmailTemplateRequest](w, r)
 	if !ok {
 		return
 	}
@@ -135,7 +121,7 @@ func (e *EmailHandler) ResetInvitationTemplate(w http.ResponseWriter, r *http.Re
 }
 
 func (e *EmailHandler) InviteUserViaEmailHandler(w http.ResponseWriter, r *http.Request) {
-	userInvitationRequest, ok := validation.ReadBody[InviteUserRequest](w, r)
+	userInvitationRequest, ok := validation.ReadBody[api.InviteUserRequest](w, r)
 	if !ok {
 		return
 	}
@@ -146,7 +132,7 @@ func (e *EmailHandler) InviteUserViaEmailHandler(w http.ResponseWriter, r *http.
 }
 
 func (e *EmailHandler) SendPasswordResetEmailHandler(w http.ResponseWriter, r *http.Request) {
-	userIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	userIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}

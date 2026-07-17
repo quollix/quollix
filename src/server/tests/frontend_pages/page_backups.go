@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -51,7 +52,7 @@ func (b *BackupsPage) ClickBack() *BackedUpAppsPage {
 	b.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		backButton.MustClick()
 	})
-	b.Frame.Assert.PagePath(tools.Paths.FrontendBackedUpApps)
+	b.Frame.Assert.PagePath(api.Paths.FrontendBackedUpApps)
 	return b.Frame.Pages.BackedUpAppsPage
 }
 
@@ -141,8 +142,8 @@ func (b *BackupsPage) DeleteFirstBackupUntilRemoved() *BackupsPage {
 	return b
 }
 
-func (b *BackupsPage) waitForSingleBackupRow() *rod.Element {
-	var row *rod.Element
+func (b *BackupsPage) waitForSingleBackupRow() *browsertest.Element {
+	var row *browsertest.Element
 	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		rows, listErr := b.Frame.Page.Elements("tr.backup-row")
 		if listErr != nil {

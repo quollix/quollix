@@ -8,7 +8,7 @@ fi
 
 echo "Installing required debian packages"
 sudo apt-get update
-sudo apt-get install -y wget git curl
+sudo apt-get install -y wget git curl chromium-browser
 
 echo "Installing docker"
 curl -fsSL https://get.docker.com | sudo sh
@@ -37,10 +37,9 @@ echo "Configuring Go toolchain auto-upgrade"
 go env -w GOTOOLCHAIN=go${goVersion}+auto
 
 echo "Configuring Linux user namespace settings for sandboxed browser frontend tests"
-# Rod frontend tests launch Chromium with sandbox enabled. On some Ubuntu/AppArmor setups,
+# Frontend tests launch Chromium with sandbox enabled. On some Ubuntu/AppArmor setups,
 # unprivileged user namespaces are blocked by default, which causes Chromium startup to fail with
 # "No usable sandbox". This configuration is required for local developer frontend tests.
-# Review this against your organization security policy before using in hardened environments.
 sudo tee /etc/sysctl.d/99-quollix-browser-sandbox.conf >/dev/null <<'EOF'
 kernel.unprivileged_userns_clone=1
 user.max_user_namespaces=28633

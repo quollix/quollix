@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"server/tools"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -25,18 +26,18 @@ var (
 )
 
 type UserRepository interface {
-	CreateUser(info *tools.User) (int, error)
+	CreateUser(info *api.User) (int, error)
 
 	DeleteUser(userId int) error
 	DoesAnyAdminUserExist() (bool, error)
-	ListUsers() ([]tools.User, error)
+	ListUsers() ([]api.User, error)
 	DoesUserExist(user string) (bool, error)
 	GetHighestGeneratedUsernameSuffix(username string, maxUsernameLength int) (int, bool, error)
 
-	GetUserById(userId int) (*tools.User, error)
-	GetUserByUsername(username string) (*tools.User, error)
-	UpdateUser(info *tools.User) error
-	GetUserByToken(token string) (*tools.User, error)
+	GetUserById(userId int) (*api.User, error)
+	GetUserByUsername(username string) (*api.User, error)
+	UpdateUser(info *api.User) error
+	GetUserByToken(token string) (*api.User, error)
 	DoesEmailExist(email string) (bool, error)
 }
 
@@ -53,7 +54,7 @@ func (r *UserRepositoryImpl) DoesEmailExist(email string) (bool, error) {
 	return exists, nil
 }
 
-func (r *UserRepositoryImpl) searchUserBy(field string, value any) (*tools.User, error) {
+func (r *UserRepositoryImpl) searchUserBy(field string, value any) (*api.User, error) {
 	users, err := r.queryUsers(fmt.Sprintf("WHERE %s = $1", field), value)
 	if err != nil {
 		return nil, err
@@ -64,7 +65,7 @@ func (r *UserRepositoryImpl) searchUserBy(field string, value any) (*tools.User,
 	return &users[0], nil
 }
 
-func (r *UserRepositoryImpl) queryUsers(where string, args ...any) ([]tools.User, error) {
+func (r *UserRepositoryImpl) queryUsers(where string, args ...any) ([]api.User, error) {
 	query := userSelect
 	if where != "" {
 		query += " " + where
@@ -73,16 +74,16 @@ func (r *UserRepositoryImpl) queryUsers(where string, args ...any) ([]tools.User
 	return r.scanUsers(query, args...)
 }
 
-func (r *UserRepositoryImpl) scanUsers(query string, args ...any) ([]tools.User, error) {
+func (r *UserRepositoryImpl) scanUsers(query string, args ...any) ([]api.User, error) {
 	rows, err := r.DbProvider.GetDB().Query(query, args...)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
 	defer u.Close(rows)
 
-	var users []tools.User
+	var users []api.User
 	for rows.Next() {
-		var user tools.User
+		var user api.User
 		if err = rows.Scan(
 			&user.Id,
 			&user.Username,
@@ -102,15 +103,15 @@ func (r *UserRepositoryImpl) scanUsers(query string, args ...any) ([]tools.User,
 	return users, nil
 }
 
-func (r *UserRepositoryImpl) GetUserById(userId int) (*tools.User, error) {
+func (r *UserRepositoryImpl) GetUserById(userId int) (*api.User, error) {
 	return r.searchUserBy("user_id", userId)
 }
 
-func (r *UserRepositoryImpl) GetUserByUsername(username string) (*tools.User, error) {
+func (r *UserRepositoryImpl) GetUserByUsername(username string) (*api.User, error) {
 	return r.searchUserBy("username", username)
 }
 
-func (r *UserRepositoryImpl) UpdateUser(info *tools.User) error {
+func (r *UserRepositoryImpl) UpdateUser(info *api.User) error {
 	_, err := r.DbProvider.GetDB().Exec(
 		userUpdate,
 		info.Id,
@@ -138,7 +139,7 @@ func (r *UserRepositoryImpl) DoesAnyAdminUserExist() (bool, error) {
 	return exists, nil
 }
 
-func (r *UserRepositoryImpl) CreateUser(user *tools.User) (int, error) {
+func (r *UserRepositoryImpl) CreateUser(user *api.User) (int, error) {
 	var id int
 	err := r.DbProvider.GetDB().QueryRow(userInsert, userInsertArgs(user)...).Scan(&id)
 	if err != nil {
@@ -147,7 +148,7 @@ func (r *UserRepositoryImpl) CreateUser(user *tools.User) (int, error) {
 	return id, nil
 }
 
-func userInsertArgs(user *tools.User) []any {
+func userInsertArgs(user *api.User) []any {
 	return []any{
 		user.Username,
 		user.Email,
@@ -211,7 +212,7 @@ FROM matching_usernames`
 	return suffix, exists, nil
 }
 
-func (r *UserRepositoryImpl) ListUsers() ([]tools.User, error) {
+func (r *UserRepositoryImpl) ListUsers() ([]api.User, error) {
 	return r.queryUsers("")
 }
 
@@ -222,11 +223,11 @@ func (r *UserRepositoryImpl) Wipe() {
 	}
 }
 
-func normalizeUserTimes(user *tools.User) {
+func normalizeUserTimes(user *api.User) {
 	user.SetPasswordTokenExpirationDate = user.SetPasswordTokenExpirationDate.UTC()
 	user.CreationDate = user.CreationDate.UTC()
 }
 
-func (r *UserRepositoryImpl) GetUserByToken(token string) (*tools.User, error) {
+func (r *UserRepositoryImpl) GetUserByToken(token string) (*api.User, error) {
 	return r.searchUserBy("set_password_token", token)
 }

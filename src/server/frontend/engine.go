@@ -5,6 +5,7 @@ import (
 	"server/tools"
 
 	"github.com/quollix/common/frontend"
+	api "github.com/quollix/common/quollix/api"
 )
 
 func NewFrontendEngine() (frontend.EngineService, error) {
@@ -12,9 +13,9 @@ func NewFrontendEngine() (frontend.EngineService, error) {
 		FrontendFolderPath: "frontend",
 		Version:            tools.ApplicationVersion,
 		Static: frontendpages.StaticTemplateGlobals{
-			Paths:    tools.Paths,
+			Paths:    api.Paths,
 			Links:    tools.Links,
-			Policies: tools.Policies,
+			Policies: api.Policies,
 		},
 	})
 }

@@ -3,10 +3,10 @@ package apps_basic
 import (
 	"net/http"
 	"net/http/httptest"
-	"server/tools"
 	"testing"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -20,7 +20,7 @@ func TestAppRequestProxy_ExchangeSecretSetsCookieAndRedirectsWithoutSecret(t *te
 		AppName:    "sample-app",
 	}
 	cookie := &http.Cookie{
-		Name:     tools.BrandAppAuthCookieName,
+		Name:     api.BrandAppAuthCookieName,
 		Value:    "app-cookie-value",
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,

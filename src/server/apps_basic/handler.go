@@ -8,6 +8,7 @@ import (
 	"server/users"
 	"strconv"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -47,7 +48,7 @@ func (a *AppsHandler) AppListHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *AppsHandler) AppStartHandler(w http.ResponseWriter, r *http.Request) {
-	appIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -84,7 +85,7 @@ func (a *AppsHandler) AppStartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *AppsHandler) AppStopHandler(w http.ResponseWriter, r *http.Request) {
-	appIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -120,20 +121,15 @@ func (a *AppsHandler) AppStopHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type ChangeAccessPolicyRequest struct {
-	AppId        string `json:"app_id" validate:"number"`
-	AccessPolicy string `json:"access_policy" validate:"access_policy"`
-}
-
 var allowedAccessPolicies = map[string]any{
-	tools.Policies.PublicAccessPolicy:          nil,
-	tools.Policies.AuthenticatedAccessPolicy:   nil,
-	tools.Policies.GroupRestrictedAccessPolicy: nil,
-	tools.Policies.AdminOnlyAccessPolicy:       nil,
+	api.Policies.PublicAccessPolicy:          nil,
+	api.Policies.AuthenticatedAccessPolicy:   nil,
+	api.Policies.GroupRestrictedAccessPolicy: nil,
+	api.Policies.AdminOnlyAccessPolicy:       nil,
 }
 
 func (a *AppsHandler) ChangeAccessPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	var req ChangeAccessPolicyRequest
+	var req api.ChangeAccessPolicyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid input", http.StatusBadRequest)
 		return
@@ -163,7 +159,7 @@ func (a *AppsHandler) ChangeAccessPolicyHandler(w http.ResponseWriter, r *http.R
 }
 
 func (a *AppsHandler) AppPruneHandler(w http.ResponseWriter, r *http.Request) {
-	appIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -200,15 +196,9 @@ func (a *AppsHandler) AppPruneHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-type AppOperationInfoResponse struct {
-	Operations            []string `json:"operations"`
-	IsOngoing             bool     `json:"is_ongoing"`
-	AppOperationsFinished []string `json:"app_operations_finished"`
-}
-
 func (a *AppsHandler) AppOperationInfoHandler(w http.ResponseWriter, r *http.Request) {
 	operations := a.OperationRegistry.ListOperations()
-	response := AppOperationInfoResponse{
+	response := api.AppOperationInfoResponse{
 		Operations:            operations,
 		IsOngoing:             len(operations) > 0,
 		AppOperationsFinished: a.OperationRegistry.ListFinishedAppOperations(),
@@ -221,14 +211,8 @@ func WriteConcurrentOperationError(w http.ResponseWriter, attemptedOperation str
 	http.Error(w, concurrentOperationErrorMessage, http.StatusBadRequest)
 }
 
-type AutoMaintenanceSettingsResponse struct {
-	AppId                   string `json:"app_id" validate:"number"`
-	AutomaticUpdatesEnabled bool   `json:"automatic_updates_enabled"`
-	AutomaticBackupsEnabled bool   `json:"automatic_backups_enabled"`
-}
-
 func (a *AppsHandler) UpdateAutomaticMaintenanceSettingsHandler(w http.ResponseWriter, r *http.Request) {
-	autoMaintenanceSettings, ok := validation.ReadBody[AutoMaintenanceSettingsResponse](w, r)
+	autoMaintenanceSettings, ok := validation.ReadBody[api.AutoMaintenanceSettingsResponse](w, r)
 	if !ok {
 		return
 	}
@@ -247,7 +231,7 @@ func (a *AppsHandler) UpdateAutomaticMaintenanceSettingsHandler(w http.ResponseW
 }
 
 func (a *AppsHandler) RegenerateOidcClientCredentials(w http.ResponseWriter, r *http.Request) {
-	appIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}

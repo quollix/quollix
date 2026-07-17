@@ -9,6 +9,7 @@ import (
 	"server/tools"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -66,7 +67,7 @@ func TestBuildTerminalAppsPage_FiltersAndSortsAndAppendsOfficial(t *testing.T) {
 
 	testObjects.AppService.EXPECT().
 		ListAppsForAdmin().
-		Return([]apps_basic.AppDto{
+		Return([]api.AppDto{
 			{Maintainer: "b-maintainer", AppName: "b-app", IsRunning: true},
 			{Maintainer: "a-maintainer", AppName: "z-app", IsRunning: true},
 			{Maintainer: "a-maintainer", AppName: "a-app", IsRunning: false},
@@ -126,7 +127,7 @@ func TestBuildGroupsPage_MapsGroupsToDtos(t *testing.T) {
 
 	testObjects.GroupRepo.EXPECT().
 		ListAllGroups().
-		Return([]groups.Group{
+		Return([]api.Group{
 			{Id: 3, Name: "devs"},
 			{Id: 12, Name: "admins"},
 		}, nil)
@@ -145,11 +146,11 @@ func TestBuildGroupMembersPage_MapsUsersAndAddsGroupInfo_AndSortsByName(t *testi
 
 	testObjects.GroupRepo.EXPECT().
 		ListUsersByGroupMembership(7).
-		Return(&groups.UsersByGroupMembership{
-			In:    []groups.Member{{Id: 2, Name: "bob"}, {Id: 10, Name: "alice"}},
-			NotIn: []groups.Member{{Id: 7, Name: "zara"}, {Id: 5, Name: "carol"}},
+		Return(&api.UsersByGroupMembership{
+			In:    []api.Member{{Id: 2, Name: "bob"}, {Id: 10, Name: "alice"}},
+			NotIn: []api.Member{{Id: 7, Name: "zara"}, {Id: 5, Name: "carol"}},
 		}, nil)
-	testObjects.GroupRepo.EXPECT().GetGroupById(7).Return(groups.Group{Id: 7, Name: "devs"}, nil)
+	testObjects.GroupRepo.EXPECT().GetGroupById(7).Return(api.Group{Id: 7, Name: "devs"}, nil)
 
 	pageContent, err := testObjects.Builder.BuildGroupMembersPage(7)
 	assert.Nil(t, err)
@@ -170,11 +171,11 @@ func TestBuildGroupAppsPage_ReturnsAccessListsAndGroupInfo_AndSortsByName(t *tes
 
 	testObjects.GroupRepo.EXPECT().
 		ListAppsAccessByGroup(7).
-		Return(&groups.AppsAccessByGroup{
+		Return(&api.AppsAccessByGroup{
 			Granted:    []string{"z-app", "a-app"},
 			NotGranted: []string{"d-app", "b-app"},
 		}, nil)
-	testObjects.GroupRepo.EXPECT().GetGroupById(7).Return(groups.Group{Id: 7, Name: "devs"}, nil)
+	testObjects.GroupRepo.EXPECT().GetGroupById(7).Return(api.Group{Id: 7, Name: "devs"}, nil)
 
 	pageContent, err := testObjects.Builder.BuildGroupAppsPage(7)
 	assert.Nil(t, err)

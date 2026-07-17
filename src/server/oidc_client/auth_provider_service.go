@@ -1,6 +1,9 @@
 package oidc_client
 
-import u "github.com/quollix/common/utils"
+import (
+	api "github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
+)
 
 const (
 	OidcAuthProviderNameAlreadyExistsError             = "OIDC provider name already exists"
@@ -9,9 +12,9 @@ const (
 )
 
 type OidcAuthProviderService interface {
-	CreateProvider(provider *OidcAuthProviderDto) error
-	UpdateProvider(provider *OidcAuthProviderDto) error
-	ListProviders() ([]OidcAuthProviderDto, error)
+	CreateProvider(provider *api.OidcAuthProviderDto) error
+	UpdateProvider(provider *api.OidcAuthProviderDto) error
+	ListProviders() ([]api.OidcAuthProviderDto, error)
 	DeleteProvider(providerId int) error
 	TestDiscovery(issuerDomainPath string) error
 }
@@ -21,7 +24,7 @@ type OidcAuthProviderServiceImpl struct {
 	ProviderClient OidcProviderClient
 }
 
-func (s *OidcAuthProviderServiceImpl) CreateProvider(provider *OidcAuthProviderDto) error {
+func (s *OidcAuthProviderServiceImpl) CreateProvider(provider *api.OidcAuthProviderDto) error {
 	if err := normalizeAndValidateProvider(provider); err != nil {
 		return err
 	}
@@ -32,7 +35,7 @@ func (s *OidcAuthProviderServiceImpl) CreateProvider(provider *OidcAuthProviderD
 	return err
 }
 
-func (s *OidcAuthProviderServiceImpl) UpdateProvider(provider *OidcAuthProviderDto) error {
+func (s *OidcAuthProviderServiceImpl) UpdateProvider(provider *api.OidcAuthProviderDto) error {
 	if err := normalizeAndValidateProvider(provider); err != nil {
 		return err
 	}
@@ -42,7 +45,7 @@ func (s *OidcAuthProviderServiceImpl) UpdateProvider(provider *OidcAuthProviderD
 	return s.ProviderRepo.UpdateProvider(provider)
 }
 
-func (s *OidcAuthProviderServiceImpl) ListProviders() ([]OidcAuthProviderDto, error) {
+func (s *OidcAuthProviderServiceImpl) ListProviders() ([]api.OidcAuthProviderDto, error) {
 	return s.ProviderRepo.ListProviders()
 }
 
@@ -57,7 +60,7 @@ func (s *OidcAuthProviderServiceImpl) TestDiscovery(issuerDomainPath string) err
 	return s.ProviderClient.TestDiscovery(issuerDomainPath)
 }
 
-func (s *OidcAuthProviderServiceImpl) validateProviderUniqueness(provider *OidcAuthProviderDto) error {
+func (s *OidcAuthProviderServiceImpl) validateProviderUniqueness(provider *api.OidcAuthProviderDto) error {
 	existingProvider, exists, err := s.ProviderRepo.GetProviderByName(provider.Name)
 	if err != nil {
 		return err
@@ -76,7 +79,7 @@ func (s *OidcAuthProviderServiceImpl) validateProviderUniqueness(provider *OidcA
 	return nil
 }
 
-func normalizeAndValidateProvider(provider *OidcAuthProviderDto) error {
+func normalizeAndValidateProvider(provider *api.OidcAuthProviderDto) error {
 	if provider.Name == "" || provider.IssuerDomainPath == "" || provider.ClientId == "" || provider.ClientSecret == "" {
 		return u.Logger.NewError(OidcAuthProviderRequiredFieldMissingError)
 	}

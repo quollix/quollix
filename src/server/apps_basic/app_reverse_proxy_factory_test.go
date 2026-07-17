@@ -10,6 +10,7 @@ import (
 	"server/tools"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 )
 
 func TestAppReverseProxyFactory_CreateProxyRequest(t *testing.T) {
@@ -19,12 +20,12 @@ func TestAppReverseProxyFactory_CreateProxyRequest(t *testing.T) {
 		AppName:    "container",
 		Port:       "8080",
 	}
-	testUrl := fmt.Sprintf("https://originalhost/path?%s=value&other=ok", tools.BrandAppQuerySecretName)
+	testUrl := fmt.Sprintf("https://originalhost/path?%s=value&other=ok", api.BrandAppQuerySecretName)
 	r := httptest.NewRequest(http.MethodGet, testUrl, nil)
 	r.Host = "originalhost"
-	r.Header.Set(tools.BrandAppAuthCookieName, "cookievalue")
+	r.Header.Set(api.BrandAppAuthCookieName, "cookievalue")
 	authCookie := &http.Cookie{
-		Name:  tools.BrandAppAuthCookieName,
+		Name:  api.BrandAppAuthCookieName,
 		Value: "cookievalue",
 	}
 	r.AddCookie(authCookie)
@@ -39,7 +40,7 @@ func TestAppReverseProxyFactory_CreateProxyRequest(t *testing.T) {
 	assert.Equal(t, "other=ok", r2.URL.RawQuery)
 	assert.Equal(t, "originalhost", r2.Header.Get("X-Forwarded-Host"))
 	assert.Equal(t, "https", r2.Header.Get("X-Forwarded-Proto"))
-	assert.Equal(t, "", r2.Header.Get(tools.BrandAppAuthCookieName))
+	assert.Equal(t, "", r2.Header.Get(api.BrandAppAuthCookieName))
 	assert.Equal(t, 0, len(r2.Cookies()))
 }
 
@@ -72,7 +73,7 @@ func TestRemoveAuthCookie_RemovesAuthCookieAndKeepsOtherCookies(t *testing.T) {
 	originalRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	proxyRequest := originalRequest.Clone(originalRequest.Context())
 	authCookie := &http.Cookie{
-		Name:  tools.BrandAppAuthCookieName,
+		Name:  api.BrandAppAuthCookieName,
 		Value: "cookievalue",
 	}
 	otherCookie := &http.Cookie{
@@ -95,7 +96,7 @@ func TestRemoveAuthCookie_RemovesCookieHeaderWhenOnlyAuthCookiesExist(t *testing
 	originalRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 	proxyRequest := originalRequest.Clone(originalRequest.Context())
 	authCookie := &http.Cookie{
-		Name:  tools.BrandAppAuthCookieName,
+		Name:  api.BrandAppAuthCookieName,
 		Value: "cookievalue",
 	}
 	originalRequest.AddCookie(authCookie)

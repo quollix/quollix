@@ -5,6 +5,7 @@ import (
 	"server/tools"
 	"time"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,7 +22,7 @@ const (
 )
 
 type UserService interface {
-	SignIn(creds Credentials) (*http.Cookie, error)
+	SignIn(creds api.Credentials) (*http.Cookie, error)
 	SignOut(userId int) error
 	UserSetsOwnPassword(userId int, newPassword string) error
 	UserResetsOwnPassword(userId int, oldPassword, newPassword string) error
@@ -101,7 +102,7 @@ func (s *UserServiceImpl) ChangeEmail(userId int, newEmail string) error {
 	return s.UserRepo.UpdateUser(user)
 }
 
-func (s *UserServiceImpl) SignIn(creds Credentials) (*http.Cookie, error) {
+func (s *UserServiceImpl) SignIn(creds api.Credentials) (*http.Cookie, error) {
 	user, err := s.UserRepo.GetUserByUsername(creds.Username)
 	if err != nil {
 		u.Logger.Info(err)
@@ -144,7 +145,7 @@ func (s *UserServiceImpl) UserResetsOwnPassword(userId int, currentPassword, new
 	return s.setUserPassword(user, newPassword)
 }
 
-func (s *UserServiceImpl) setUserPassword(user *tools.User, newPassword string) error {
+func (s *UserServiceImpl) setUserPassword(user *api.User, newPassword string) error {
 	var err error
 	user.HashedPassword, err = s.AuthHelper.SaltAndHash(newPassword)
 	if err != nil {
@@ -276,7 +277,7 @@ func (s *UserServiceImpl) GetUserIdAndRoleFromQuollixRequest(r *http.Request) (i
 }
 
 func (s *UserServiceImpl) GetUserIdAndRoleFromRequestForAudience(r *http.Request, audience string) (int, tools.UserAccessLevel, error) {
-	cookie, err := r.Cookie(tools.BrandAppAuthCookieName)
+	cookie, err := r.Cookie(api.BrandAppAuthCookieName)
 	if err != nil {
 		return AnonymousUserId, tools.AnonymousLevel, nil
 	}
@@ -310,8 +311,8 @@ func NewUser(
 	setPasswordToken string,
 	setPasswordTokenExpirationDate time.Time,
 	creationDate time.Time,
-) *tools.User {
-	return &tools.User{
+) *api.User {
+	return &api.User{
 		Username:                       username,
 		Email:                          email,
 		HashedPassword:                 hashedPassword,

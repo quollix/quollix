@@ -6,6 +6,7 @@ import (
 	"server/tools"
 	"strings"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -42,7 +43,7 @@ func (a *AppRequestParserImpl) GetAppNameFromRequestHost(requestHost, baseDomain
 }
 
 func (a *AppRequestParserImpl) GetQuerySecret(r *http.Request) (secret string, isPresent bool, isValidValue bool) {
-	secret = r.URL.Query().Get(tools.BrandAppQuerySecretName)
+	secret = r.URL.Query().Get(api.BrandAppQuerySecretName)
 	if secret == "" {
 		return "", false, true
 	}

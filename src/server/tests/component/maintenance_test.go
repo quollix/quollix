@@ -5,10 +5,12 @@ package component
 import (
 	"server/maintenance"
 	"server/maintenance/retention"
-	"server/tests/api_client"
 	"server/tools"
 	"testing"
 	"time"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -64,7 +66,7 @@ func TestMaintenanceSettingsHappyPath(t *testing.T) {
 
 	assertTimeIsWithinLocalHourWindow(t, maintenanceConfig.NextMaintenanceAt, "Europe/London", 2)
 
-	expected := &maintenance.MaintenanceConfigDto{
+	expected := &api.MaintenanceConfigDto{
 		IanaTimezone:               "Europe/Berlin",
 		MaintenanceWindowStartHour: 6,
 	}
@@ -102,7 +104,7 @@ func TestMaintenanceSettingsInvalidInput(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			maintenanceConfig := &maintenance.MaintenanceConfigDto{
+			maintenanceConfig := &api.MaintenanceConfigDto{
 				IanaTimezone:               testCase.timezone,
 				MaintenanceWindowStartHour: testCase.hour,
 			}
@@ -117,7 +119,7 @@ func TestReadingAndSavingRetentionPolicy(t *testing.T) {
 	defer client.Test.ResetTestState()
 
 	defaultPolicy := retention.GetDefaultRetentionPolicy()
-	newPolicy := &retention.RetentionPolicy{
+	newPolicy := &api.RetentionPolicy{
 		KeepDaily:     defaultPolicy.KeepDaily + 1,
 		KeepWeekly:    defaultPolicy.KeepWeekly + 1,
 		KeepMonthly:   defaultPolicy.KeepMonthly + 1,
@@ -155,7 +157,7 @@ func TestMaintenanceJobExecutionConductsUpdatesAndCreatesBackups(t *testing.T) {
 	assertBackupCount(t, client, tools.SampleMaintainer, tools.SampleApp, 2)
 }
 
-func assertBackupCount(t *testing.T, client *api_client.QuollixClient, maintainer string, appName string, expectedCount int) []tools.BackupInfo {
+func assertBackupCount(t *testing.T, client *api_client.QuollixClient, maintainer string, appName string, expectedCount int) []api.BackupInfo {
 	backups, err := client.Backups.ListByApp(maintainer, appName)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedCount, len(backups))
@@ -168,13 +170,13 @@ func TestSavingRetentionPolicyInvalidInput(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		policy retention.RetentionPolicy
+		policy api.RetentionPolicy
 	}{
-		{"negative KeepPreUpdate", retention.RetentionPolicy{KeepPreUpdate: -1}},
-		{"negative KeepDaily", retention.RetentionPolicy{KeepDaily: -1}},
-		{"negative KeepWeekly", retention.RetentionPolicy{KeepWeekly: -1}},
-		{"negative KeepMonthly", retention.RetentionPolicy{KeepMonthly: -1}},
-		{"negative KeepYearly", retention.RetentionPolicy{KeepYearly: -1}},
+		{"negative KeepPreUpdate", api.RetentionPolicy{KeepPreUpdate: -1}},
+		{"negative KeepDaily", api.RetentionPolicy{KeepDaily: -1}},
+		{"negative KeepWeekly", api.RetentionPolicy{KeepWeekly: -1}},
+		{"negative KeepMonthly", api.RetentionPolicy{KeepMonthly: -1}},
+		{"negative KeepYearly", api.RetentionPolicy{KeepYearly: -1}},
 	}
 
 	for _, testCase := range testCases {

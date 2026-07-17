@@ -18,8 +18,9 @@ import (
 	"time"
 
 	"server/oidc_provider"
-	"server/tests/api_client"
-	"server/tools"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -57,7 +58,7 @@ func NewOidcTestClientForBaseURL(t *testing.T, baseURL string) *OidcTestClient {
 		},
 	}
 
-	req, err := http.NewRequest("GET", baseURL+tools.Paths.BackendOidcWellKnown, nil)
+	req, err := http.NewRequest("GET", baseURL+api.Paths.BackendOidcWellKnown, nil)
 	assert.Nil(t, err)
 	resp, err := browser.Do(req)
 	assert.Nil(t, err)

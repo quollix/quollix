@@ -5,8 +5,8 @@ import (
 	"server/tools"
 	"strings"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
 	u "github.com/quollix/common/utils"
 )
 
@@ -67,7 +67,7 @@ func (m *MaintenancePage) SetAutomaticBackupsEnabled(appName string, enabled boo
 	return m
 }
 
-func (m *MaintenancePage) setCheckboxEnabled(row *rod.Element, selector string, expectedChecked bool) {
+func (m *MaintenancePage) setCheckboxEnabled(row *browsertest.Element, selector string, expectedChecked bool) {
 	checkbox, err := row.Element(selector)
 	assert.Nil(m.Frame.T, err)
 
@@ -80,7 +80,7 @@ func (m *MaintenancePage) setCheckboxEnabled(row *rod.Element, selector string, 
 	checkbox.MustClick()
 }
 
-func (m *MaintenancePage) readAppEntry(row *rod.Element) *MaintenanceAppEntry {
+func (m *MaintenancePage) readAppEntry(row *browsertest.Element) *MaintenanceAppEntry {
 	maintainerCell, err := row.Element(".maintenance-maintainer-cell")
 	assert.Nil(m.Frame.T, err)
 	maintainer, err := maintainerCell.Text()
@@ -106,7 +106,7 @@ func (m *MaintenancePage) readAppEntry(row *rod.Element) *MaintenanceAppEntry {
 	}
 }
 
-func (m *MaintenancePage) readCheckboxState(row *rod.Element, selector string) (present bool, checked bool) {
+func (m *MaintenancePage) readCheckboxState(row *browsertest.Element, selector string) (present bool, checked bool) {
 	present, _, err := row.Has(selector)
 	assert.Nil(m.Frame.T, err)
 	if !present {
@@ -119,7 +119,7 @@ func (m *MaintenancePage) readCheckboxState(row *rod.Element, selector string) (
 	return true, checkedAttr != nil
 }
 
-func (m *MaintenancePage) findRowByAppName(appName string) (*rod.Element, error) {
+func (m *MaintenancePage) findRowByAppName(appName string) (*browsertest.Element, error) {
 	rows, err := m.Frame.Page.Elements("tr.maintenance-row")
 	assert.Nil(m.Frame.T, err)
 	for _, row := range rows {

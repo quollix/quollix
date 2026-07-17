@@ -6,12 +6,13 @@ import (
 	"strconv"
 	"time"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"gopkg.in/yaml.v3"
 )
 
 type AppServiceHelper interface {
-	ConvertToAppDtos(apps []RepoApp) []AppDto
+	ConvertToAppDtos(apps []RepoApp) []api.AppDto
 	IsAppVisibleToUser(userId int, role tools.UserAccessLevel, app RepoApp) bool
 	GetPortFromComposeYaml(composeContent []byte, appName string) (string, error)
 }
@@ -40,10 +41,10 @@ func (a *AppServiceHelperImpl) IsAppVisibleToUser(userId int, role tools.UserAcc
 	}
 }
 
-func (a *AppServiceHelperImpl) ConvertToAppDtos(apps []RepoApp) []AppDto {
-	var appDtos []AppDto
+func (a *AppServiceHelperImpl) ConvertToAppDtos(apps []RepoApp) []api.AppDto {
+	var appDtos []api.AppDto
 	for _, app := range apps {
-		appDto := AppDto{
+		appDto := api.AppDto{
 			AppId:                    strconv.Itoa(app.AppId),
 			Maintainer:               app.Maintainer,
 			AppName:                  app.AppName,
@@ -75,7 +76,7 @@ func GetSampleApp() *RepoApp {
 		"quollix",
 		tools.SampleApp,
 		"v1.0.0",
-		tools.Policies.PublicAccessPolicy,
+		api.Policies.PublicAccessPolicy,
 		"80",
 		"abcdef1234567890",
 		"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",

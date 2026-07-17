@@ -6,6 +6,7 @@ import (
 
 	"server/tools"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -16,9 +17,9 @@ var (
 
 type SshClient interface {
 	GetKnownHosts(host, port string) (string, error)
-	TestWhetherSshAccessWorks(repo *tools.SshConnectionRequest) error
-	PrepareBackupServer(repo *tools.BackupServerConfigs) error
-	PurgeBackupServer(repo *tools.SshConnectionRequest) error
+	TestWhetherSshAccessWorks(repo *api.SshConnectionRequest) error
+	PrepareBackupServer(repo *api.BackupServerConfigs) error
+	PurgeBackupServer(repo *api.SshConnectionRequest) error
 }
 
 type SshClientImpl struct {
@@ -33,7 +34,7 @@ func (s *SshClientImpl) GetKnownHosts(host, port string) (string, error) {
 	return output.Combined(), err
 }
 
-func (s *SshClientImpl) TestWhetherSshAccessWorks(repo *tools.SshConnectionRequest) error {
+func (s *SshClientImpl) TestWhetherSshAccessWorks(repo *api.SshConnectionRequest) error {
 	if _, err := s.ResticContainerExecutor.Execute([]string{"mkdir", "-p", SshDirLocation}, nil, nil, "", ""); err != nil {
 		return err
 	}
@@ -70,7 +71,7 @@ func writeKnownHostsCommand(knownHosts string) []string {
 	}
 }
 
-func rcloneConfigCreateCommand(repo *tools.SshConnectionRequest) []string {
+func rcloneConfigCreateCommand(repo *api.SshConnectionRequest) []string {
 	return []string{
 		"rclone",
 		"config",
@@ -94,8 +95,8 @@ func rclonePurgeCommand() []string {
 	}
 }
 
-func GetSampleRemoteRepo() *tools.BackupServerConfigs {
-	return &tools.BackupServerConfigs{
+func GetSampleRemoteRepo() *api.BackupServerConfigs {
+	return &api.BackupServerConfigs{
 		IsEnabled:          true,
 		Host:               tools.TestSshServerHost,
 		SshPort:            tools.TestSshServerPort,
@@ -106,7 +107,7 @@ func GetSampleRemoteRepo() *tools.BackupServerConfigs {
 	}
 }
 
-func (r *SshClientImpl) PrepareBackupServer(repo *tools.BackupServerConfigs) error {
+func (r *SshClientImpl) PrepareBackupServer(repo *api.BackupServerConfigs) error {
 	if err := r.prepareConfigFiles(repo); err != nil {
 		return err
 	}
@@ -126,8 +127,8 @@ func (r *SshClientImpl) PrepareBackupServer(repo *tools.BackupServerConfigs) err
 	return nil
 }
 
-func (r *SshClientImpl) prepareConfigFiles(repo *tools.BackupServerConfigs) error {
-	sshConnection := &tools.SshConnectionRequest{
+func (r *SshClientImpl) prepareConfigFiles(repo *api.BackupServerConfigs) error {
+	sshConnection := &api.SshConnectionRequest{
 		Host:          repo.Host,
 		SshPort:       repo.SshPort,
 		SshUser:       repo.SshUser,
@@ -137,7 +138,7 @@ func (r *SshClientImpl) prepareConfigFiles(repo *tools.BackupServerConfigs) erro
 	return r.prepareConfigFilesShared(sshConnection, repo.EncryptionPassword)
 }
 
-func (r *SshClientImpl) prepareConfigFilesShared(repo *tools.SshConnectionRequest, resticEncryptionPassword string) error {
+func (r *SshClientImpl) prepareConfigFilesShared(repo *api.SshConnectionRequest, resticEncryptionPassword string) error {
 	// Use rclone's SFTP backend for SSH-based repositories. SFTP is the SSH File
 	// Transfer Protocol, not FTPS/FTP, so a regular SSH server is enough when it
 	// exposes the SFTP subsystem. Modern scp clients use SFTP internally by default,
@@ -152,7 +153,7 @@ func (r *SshClientImpl) prepareConfigFilesShared(repo *tools.SshConnectionReques
 	return err
 }
 
-func (r *SshClientImpl) PurgeBackupServer(repo *tools.SshConnectionRequest) error {
+func (r *SshClientImpl) PurgeBackupServer(repo *api.SshConnectionRequest) error {
 	if err := r.TestWhetherSshAccessWorks(repo); err != nil {
 		return err
 	}

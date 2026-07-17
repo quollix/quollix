@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"server/tests/api_client"
 	"server/tools"
+
+	"github.com/quollix/common/quollix/api_client"
 
 	u "github.com/quollix/common/utils"
 )

@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -16,7 +17,7 @@ type VersionsPage struct {
 }
 
 func (v *VersionsPage) AssertVersionsPageHeader(maintainer, appName string) *VersionsPage {
-	v.Frame.Assert.PagePath(tools.Paths.FrontendVersions)
+	v.Frame.Assert.PagePath(api.Paths.FrontendVersions)
 	assert.Equal(v.Frame.T, "Maintainer: "+maintainer, strings.TrimSpace(v.Frame.Page.MustElement("#versions-maintainer").MustText()))
 	assert.Equal(v.Frame.T, "App Name: "+appName, strings.TrimSpace(v.Frame.Page.MustElement("#versions-app-name").MustText()))
 	return v
@@ -122,7 +123,7 @@ func (v *VersionsPage) WaitUntilAppVersionInstalled(appName, expectedVersion str
 	return v
 }
 
-func (v *VersionsPage) findVersionRow(version string) *rod.Element {
+func (v *VersionsPage) findVersionRow(version string) *browsertest.Element {
 	rows := v.Frame.Page.MustElements("#versions-results-body tr.version-row")
 	for _, row := range rows {
 		versionAttr := row.MustAttribute("data-version-name")

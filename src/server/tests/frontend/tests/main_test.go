@@ -5,11 +5,13 @@ package frontend
 import (
 	"net/http"
 	"os"
-	"server/tests/api_client"
 	"server/tests/frontend_pages"
 	"server/tools"
 	"testing"
 	"time"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 )
@@ -28,7 +30,7 @@ func TestMain(m *testing.M) {
 func checkAuthWithCookie(t *testing.T, cookie *http.Cookie) error {
 	client := api_client.NewQuollixClient()
 	client.Parent.Cookie = cookie
-	_, err := client.Parent.DoRequest(tools.Paths.BackendCheckAuth, nil)
+	_, err := client.Parent.DoRequest(api.Paths.BackendCheckAuth, nil)
 	return err
 }
 

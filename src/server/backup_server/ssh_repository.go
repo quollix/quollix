@@ -4,13 +4,14 @@ import (
 	"server/configs"
 	"server/tools"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
 type SshRepository interface {
 	IsRemoteBackupEnabled() (bool, error)
-	SaveRemoteBackupRepository(backupRepo *tools.BackupServerConfigs) error
-	GetRemoteBackupRepository() (*tools.BackupServerConfigs, error)
+	SaveRemoteBackupRepository(backupRepo *api.BackupServerConfigs) error
+	GetRemoteBackupRepository() (*api.BackupServerConfigs, error)
 	IsRemoteBackupConfigPresent() (bool, error)
 }
 
@@ -26,7 +27,7 @@ func (r *SshRepositoryImpl) IsRemoteBackupEnabled() (bool, error) {
 	return repo.IsEnabled, nil
 }
 
-func (r *SshRepositoryImpl) SaveRemoteBackupRepository(remoteBackupRepository *tools.BackupServerConfigs) error {
+func (r *SshRepositoryImpl) SaveRemoteBackupRepository(remoteBackupRepository *api.BackupServerConfigs) error {
 	isEnabledValue := "false"
 	if remoteBackupRepository.IsEnabled {
 		isEnabledValue = "true"
@@ -58,8 +59,8 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
 	return nil
 }
 
-func (r *SshRepositoryImpl) GetRemoteBackupRepository() (*tools.BackupServerConfigs, error) {
-	var repo tools.BackupServerConfigs
+func (r *SshRepositoryImpl) GetRemoteBackupRepository() (*api.BackupServerConfigs, error) {
+	var repo api.BackupServerConfigs
 	var isEnabledString string
 
 	err := r.DbProvider.GetDB().QueryRow(`
@@ -120,8 +121,8 @@ WHERE key IN ($1,$2,$3,$4,$5,$6,$7);
 	return count == 7, nil
 }
 
-func GetEmptyRemoteRepoConfigs() *tools.BackupServerConfigs {
-	return &tools.BackupServerConfigs{
+func GetEmptyRemoteRepoConfigs() *api.BackupServerConfigs {
+	return &api.BackupServerConfigs{
 		IsEnabled:          false,
 		Host:               "",
 		SshPort:            "",

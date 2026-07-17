@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"server/apps_basic"
-	"server/tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -106,7 +106,7 @@ func TestUpdateApp(t *testing.T) {
 		"updated-maintainer",
 		"updated-app-name",
 		"v2.0.0",
-		tools.Policies.GroupRestrictedAccessPolicy,
+		api.Policies.GroupRestrictedAccessPolicy,
 		"8080",
 		clientId,
 		clientSecret,

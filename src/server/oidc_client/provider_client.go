@@ -9,6 +9,7 @@ import (
 	"server/tools"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"golang.org/x/oauth2"
 )
@@ -19,8 +20,8 @@ const (
 )
 
 type OidcProviderClient interface {
-	GetAuthorizationUrl(provider *OidcAuthProviderDto, redirectUrl string, state string) (string, error)
-	ExchangeCodeForClaims(provider *OidcAuthProviderDto, redirectUrl string, code string) (OidcLoginClaims, error)
+	GetAuthorizationUrl(provider *api.OidcAuthProviderDto, redirectUrl string, state string) (string, error)
+	ExchangeCodeForClaims(provider *api.OidcAuthProviderDto, redirectUrl string, code string) (OidcLoginClaims, error)
 	TestDiscovery(issuerDomainPath string) error
 }
 
@@ -44,7 +45,7 @@ func NewOidcProviderClient(config *tools.GlobalConfig) OidcProviderClient {
 	}
 }
 
-func (c *OidcProviderClientImpl) GetAuthorizationUrl(provider *OidcAuthProviderDto, redirectUrl string, state string) (string, error) {
+func (c *OidcProviderClientImpl) GetAuthorizationUrl(provider *api.OidcAuthProviderDto, redirectUrl string, state string) (string, error) {
 	ctx, cancel := c.requestContext()
 	defer cancel()
 
@@ -55,7 +56,7 @@ func (c *OidcProviderClientImpl) GetAuthorizationUrl(provider *OidcAuthProviderD
 	return c.oauth2Config(provider, oidcProvider, redirectUrl).AuthCodeURL(state), nil
 }
 
-func (c *OidcProviderClientImpl) ExchangeCodeForClaims(provider *OidcAuthProviderDto, redirectUrl string, code string) (OidcLoginClaims, error) {
+func (c *OidcProviderClientImpl) ExchangeCodeForClaims(provider *api.OidcAuthProviderDto, redirectUrl string, code string) (OidcLoginClaims, error) {
 	ctx, cancel := c.requestContext()
 	defer cancel()
 
@@ -94,7 +95,7 @@ func (c *OidcProviderClientImpl) TestDiscovery(issuerDomainPath string) error {
 	return err
 }
 
-func (c *OidcProviderClientImpl) oauth2Config(provider *OidcAuthProviderDto, oidcProvider *oidc.Provider, redirectUrl string) *oauth2.Config {
+func (c *OidcProviderClientImpl) oauth2Config(provider *api.OidcAuthProviderDto, oidcProvider *oidc.Provider, redirectUrl string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     provider.ClientId,
 		ClientSecret: provider.ClientSecret,

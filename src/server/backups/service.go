@@ -5,17 +5,18 @@ import (
 	"server/backup_server"
 	"server/tools"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
 type BackupService interface {
 	CreateBackup(appId int, description string) error
 	DeleteBackups(backupId []string) error
-	RestoreBackup(backupRestoreRequest tools.BackupOperationRequest) (*tools.RestoredVersionInfo, error)
+	RestoreBackup(backupRestoreRequest api.BackupOperationRequest) (*api.RestoredVersionInfo, error)
 	ResolveSingleAppNameByBackupIds(backupIds []string) (string, error)
 
-	ListBackupsOfApp(request tools.MaintainerAndApp) ([]tools.BackupInfo, error)
-	ListAppsInBackupRepo() ([]tools.MaintainerAndApp, error)
+	ListBackupsOfApp(request api.MaintainerAndApp) ([]api.BackupInfo, error)
+	ListAppsInBackupRepo() ([]api.MaintainerAndApp, error)
 }
 
 type BackupServiceImpl struct {
@@ -85,7 +86,7 @@ func (b *BackupServiceImpl) CreateBackup(appId int, description string) error {
 	return nil
 }
 
-func (b *BackupServiceImpl) ListBackupsOfApp(request tools.MaintainerAndApp) ([]tools.BackupInfo, error) {
+func (b *BackupServiceImpl) ListBackupsOfApp(request api.MaintainerAndApp) ([]api.BackupInfo, error) {
 	if err := b.SshRepositoryConfigService.EnsureBackupIsEnabled(); err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func (b *BackupServiceImpl) ResolveSingleAppNameByBackupIds(backupIds []string) 
 	return "", u.Logger.NewError("backups must belong to exactly one app")
 }
 
-func (b *BackupServiceImpl) RestoreBackup(request tools.BackupOperationRequest) (*tools.RestoredVersionInfo, error) {
+func (b *BackupServiceImpl) RestoreBackup(request api.BackupOperationRequest) (*api.RestoredVersionInfo, error) {
 	if err := b.SshRepositoryConfigService.EnsureBackupIsEnabled(); err != nil {
 		return nil, err
 	}
@@ -181,7 +182,7 @@ func (b *BackupServiceImpl) RestoreBackup(request tools.BackupOperationRequest) 
 	return b.RestoreFinalizer.FinalizeRestore(backupInfo, snapshot)
 }
 
-func (b *BackupServiceImpl) ListAppsInBackupRepo() ([]tools.MaintainerAndApp, error) {
+func (b *BackupServiceImpl) ListAppsInBackupRepo() ([]api.MaintainerAndApp, error) {
 	if err := b.SshRepositoryConfigService.EnsureBackupIsEnabled(); err != nil {
 		return nil, err
 	}

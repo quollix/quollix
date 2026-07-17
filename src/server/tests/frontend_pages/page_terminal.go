@@ -5,9 +5,9 @@ import (
 	"server/tools"
 	"strings"
 
-	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/input"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 )
 
 const (
@@ -69,11 +69,11 @@ func (p *TerminalAppsPage) OpenServicesPage(maintainer, appName string) *Termina
 	p.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		button.MustClick()
 	})
-	p.Frame.Assert.PagePath(tools.Paths.FrontendTerminalServices)
+	p.Frame.Assert.PagePath(api.Paths.FrontendTerminalServices)
 	return p.Frame.Pages.TerminalServicesPage
 }
 
-func (p *TerminalAppsPage) getRequiredRow(maintainer, appName string) *rod.Element {
+func (p *TerminalAppsPage) getRequiredRow(maintainer, appName string) *browsertest.Element {
 	rows, err := p.Frame.Page.Elements("tr.terminal-app-row")
 	assert.Nil(p.Frame.T, err)
 	for _, row := range rows {
@@ -94,13 +94,13 @@ func (p *TerminalServicesPage) ClickBackAndAssertTerminalAppsPage() *TerminalApp
 	p.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		button.MustClick()
 	})
-	p.Frame.Assert.PagePath(tools.Paths.FrontendTerminalApps)
+	p.Frame.Assert.PagePath(api.Paths.FrontendTerminalApps)
 	return p.Frame.Pages.TerminalAppsPage
 }
 
 func (p *TerminalServicesPage) AssertSelection(maintainer, appName string) *TerminalServicesPage {
-	assert.Equal(p.Frame.T, "Maintainer: "+maintainer, strings.TrimSpace(p.Frame.Controls.GetRequiredElement("#terminal-services-maintainer").MustText()))
-	assert.Equal(p.Frame.T, "App Name: "+appName, strings.TrimSpace(p.Frame.Controls.GetRequiredElement("#terminal-services-app-name").MustText()))
+	assert.Equal(p.Frame.T, "Maintainer: "+maintainer, strings.TrimSpace(p.Frame.Controls.GetRequiredElementEventually("#terminal-services-maintainer").MustText()))
+	assert.Equal(p.Frame.T, "App Name: "+appName, strings.TrimSpace(p.Frame.Controls.GetRequiredElementEventually("#terminal-services-app-name").MustText()))
 	return p
 }
 
@@ -117,11 +117,11 @@ func (p *TerminalServicesPage) OpenTerminal(serviceName string) *TerminalViewPag
 	p.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		button.MustClick()
 	})
-	p.Frame.Assert.PagePath(tools.Paths.FrontendTerminalView)
+	p.Frame.Assert.PagePath(api.Paths.FrontendTerminalView)
 	return p.Frame.Pages.TerminalViewPage
 }
 
-func (p *TerminalServicesPage) getRequiredRow(serviceName string) *rod.Element {
+func (p *TerminalServicesPage) getRequiredRow(serviceName string) *browsertest.Element {
 	rows, err := p.Frame.Page.Elements("tr.terminal-service-row")
 	assert.Nil(p.Frame.T, err)
 	for _, row := range rows {
@@ -140,14 +140,14 @@ func (p *TerminalViewPage) ClickBackAndAssertTerminalServicesPage() *TerminalSer
 	p.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		button.MustClick()
 	})
-	p.Frame.Assert.PagePath(tools.Paths.FrontendTerminalServices)
+	p.Frame.Assert.PagePath(api.Paths.FrontendTerminalServices)
 	return p.Frame.Pages.TerminalServicesPage
 }
 
 func (p *TerminalViewPage) AssertSelection(maintainer, appName, serviceName string) *TerminalViewPage {
-	assert.Equal(p.Frame.T, "Maintainer: "+maintainer, strings.TrimSpace(p.Frame.Controls.GetRequiredElement("#terminal-view-maintainer").MustText()))
-	assert.Equal(p.Frame.T, "App Name: "+appName, strings.TrimSpace(p.Frame.Controls.GetRequiredElement("#terminal-view-app-name").MustText()))
-	assert.Equal(p.Frame.T, "Service: "+serviceName, strings.TrimSpace(p.Frame.Controls.GetRequiredElement("#terminal-view-service-name").MustText()))
+	assert.Equal(p.Frame.T, "Maintainer: "+maintainer, strings.TrimSpace(p.Frame.Controls.GetRequiredElementEventually("#terminal-view-maintainer").MustText()))
+	assert.Equal(p.Frame.T, "App Name: "+appName, strings.TrimSpace(p.Frame.Controls.GetRequiredElementEventually("#terminal-view-app-name").MustText()))
+	assert.Equal(p.Frame.T, "Service: "+serviceName, strings.TrimSpace(p.Frame.Controls.GetRequiredElementEventually("#terminal-view-service-name").MustText()))
 	return p
 }
 
@@ -166,11 +166,7 @@ func (p *TerminalViewPage) AssertReady() *TerminalViewPage {
 func (p *TerminalViewPage) RunCommand(command string) *TerminalViewPage {
 	textarea := p.Frame.Controls.GetRequiredElement(".xterm-helper-textarea")
 	textarea.MustClick()
-	keys := make([]input.Key, 0, len(command)+1)
-	for _, r := range command {
-		keys = append(keys, input.Key(r))
-	}
-	textarea.MustKeyActions().Type(keys...).Type(input.Enter).MustDo()
+	assert.Nil(p.Frame.T, textarea.TypeText(command+"\r"))
 	return p
 }
 

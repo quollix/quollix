@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"server/system_config_migrations"
-	"server/tests/api_client"
 
+	"github.com/quollix/common/quollix/api_client"
 	u "github.com/quollix/common/utils"
 )
 

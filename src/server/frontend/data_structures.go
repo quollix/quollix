@@ -1,27 +1,21 @@
 package frontend
 
 import (
-	"server/apps_basic"
-	"server/configs"
-	"server/maintenance/retention"
-	"server/oidc_client"
-	"server/oidc_provider"
-	"server/tools"
-
+	api "github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 )
 
 type AppSsoPageContent struct {
-	Apps []apps_basic.AppDto
+	Apps []api.AppDto
 }
 
 type ProvidersPageContent struct {
-	AuthProviders []oidc_client.OidcAuthProviderDto
+	AuthProviders []api.OidcAuthProviderDto
 }
 
 type OidcClientsPageContent struct {
-	Clients []oidc_provider.OidcRelyingPartyDto
+	Clients []api.OidcRelyingPartyDto
 }
 
 type SignInPageContent struct {
@@ -40,7 +34,7 @@ type EmailPageContent struct {
 }
 
 type TerminalAppsPageContent struct {
-	Apps []apps_basic.AppDto
+	Apps []api.AppDto
 }
 
 type TerminalServicesPageContent struct {
@@ -97,12 +91,12 @@ type BackupsPageContent struct {
 type BackedUpAppsPageContent struct {
 	IsBackupEnabled bool
 	IsLoading       bool
-	Apps            []tools.MaintainerAndApp
+	Apps            []api.MaintainerAndApp
 }
 
 type BackedUpAppsPageLoadResponse struct {
-	IsRunning bool                     `json:"is_running"`
-	Apps      []tools.MaintainerAndApp `json:"apps"`
+	IsRunning bool                   `json:"is_running"`
+	Apps      []api.MaintainerAndApp `json:"apps"`
 }
 
 type BackupsPageLoadResponse struct {
@@ -157,7 +151,7 @@ type UserFrontendDto struct {
 }
 
 type AppsPageContent struct {
-	Apps            []apps_basic.AppDto
+	Apps            []api.AppDto
 	IsBackupEnabled bool
 }
 
@@ -167,9 +161,9 @@ type MaintenanceWindowOption struct {
 }
 
 type SettingsPageContent struct {
-	BackupServer             *tools.BackupServerConfigs
-	MaintenanceConfig        *configs.MaintenanceConfig
-	RetentionPolicy          *retention.RetentionPolicy
+	BackupServer             *api.BackupServerConfigs
+	MaintenanceConfig        *api.MaintenanceConfig
+	RetentionPolicy          *api.RetentionPolicy
 	MaintenanceWindowOptions []MaintenanceWindowOption
 	IanaTimezoneOptions      []string
 	NextMaintenanceAt        string
@@ -177,11 +171,11 @@ type SettingsPageContent struct {
 
 type UserEditPage struct {
 	UserId string
-	User   *tools.User
+	User   *api.User
 }
 
 type MaintenancePage struct {
-	Apps []apps_basic.AppDto
+	Apps []api.AppDto
 }
 
 type AccountPageData struct {

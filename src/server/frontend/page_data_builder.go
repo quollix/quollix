@@ -17,6 +17,7 @@ import (
 	"server/tools"
 	"server/users"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"gopkg.in/yaml.v3"
 )
@@ -36,14 +37,14 @@ type FrontendPageDataBuilder interface {
 	BuildStorePage(maintainerName, appName string, showUnofficial, isSearch bool) (*StorePageContent, error)
 	BuildVersionsPage(maintainer, app string) (*VersionsPageContent, error)
 	BuildBackedUpAppsPage() (*BackedUpAppsPageContent, error)
-	BuildBackupsPage(request tools.MaintainerAndApp) (*BackupsPageContent, error)
+	BuildBackupsPage(request api.MaintainerAndApp) (*BackupsPageContent, error)
 	BuildSetPasswordPage(token string) (*SetPasswordPageContent, error)
 	BuildAppSsoPage() (*AppSsoPageContent, error)
 	BuildProvidersPage() (*ProvidersPageContent, error)
 	BuildOidcClientsPage() (*OidcClientsPageContent, error)
 	BuildMaintenancePage() (*MaintenancePage, error)
 	BuildUserEditPageData(userId string) (*UserEditPage, error)
-	BuildAccountPageData(user *tools.User) *AccountPageData
+	BuildAccountPageData(user *api.User) *AccountPageData
 }
 
 type FrontendPageDataBuilderImpl struct {
@@ -261,20 +262,20 @@ func (b *FrontendPageDataBuilderImpl) BuildTerminalViewPage(selectedMaintainer, 
 	}, nil
 }
 
-func (b *FrontendPageDataBuilderImpl) listRunningAppsForAdminSorted() ([]apps_basic.AppDto, error) {
+func (b *FrontendPageDataBuilderImpl) listRunningAppsForAdminSorted() ([]api.AppDto, error) {
 	appsForAdmin, err := b.AppService.ListAppsForAdmin()
 	if err != nil {
 		return nil, err
 	}
 
-	runningApps := make([]apps_basic.AppDto, 0, len(appsForAdmin)+1)
+	runningApps := make([]api.AppDto, 0, len(appsForAdmin)+1)
 	for _, app := range appsForAdmin {
 		if app.IsRunning {
 			runningApps = append(runningApps, app)
 		}
 	}
 
-	runningApps = append(runningApps, apps_basic.AppDto{
+	runningApps = append(runningApps, api.AppDto{
 		Maintainer: u.OfficialMaintainer,
 		AppName:    u.OfficialBrandAppName,
 	})
@@ -520,7 +521,7 @@ func (b *FrontendPageDataBuilderImpl) BuildBackedUpAppsPage() (*BackedUpAppsPage
 	}, nil
 }
 
-func (b *FrontendPageDataBuilderImpl) BuildBackupsPage(request tools.MaintainerAndApp) (*BackupsPageContent, error) {
+func (b *FrontendPageDataBuilderImpl) BuildBackupsPage(request api.MaintainerAndApp) (*BackupsPageContent, error) {
 	return &BackupsPageContent{
 		Maintainer: request.Maintainer,
 		AppName:    request.AppName,
@@ -542,7 +543,7 @@ func (b *FrontendPageDataBuilderImpl) BuildAppSsoPage() (*AppSsoPageContent, err
 		return nil, err
 	}
 
-	var filteredApps []apps_basic.AppDto
+	var filteredApps []api.AppDto
 	for _, app := range appsForAdmin {
 		if app.AppName != u.OfficialDatabaseAppName {
 			filteredApps = append(filteredApps, app)
@@ -610,7 +611,7 @@ func (b *FrontendPageDataBuilderImpl) BuildUserEditPageData(userId string) (*Use
 	}, nil
 }
 
-func (b *FrontendPageDataBuilderImpl) BuildAccountPageData(user *tools.User) *AccountPageData {
+func (b *FrontendPageDataBuilderImpl) BuildAccountPageData(user *api.User) *AccountPageData {
 	page := &AccountPageData{
 		Username:      user.Username,
 		Email:         user.Email,

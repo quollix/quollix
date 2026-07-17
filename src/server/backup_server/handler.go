@@ -3,8 +3,8 @@ package backup_server
 import (
 	"net/http"
 	"server/apps_basic"
-	"server/tools"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -22,7 +22,7 @@ type SshHandler struct {
 }
 
 func (s *SshHandler) SaveSshSettingsHandler(w http.ResponseWriter, r *http.Request) {
-	remoteRepo, ok := validation.ReadBody[tools.BackupServerConfigs](w, r)
+	remoteRepo, ok := validation.ReadBody[api.BackupServerConfigs](w, r)
 	if !ok {
 		return
 	}
@@ -55,19 +55,14 @@ func (s *SshHandler) ResetSshSettingsHandler(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func getEmptyBackupServerConfigs() *tools.BackupServerConfigs {
-	return &tools.BackupServerConfigs{
+func getEmptyBackupServerConfigs() *api.BackupServerConfigs {
+	return &api.BackupServerConfigs{
 		IsEnabled: false,
 	}
 }
 
-type KnownHostsRequest struct {
-	Host string `json:"host" validate:"remote_host"`
-	Port string `json:"port" validate:"number"`
-}
-
 func (s *SshHandler) GetKnownHostsHandler(w http.ResponseWriter, r *http.Request) {
-	repo, ok := validation.ReadBody[KnownHostsRequest](w, r)
+	repo, ok := validation.ReadBody[api.KnownHostsRequest](w, r)
 	if !ok {
 		return
 	}
@@ -81,11 +76,11 @@ func (s *SshHandler) GetKnownHostsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	u.SendJsonResponse(w, tools.SingleString{Value: knownHost})
+	u.SendJsonResponse(w, api.SingleString{Value: knownHost})
 }
 
 func (s *SshHandler) TestSshAccessHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[tools.SshConnectionRequest](w, r)
+	request, ok := validation.ReadBody[api.SshConnectionRequest](w, r)
 	if !ok {
 		return
 	}
@@ -98,7 +93,7 @@ func (s *SshHandler) TestSshAccessHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (b *SshHandler) PurgeBackupServerHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[tools.SshConnectionRequest](w, r)
+	request, ok := validation.ReadBody[api.SshConnectionRequest](w, r)
 	if !ok {
 		return
 	}

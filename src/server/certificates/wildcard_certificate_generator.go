@@ -10,6 +10,7 @@ import (
 
 	"server/configs"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"golang.org/x/crypto/acme"
 )
@@ -17,7 +18,7 @@ import (
 const CertificatChallengeNotPossibleForLocalhost = "certificate challenge is not possible for base domain 'localhost'"
 
 type WildcardCertificateService interface {
-	StartDns01Session() (*Dns01Session, *Dns01ChallengeInfo, error)
+	StartDns01Session() (*Dns01Session, *api.Dns01ChallengeInfo, error)
 	FinishDns01Session(session *Dns01Session, wildcardKeyAuth string)
 }
 
@@ -31,7 +32,7 @@ type WildcardCertificateServiceImpl struct {
 	OperationMonitor     OperationMonitor
 }
 
-func (w *WildcardCertificateServiceImpl) StartDns01Session() (*Dns01Session, *Dns01ChallengeInfo, error) {
+func (w *WildcardCertificateServiceImpl) StartDns01Session() (*Dns01Session, *api.Dns01ChallengeInfo, error) {
 	host, err := w.ConfigsService.GetBaseDomain()
 	if err != nil {
 		return nil, nil, err
@@ -78,7 +79,7 @@ func (w *WildcardCertificateServiceImpl) StartDns01Session() (*Dns01Session, *Dn
 		Id:             sessionId,
 	}
 
-	info := &Dns01ChallengeInfo{
+	info := &api.Dns01ChallengeInfo{
 		RecordName:      acmeChallengePrefix + host,
 		WildcardKeyAuth: wildcardKeyAuth,
 	}

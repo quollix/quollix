@@ -4,8 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"server/tools"
-
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -16,7 +15,7 @@ type OidcRelyingPartyHandler struct {
 }
 
 func (h *OidcRelyingPartyHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
-	client, ok := validation.ReadBody[OidcRelyingPartyRequest](w, r)
+	client, ok := validation.ReadBody[api.OidcRelyingPartyRequest](w, r)
 	if !ok {
 		return
 	}
@@ -27,7 +26,7 @@ func (h *OidcRelyingPartyHandler) CreateClient(w http.ResponseWriter, r *http.Re
 }
 
 func (h *OidcRelyingPartyHandler) UpdateClient(w http.ResponseWriter, r *http.Request) {
-	client, ok := validation.ReadBody[OidcRelyingPartyRequest](w, r)
+	client, ok := validation.ReadBody[api.OidcRelyingPartyRequest](w, r)
 	if !ok {
 		return
 	}
@@ -47,7 +46,7 @@ func (h *OidcRelyingPartyHandler) ListClients(w http.ResponseWriter, _ *http.Req
 }
 
 func (h *OidcRelyingPartyHandler) DeleteClient(w http.ResponseWriter, r *http.Request) {
-	clientIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	clientIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -63,7 +62,7 @@ func (h *OidcRelyingPartyHandler) DeleteClient(w http.ResponseWriter, r *http.Re
 }
 
 func (h *OidcRelyingPartyHandler) RegenerateClientCredentials(w http.ResponseWriter, r *http.Request) {
-	clientIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	clientIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}

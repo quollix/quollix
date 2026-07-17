@@ -15,6 +15,7 @@ import (
 	"server/users"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -78,7 +79,7 @@ func InitDeps() {
 	isInitialized = true
 }
 
-func GetSampleAdminUser() *tools.User {
+func GetSampleAdminUser() *api.User {
 	return users.NewUser(
 		"admin",
 		"admin@example.com",

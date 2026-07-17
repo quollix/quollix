@@ -5,6 +5,7 @@ import (
 	"server/configs"
 	"server/maintenance/retention"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -25,13 +26,8 @@ type MaintenanceConfigsHandler struct {
 	MaintenanceService        MaintenanceService
 }
 
-type MaintenanceConfigDto struct {
-	IanaTimezone               string `json:"iana_timezone" validate:"ignore"` // "ignore" because we will do custom validation for this field in the handler
-	MaintenanceWindowStartHour int    `json:"maintenance_window_start_hour"`
-}
-
 func (s *MaintenanceConfigsHandler) SaveMaintenanceConfigs(w http.ResponseWriter, r *http.Request) {
-	config, ok := validation.ReadBody[MaintenanceConfigDto](w, r)
+	config, ok := validation.ReadBody[api.MaintenanceConfigDto](w, r)
 	if !ok {
 		return
 	}
@@ -64,7 +60,7 @@ func (s *MaintenanceConfigsHandler) ReadRetentionPolicyHandler(w http.ResponseWr
 }
 
 func (s *MaintenanceConfigsHandler) SaveRetentionPolicyHandler(w http.ResponseWriter, r *http.Request) {
-	policy, ok := validation.ReadBody[retention.RetentionPolicy](w, r)
+	policy, ok := validation.ReadBody[api.RetentionPolicy](w, r)
 	if !ok {
 		return
 	}

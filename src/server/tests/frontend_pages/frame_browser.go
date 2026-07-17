@@ -4,7 +4,6 @@ import (
 	"server/tools"
 	"time"
 
-	"github.com/go-rod/rod/lib/proto"
 	"github.com/quollix/common/assert"
 )
 
@@ -13,9 +12,7 @@ type FrameBrowser struct {
 }
 
 func (b *FrameBrowser) DoAndWaitDOMContentLoaded(action func()) {
-	waitForNavigation := b.Frame.Page.WaitNavigation(proto.PageLifecycleEventNameDOMContentLoaded)
-	action()
-	waitForNavigation()
+	assert.Nil(b.Frame.T, b.Frame.Page.DoAndWaitLoad(action))
 }
 
 func (b *FrameBrowser) WaitForElement(selector string) *FrameType {
@@ -59,7 +56,7 @@ func (b *FrameBrowser) ConfirmDialog() *FrameType {
 		if findErr != nil {
 			return findErr
 		}
-		return confirmButton.Click(proto.InputMouseButtonLeft, 1)
+		return confirmButton.Click()
 	})
 	assert.Nil(b.Frame.T, err)
 	return b.Frame

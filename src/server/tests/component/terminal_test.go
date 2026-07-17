@@ -11,11 +11,12 @@ import (
 	"net/url"
 	"regexp"
 	"server/terminal"
-	"server/tests/api_client"
-	"server/tools"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/gorilla/websocket"
 	"github.com/quollix/common/assert"
@@ -194,7 +195,7 @@ func prepateWebsocketConnection(parsedRootUrl *url.URL, cookie *http.Cookie) (ur
 	websocketUrl := url.URL{
 		Scheme: "wss",
 		Host:   parsedRootUrl.Host,
-		Path:   tools.Paths.BackendTerminal,
+		Path:   api.Paths.BackendTerminal,
 		RawQuery: url.Values{
 			"maintainer":  []string{"quollix"},
 			"appName":     []string{"quollix"},

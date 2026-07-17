@@ -2,15 +2,15 @@ package frontend_pages
 
 import (
 	"fmt"
-	"server/maintenance/retention"
 	"server/tools"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/validation"
 )
 
@@ -38,7 +38,7 @@ func (s *SettingsPage) SaveBaseDomainAndAssertSuccessSnackbar() *SettingsPage {
 	s.Frame.Controls.GetRequiredElement("#settings-base-domain-save-button").MustClick()
 	s.Frame.Browser.ConfirmDialog()
 	s.Frame.Assert.SnackbarVisibleWithTextEventually("Base domain saved successfully.")
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
@@ -52,7 +52,7 @@ func (s *SettingsPage) ResetCertificateAndAssertSuccessSnackbar() *SettingsPage 
 	s.Frame.Controls.GetRequiredElement("#settings-certificate-reset-button").MustClick()
 	s.Frame.Browser.ConfirmDialog()
 	s.Frame.Assert.SnackbarVisibleWithTextEventually("Certificate has been reset to a self-signed certificate.")
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
@@ -222,14 +222,14 @@ func (s *SettingsPage) SetBackupServerEnabled(enabled bool) *SettingsPage {
 func (s *SettingsPage) SaveBackupServerAndAssertSuccessSnackbar() *SettingsPage {
 	s.Frame.Controls.GetRequiredElement("#backup-server-save-button").MustClick()
 	s.Frame.Assert.SnackbarVisibleWithTextEventuallyWithin("Backup server settings saved.", backupOperationTimeout)
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
 func (s *SettingsPage) SaveBackupServerAndAssertErrorSnackbar(expected string) *SettingsPage {
 	s.Frame.Controls.GetRequiredElement("#backup-server-save-button").MustClick()
 	s.Frame.Assert.SnackbarVisibleWithTextEventuallyWithin(expected, backupOperationTimeout)
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
@@ -237,11 +237,11 @@ func (s *SettingsPage) ResetBackupServerAndAssertSuccessSnackbar() *SettingsPage
 	s.Frame.Controls.GetRequiredElement("#backup-server-reset-button").MustClick()
 	s.Frame.Browser.ConfirmDialog()
 	s.Frame.Assert.SnackbarVisibleWithTextEventually("Backup server settings have been reset.")
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
-func (s *SettingsPage) WaitUntilBackupServerConfigMatches(expected *tools.BackupServerConfigs) *SettingsPage {
+func (s *SettingsPage) WaitUntilBackupServerConfigMatches(expected *api.BackupServerConfigs) *SettingsPage {
 	err := tools.Eventually(func() error {
 		configs, readErr := s.Frame.Client.Settings.ReadSshConfigs()
 		assert.Nil(s.Frame.T, readErr)
@@ -258,12 +258,12 @@ func (s *SettingsPage) PurgeBackupServerAndAssertSuccessSnackbar() *SettingsPage
 	s.Frame.Controls.GetRequiredElement("#backup-server-purge-button").MustClick()
 	s.Frame.Browser.ConfirmDialog()
 	s.Frame.Assert.SnackbarVisibleWithTextEventuallyWithin("Backup server has been purged.", backupOperationTimeout)
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
-func (s *SettingsPage) ReadBackupServerFormValues() *tools.BackupServerConfigs {
-	return &tools.BackupServerConfigs{
+func (s *SettingsPage) ReadBackupServerFormValues() *api.BackupServerConfigs {
+	return &api.BackupServerConfigs{
 		IsEnabled:          s.Frame.Controls.GetCheckboxValue("#backup-server-enabled-checkbox"),
 		Host:               s.Frame.Controls.GetInputValue(`input[name="backupServerHost"]`),
 		SshPort:            s.Frame.Controls.GetInputValue(`input[name="backupServerSshPort"]`),
@@ -274,7 +274,7 @@ func (s *SettingsPage) ReadBackupServerFormValues() *tools.BackupServerConfigs {
 	}
 }
 
-func (s *SettingsPage) AssertBackupServerFormValues(expected *tools.BackupServerConfigs) *SettingsPage {
+func (s *SettingsPage) AssertBackupServerFormValues(expected *api.BackupServerConfigs) *SettingsPage {
 	err := tools.Eventually(func() error {
 		actual := s.ReadBackupServerFormValues()
 		if *actual != *expected {
@@ -351,7 +351,7 @@ func (s *SettingsPage) AssertSelectedMaintenanceWindow(label string) *SettingsPa
 func (s *SettingsPage) SaveMaintenanceConfigAndAssertSuccessSnackbar() *SettingsPage {
 	s.Frame.Controls.GetRequiredElement("#maintenance-save-button").MustClick()
 	s.Frame.Assert.SnackbarVisibleWithTextEventually("Maintenance settings saved.")
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
@@ -374,7 +374,7 @@ func (s *SettingsPage) AssertNextMaintenanceExecutionHour(expectedHour int) *Set
 	return s
 }
 
-func (s *SettingsPage) EnterRetentionPolicyValues(policy *retention.RetentionPolicy) *SettingsPage {
+func (s *SettingsPage) EnterRetentionPolicyValues(policy *api.RetentionPolicy) *SettingsPage {
 	s.Frame.Controls.SetInputValue("#retention-keep-pre-update", fmt.Sprintf("%d", policy.KeepPreUpdate))
 	s.Frame.Controls.SetInputValue("#retention-keep-daily", fmt.Sprintf("%d", policy.KeepDaily))
 	s.Frame.Controls.SetInputValue("#retention-keep-weekly", fmt.Sprintf("%d", policy.KeepWeekly))
@@ -383,8 +383,8 @@ func (s *SettingsPage) EnterRetentionPolicyValues(policy *retention.RetentionPol
 	return s
 }
 
-func (s *SettingsPage) ReadRetentionPolicyValues() *retention.RetentionPolicy {
-	return &retention.RetentionPolicy{
+func (s *SettingsPage) ReadRetentionPolicyValues() *api.RetentionPolicy {
+	return &api.RetentionPolicy{
 		KeepPreUpdate: parseInt(s.Frame.T, s.Frame.Controls.GetInputValue("#retention-keep-pre-update")),
 		KeepDaily:     parseInt(s.Frame.T, s.Frame.Controls.GetInputValue("#retention-keep-daily")),
 		KeepWeekly:    parseInt(s.Frame.T, s.Frame.Controls.GetInputValue("#retention-keep-weekly")),
@@ -393,7 +393,7 @@ func (s *SettingsPage) ReadRetentionPolicyValues() *retention.RetentionPolicy {
 	}
 }
 
-func (s *SettingsPage) AssertRetentionPolicyValues(expected *retention.RetentionPolicy) *SettingsPage {
+func (s *SettingsPage) AssertRetentionPolicyValues(expected *api.RetentionPolicy) *SettingsPage {
 	err := tools.Eventually(func() error {
 		actual := s.ReadRetentionPolicyValues()
 		if *actual != *expected {
@@ -409,7 +409,7 @@ func (s *SettingsPage) SaveRetentionPolicyAndAssertSuccessSnackbar() *SettingsPa
 	s.Frame.Controls.GetRequiredElement("#retention-policy-save-button").MustClick()
 	s.Frame.Browser.ConfirmDialog()
 	s.Frame.Assert.SnackbarVisibleWithTextEventually("Retention policy saved.")
-	s.Frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
 	return s
 }
 
@@ -419,7 +419,7 @@ func parseInt(t *testing.T, value string) int {
 	return intValue
 }
 
-func isElementVisible(t *testing.T, element *rod.Element) bool {
+func isElementVisible(t *testing.T, element *browsertest.Element) bool {
 	style, err := element.Attribute("style")
 	assert.Nil(t, err)
 	if style == nil {

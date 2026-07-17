@@ -4,8 +4,9 @@ import (
 	"server/tools"
 	"strings"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -128,13 +129,13 @@ func (b *BackedUpAppsPage) OpenListBackupsPage(maintainer, appName string) *Back
 	b.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		listBackupsButton.MustClick()
 	})
-	b.Frame.Assert.PagePath(tools.Paths.FrontendListBackups)
+	b.Frame.Assert.PagePath(api.Paths.FrontendListBackups)
 	b.Frame.Pages.BackupsPage.AssertLoadingBackupsVisible()
 	return b.Frame.Pages.BackupsPage
 }
 
-func (b *BackedUpAppsPage) getRequiredBackedUpAppRow(maintainer, appName string) *rod.Element {
-	var found *rod.Element
+func (b *BackedUpAppsPage) getRequiredBackedUpAppRow(maintainer, appName string) *browsertest.Element {
+	var found *browsertest.Element
 	err := tools.Eventually(func() error {
 		row, err := b.Frame.Page.Element("tr.backed-up-app-row")
 		if err != nil {

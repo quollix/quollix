@@ -2,10 +2,10 @@ package backups
 
 import (
 	"server/backup_server"
-	"server/tools"
 	"testing"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -15,7 +15,7 @@ func TestBackupServiceImpl_ResolveSingleAppNameByBackupIds_SingleApp(t *testing.
 		ResticService: resticService,
 	}
 
-	resticService.EXPECT().ListBackups().Return([]tools.BackupInfo{
+	resticService.EXPECT().ListBackups().Return([]api.BackupInfo{
 		{BackupId: "backup-1", AppName: "xwiki"},
 		{BackupId: "backup-2", AppName: "xwiki"},
 		{BackupId: "backup-3", AppName: "vaultwarden"},
@@ -32,7 +32,7 @@ func TestBackupServiceImpl_ResolveSingleAppNameByBackupIds_BackupNotFound(t *tes
 		ResticService: resticService,
 	}
 
-	resticService.EXPECT().ListBackups().Return([]tools.BackupInfo{
+	resticService.EXPECT().ListBackups().Return([]api.BackupInfo{
 		{BackupId: "backup-1", AppName: "xwiki"},
 	}, nil)
 
@@ -46,7 +46,7 @@ func TestBackupServiceImpl_ResolveSingleAppNameByBackupIds_MultipleAppsReturnsEr
 		ResticService: resticService,
 	}
 
-	resticService.EXPECT().ListBackups().Return([]tools.BackupInfo{
+	resticService.EXPECT().ListBackups().Return([]api.BackupInfo{
 		{BackupId: "backup-1", AppName: "xwiki"},
 		{BackupId: "backup-2", AppName: "vaultwarden"},
 	}, nil)

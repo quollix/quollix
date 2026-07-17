@@ -2,20 +2,21 @@ package retention
 
 import (
 	"fmt"
-	"server/tools"
 	"sort"
+
+	api "github.com/quollix/common/quollix/api"
 )
 
 type BackupRetentionSelector interface {
-	FindPreUpdateBackupsToRetain(backups []tools.BackupInfo, keepPreUpdate int) []string
+	FindPreUpdateBackupsToRetain(backups []api.BackupInfo, keepPreUpdate int) []string
 
-	FindDailyBackupsToRetain(backups []tools.BackupInfo, keepDaily int) []string
-	FindWeeklyBackupsToRetain(backups []tools.BackupInfo, keepWeekly int) []string
-	FindMonthlyBackupsToRetain(backups []tools.BackupInfo, keepMonthly int) []string
-	FindYearlyBackupsToRetain(backups []tools.BackupInfo, keepYearly int) []string
+	FindDailyBackupsToRetain(backups []api.BackupInfo, keepDaily int) []string
+	FindWeeklyBackupsToRetain(backups []api.BackupInfo, keepWeekly int) []string
+	FindMonthlyBackupsToRetain(backups []api.BackupInfo, keepMonthly int) []string
+	FindYearlyBackupsToRetain(backups []api.BackupInfo, keepYearly int) []string
 
-	CopyAndSortBackupsByNewestFirst(backups []tools.BackupInfo) []tools.BackupInfo
-	ExtractBackupIds(backups []tools.BackupInfo) []string
+	CopyAndSortBackupsByNewestFirst(backups []api.BackupInfo) []api.BackupInfo
+	ExtractBackupIds(backups []api.BackupInfo) []string
 
 	MergeUniqueBackupIds(backupIdLists ...[]string) map[string]struct{}
 	FindBackupIdsToRetent(backupIds []string, retainedBackupIds map[string]struct{}) []string
@@ -23,7 +24,7 @@ type BackupRetentionSelector interface {
 
 type BackupRetentionSelectorImpl struct{}
 
-func (b BackupRetentionSelectorImpl) FindPreUpdateBackupsToRetain(sortedPreUpdateBackups []tools.BackupInfo, keepPreUpdate int) []string {
+func (b BackupRetentionSelectorImpl) FindPreUpdateBackupsToRetain(sortedPreUpdateBackups []api.BackupInfo, keepPreUpdate int) []string {
 	var retainedBackupIds []string
 	for backupIndex, backup := range sortedPreUpdateBackups {
 		if backupIndex >= keepPreUpdate {
@@ -34,32 +35,32 @@ func (b BackupRetentionSelectorImpl) FindPreUpdateBackupsToRetain(sortedPreUpdat
 	return retainedBackupIds
 }
 
-func (s *BackupRetentionSelectorImpl) FindDailyBackupsToRetain(backups []tools.BackupInfo, keepDaily int) []string {
-	return s.retainNewestIdsByStringBucket(backups, keepDaily, func(backup tools.BackupInfo) string {
+func (s *BackupRetentionSelectorImpl) FindDailyBackupsToRetain(backups []api.BackupInfo, keepDaily int) []string {
+	return s.retainNewestIdsByStringBucket(backups, keepDaily, func(backup api.BackupInfo) string {
 		return backup.BackupCreationTimestamp.Format("2006-01-02")
 	})
 }
 
-func (s *BackupRetentionSelectorImpl) FindWeeklyBackupsToRetain(backups []tools.BackupInfo, keepWeekly int) []string {
-	return s.retainNewestIdsByStringBucket(backups, keepWeekly, func(backup tools.BackupInfo) string {
+func (s *BackupRetentionSelectorImpl) FindWeeklyBackupsToRetain(backups []api.BackupInfo, keepWeekly int) []string {
+	return s.retainNewestIdsByStringBucket(backups, keepWeekly, func(backup api.BackupInfo) string {
 		year, week := backup.BackupCreationTimestamp.ISOWeek()
 		return fmt.Sprintf("%04d-%02d", year, week)
 	})
 }
 
-func (s *BackupRetentionSelectorImpl) FindMonthlyBackupsToRetain(backups []tools.BackupInfo, keepMonthly int) []string {
-	return s.retainNewestIdsByStringBucket(backups, keepMonthly, func(backup tools.BackupInfo) string {
+func (s *BackupRetentionSelectorImpl) FindMonthlyBackupsToRetain(backups []api.BackupInfo, keepMonthly int) []string {
+	return s.retainNewestIdsByStringBucket(backups, keepMonthly, func(backup api.BackupInfo) string {
 		return backup.BackupCreationTimestamp.Format("2006-01")
 	})
 }
 
-func (s *BackupRetentionSelectorImpl) FindYearlyBackupsToRetain(backups []tools.BackupInfo, keepYearly int) []string {
-	return s.retainNewestIdsByStringBucket(backups, keepYearly, func(backup tools.BackupInfo) string {
+func (s *BackupRetentionSelectorImpl) FindYearlyBackupsToRetain(backups []api.BackupInfo, keepYearly int) []string {
+	return s.retainNewestIdsByStringBucket(backups, keepYearly, func(backup api.BackupInfo) string {
 		return backup.BackupCreationTimestamp.Format("2006")
 	})
 }
 
-func (s *BackupRetentionSelectorImpl) retainNewestIdsByStringBucket(backups []tools.BackupInfo, keepCount int, bucketKeyFunc func(tools.BackupInfo) string) []string {
+func (s *BackupRetentionSelectorImpl) retainNewestIdsByStringBucket(backups []api.BackupInfo, keepCount int, bucketKeyFunc func(api.BackupInfo) string) []string {
 	if keepCount <= 0 {
 		return nil
 	}
@@ -79,8 +80,8 @@ func (s *BackupRetentionSelectorImpl) retainNewestIdsByStringBucket(backups []to
 	return retainedBackupIds
 }
 
-func (s *BackupRetentionSelectorImpl) CopyAndSortBackupsByNewestFirst(backups []tools.BackupInfo) []tools.BackupInfo {
-	sortedBackups := make([]tools.BackupInfo, 0, len(backups))
+func (s *BackupRetentionSelectorImpl) CopyAndSortBackupsByNewestFirst(backups []api.BackupInfo) []api.BackupInfo {
+	sortedBackups := make([]api.BackupInfo, 0, len(backups))
 	sortedBackups = append(sortedBackups, backups...)
 	sort.Slice(sortedBackups, func(firstIndex, secondIndex int) bool {
 		return sortedBackups[firstIndex].BackupCreationTimestamp.After(sortedBackups[secondIndex].BackupCreationTimestamp)
@@ -88,7 +89,7 @@ func (s *BackupRetentionSelectorImpl) CopyAndSortBackupsByNewestFirst(backups []
 	return sortedBackups
 }
 
-func (s *BackupRetentionSelectorImpl) ExtractBackupIds(backups []tools.BackupInfo) []string {
+func (s *BackupRetentionSelectorImpl) ExtractBackupIds(backups []api.BackupInfo) []string {
 	backupIds := make([]string, 0, len(backups))
 	for _, backup := range backups {
 		backupIds = append(backupIds, backup.BackupId)

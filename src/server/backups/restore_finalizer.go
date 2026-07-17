@@ -4,10 +4,12 @@ import (
 	"server/apps_basic"
 	"server/backup_server"
 	"server/tools"
+
+	"github.com/quollix/common/quollix/api"
 )
 
 type RestoreFinalizer interface {
-	FinalizeRestore(info *tools.BackupInfo, snapshot *AppSnapshot) (*tools.RestoredVersionInfo, error)
+	FinalizeRestore(info *api.BackupInfo, snapshot *AppSnapshot) (*api.RestoredVersionInfo, error)
 }
 
 type RestoreFinalizerImpl struct {
@@ -18,8 +20,8 @@ type RestoreFinalizerImpl struct {
 	AppDetector       apps_basic.AppDetector
 }
 
-func (f *RestoreFinalizerImpl) FinalizeRestore(info *tools.BackupInfo, snapshot *AppSnapshot) (*tools.RestoredVersionInfo, error) {
-	restoredVersionInfo := &tools.RestoredVersionInfo{
+func (f *RestoreFinalizerImpl) FinalizeRestore(info *api.BackupInfo, snapshot *AppSnapshot) (*api.RestoredVersionInfo, error) {
+	restoredVersionInfo := &api.RestoredVersionInfo{
 		Maintainer:     info.Maintainer,
 		AppName:        info.AppName,
 		VersionName:    info.VersionName,

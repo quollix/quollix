@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"server/tools"
+
+	api "github.com/quollix/common/quollix/api"
 )
 
 type AppReverseProxyFactory interface {
@@ -27,9 +29,9 @@ func (a *AppReverseProxyFactoryImpl) CreateProxyRequest(originalRequest *http.Re
 		newProxyRequest.URL.Scheme = "http"
 		newProxyRequest.URL.Host = fmt.Sprintf("%s_%s_%s:%s", app.Maintainer, app.AppName, app.AppName, app.Port)
 		query := newProxyRequest.URL.Query()
-		query.Del(tools.BrandAppQuerySecretName)
+		query.Del(api.BrandAppQuerySecretName)
 		newProxyRequest.URL.RawQuery = query.Encode()
-		newProxyRequest.Header.Del(tools.BrandAppAuthCookieName)
+		newProxyRequest.Header.Del(api.BrandAppAuthCookieName)
 
 		removeAuthCookie(newProxyRequest, originalRequest)
 	}
@@ -39,7 +41,7 @@ func (a *AppReverseProxyFactoryImpl) CreateProxyRequest(originalRequest *http.Re
 func removeAuthCookie(proxyRequest *http.Request, originalRequest *http.Request) {
 	var newCookies []string
 	for _, cookie := range originalRequest.Cookies() {
-		if cookie.Name != tools.BrandAppAuthCookieName {
+		if cookie.Name != api.BrandAppAuthCookieName {
 			newCookies = append(newCookies, cookie.String())
 		}
 	}

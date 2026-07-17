@@ -5,10 +5,11 @@ package component
 import (
 	"crypto/tls"
 	"net/http"
-	"server/tests/api_client"
-	"server/tools"
 	"strings"
 	"testing"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -19,7 +20,7 @@ func TestEmailFrontendEndpointIsAvailable(t *testing.T) {
 	assert.Nil(t, client.Auth.SignIn("admin", "password"))
 	defer client.Test.ResetTestState()
 
-	req, err := http.NewRequest(http.MethodGet, client.Parent.RootUrl+tools.Paths.FrontendEmail, nil)
+	req, err := http.NewRequest(http.MethodGet, client.Parent.RootUrl+api.Paths.FrontendEmail, nil)
 	assert.Nil(t, err)
 	req.AddCookie(client.Parent.Cookie)
 

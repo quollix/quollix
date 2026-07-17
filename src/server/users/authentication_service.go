@@ -6,6 +6,7 @@ import (
 	"server/tools"
 	"time"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -37,8 +38,8 @@ func (a *AuthenticationServiceImpl) GetRequestWithAuthContext(w http.ResponseWri
 	return r, nil
 }
 
-func (a *AuthenticationServiceImpl) getUserAuthentication(r *http.Request) (*tools.User, error) {
-	cookie, err := r.Cookie(tools.BrandAppAuthCookieName)
+func (a *AuthenticationServiceImpl) getUserAuthentication(r *http.Request) (*api.User, error) {
+	cookie, err := r.Cookie(api.BrandAppAuthCookieName)
 	if err != nil {
 		return nil, u.Logger.NewError(CookieNotFoundError)
 	}

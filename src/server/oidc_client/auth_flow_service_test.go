@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,7 +17,7 @@ var oidcAuthFlowNow = time.Date(2026, time.June, 21, 11, 0, 0, 0, time.UTC)
 
 func TestOidcAuthFlowServiceImpl_StartLoginStoresStateAndReturnsRedirect(t *testing.T) {
 	testObjects := newOidcAuthFlowTestObjects(t)
-	provider := &OidcAuthProviderDto{Id: 10, IssuerDomainPath: "issuer.example", ClientId: "client-id"}
+	provider := &api.OidcAuthProviderDto{Id: 10, IssuerDomainPath: "issuer.example", ClientId: "client-id"}
 	var storedState OidcLoginState
 	testObjects.ProviderRepo.EXPECT().GetProviderById(10).Return(provider, nil)
 	testObjects.AuthHelper.EXPECT().GenerateSecret().Return("state-secret", nil)
@@ -33,7 +34,7 @@ func TestOidcAuthFlowServiceImpl_StartLoginStoresStateAndReturnsRedirect(t *test
 	assert.Equal(t, "https://issuer.example/auth", start.RedirectUrl)
 	assert.Equal(t, oidcSignInStateCookieName, start.StateCookie.Name)
 	assert.Equal(t, "state-secret", start.StateCookie.Value)
-	assert.Equal(t, tools.Paths.BackendOidcCallback, start.StateCookie.Path)
+	assert.Equal(t, api.Paths.BackendOidcCallback, start.StateCookie.Path)
 	assert.True(t, start.StateCookie.HttpOnly)
 	assert.True(t, start.StateCookie.Secure)
 	assert.Equal(t, "state-secret", storedState.State)
@@ -43,7 +44,7 @@ func TestOidcAuthFlowServiceImpl_StartLoginStoresStateAndReturnsRedirect(t *test
 
 func TestOidcAuthFlowServiceImpl_FinishLoginExchangesCodeAndCreatesSession(t *testing.T) {
 	testObjects := newOidcAuthFlowTestObjects(t)
-	provider := &OidcAuthProviderDto{Id: 10, IssuerDomainPath: "issuer.example", ClientId: "client-id"}
+	provider := &api.OidcAuthProviderDto{Id: 10, IssuerDomainPath: "issuer.example", ClientId: "client-id"}
 	claims := OidcLoginClaims{
 		Subject:           "subject",
 		PreferredUsername: "tom",
@@ -68,7 +69,7 @@ func TestOidcAuthFlowServiceImpl_FinishLoginExchangesCodeAndCreatesSession(t *te
 
 func TestOidcAuthFlowServiceImpl_FinishLoginTrimsStateAndCode(t *testing.T) {
 	testObjects := newOidcAuthFlowTestObjects(t)
-	provider := &OidcAuthProviderDto{Id: 10, IssuerDomainPath: "issuer.example", ClientId: "client-id"}
+	provider := &api.OidcAuthProviderDto{Id: 10, IssuerDomainPath: "issuer.example", ClientId: "client-id"}
 	claims := OidcLoginClaims{
 		Subject:           "subject",
 		PreferredUsername: "tom",

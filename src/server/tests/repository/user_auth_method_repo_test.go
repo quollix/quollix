@@ -5,11 +5,11 @@ package repository
 import (
 	"server/oidc_client"
 	test_tools "server/tests/test_tools"
-	"server/tools"
 	"testing"
 	"time"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 var (
@@ -113,7 +113,7 @@ func TestUserAuthMethodRepository_ProviderDeletionCascades(t *testing.T) {
 	assert.Equal(t, 0, len(methods))
 }
 
-func initUserAuthMethodRepoTest(t *testing.T) (*tools.User, *oidc_client.OidcAuthProviderDto) {
+func initUserAuthMethodRepoTest(t *testing.T) (*api.User, *api.OidcAuthProviderDto) {
 	InitDeps()
 
 	user := GetSampleAdminUser()

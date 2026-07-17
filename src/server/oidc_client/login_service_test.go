@@ -10,6 +10,7 @@ import (
 	"server/users"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/stretchr/testify/mock"
 )
@@ -27,7 +28,7 @@ func TestLoginServiceImpl_LoginWithClaims_WhenAuthMethodExistsUpdatesTimestampAn
 	}
 	testObjects.OsWrapper.EXPECT().Now().Return(loginFlowSampleTime)
 	testObjects.UserAuthMethodRepo.EXPECT().GetUserAuthMethodByProviderAndSubject(1, "external-subject").Return(method, true, nil)
-	testObjects.UserRepo.EXPECT().GetUserById(42).Return(&tools.User{Id: 42, IsEnabled: true}, nil)
+	testObjects.UserRepo.EXPECT().GetUserById(42).Return(&api.User{Id: 42, IsEnabled: true}, nil)
 	testObjects.UserAuthMethodRepo.EXPECT().UpdateLastOidcAuthenticatedAt(55, loginFlowSampleTime).Return(nil)
 	testObjects.SessionService.EXPECT().GenerateAndSaveCookie(42, users.QuollixSessionAudience()).Return(testCookie(42), nil)
 
@@ -48,7 +49,7 @@ func TestLoginServiceImpl_LoginWithClaims_WhenLinkedUserIsDisabledReturnsError(t
 	}
 	testObjects.OsWrapper.EXPECT().Now().Return(loginFlowSampleTime)
 	testObjects.UserAuthMethodRepo.EXPECT().GetUserAuthMethodByProviderAndSubject(1, "external-subject").Return(method, true, nil)
-	testObjects.UserRepo.EXPECT().GetUserById(42).Return(&tools.User{Id: 42, IsEnabled: false}, nil)
+	testObjects.UserRepo.EXPECT().GetUserById(42).Return(&api.User{Id: 42, IsEnabled: false}, nil)
 
 	_, err := testObjects.Service.LoginWithClaims(1, OidcLoginClaims{Subject: "external-subject"})
 
@@ -66,7 +67,7 @@ func TestLoginServiceImpl_LoginWithClaims_TrimsSubjectBeforeLookup(t *testing.T)
 	}
 	testObjects.OsWrapper.EXPECT().Now().Return(loginFlowSampleTime)
 	testObjects.UserAuthMethodRepo.EXPECT().GetUserAuthMethodByProviderAndSubject(1, "external-subject").Return(method, true, nil)
-	testObjects.UserRepo.EXPECT().GetUserById(42).Return(&tools.User{Id: 42, IsEnabled: true}, nil)
+	testObjects.UserRepo.EXPECT().GetUserById(42).Return(&api.User{Id: 42, IsEnabled: true}, nil)
 	testObjects.UserAuthMethodRepo.EXPECT().UpdateLastOidcAuthenticatedAt(55, loginFlowSampleTime).Return(nil)
 	testObjects.SessionService.EXPECT().GenerateAndSaveCookie(42, users.QuollixSessionAudience()).Return(testCookie(42), nil)
 
@@ -79,7 +80,7 @@ func TestLoginServiceImpl_LoginWithClaims_TrimsSubjectBeforeLookup(t *testing.T)
 func TestLoginServiceImpl_LoginWithClaims_WhenAuthMethodIsMissingCreatesUserAuthMethodAndSession(t *testing.T) {
 	testObjects := newLoginFlowTestObjects(t)
 	testObjects.expectTrustedProvider()
-	var createdUser *tools.User
+	var createdUser *api.User
 	var createdMethod *UserAuthMethod
 	testObjects.OsWrapper.EXPECT().Now().Return(loginFlowSampleTime)
 	testObjects.UserAuthMethodRepo.EXPECT().
@@ -90,7 +91,7 @@ func TestLoginServiceImpl_LoginWithClaims_WhenAuthMethodIsMissingCreatesUserAuth
 		Email:             "external@example.com",
 		PreferredUsername: "external",
 	}).Return("external", "external@example.com", nil)
-	testObjects.UserRepo.EXPECT().CreateUser(mock.AnythingOfType("*tools.User")).RunAndReturn(func(user *tools.User) (int, error) {
+	testObjects.UserRepo.EXPECT().CreateUser(mock.AnythingOfType("*api.User")).RunAndReturn(func(user *api.User) (int, error) {
 		createdUser = user
 		return 100, nil
 	})
@@ -186,7 +187,7 @@ func newLoginFlowTestObjects(t *testing.T) loginFlowTestObjects {
 }
 
 func (o loginFlowTestObjects) expectTrustedProvider() {
-	o.ProviderRepo.EXPECT().GetProviderById(1).Return(&OidcAuthProviderDto{Id: 1, Name: "provider"}, nil)
+	o.ProviderRepo.EXPECT().GetProviderById(1).Return(&api.OidcAuthProviderDto{Id: 1, Name: "provider"}, nil)
 }
 
 func testCookie(userId int) *http.Cookie {

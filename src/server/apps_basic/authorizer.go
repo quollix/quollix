@@ -5,6 +5,7 @@ import (
 	"server/tools"
 	"server/users"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -31,19 +32,19 @@ func (a *AuthorizerImpl) Authorize(appPolicy string, userAccessLevel tools.UserA
 
 func (a *AuthorizerImpl) authorize(appPolicy string, userAccessLevel tools.UserAccessLevel, userId int, appName string) error {
 	switch appPolicy {
-	case tools.Policies.PublicAccessPolicy:
+	case api.Policies.PublicAccessPolicy:
 		return nil
-	case tools.Policies.AuthenticatedAccessPolicy:
+	case api.Policies.AuthenticatedAccessPolicy:
 		if userAccessLevel == tools.AnonymousLevel {
 			return u.Logger.NewError(AccessDeniedError)
 		}
 		return nil
-	case tools.Policies.AdminOnlyAccessPolicy:
+	case api.Policies.AdminOnlyAccessPolicy:
 		if userAccessLevel == tools.AdminLevel {
 			return nil
 		}
 		return u.Logger.NewError(AccessDeniedError)
-	case tools.Policies.GroupRestrictedAccessPolicy:
+	case api.Policies.GroupRestrictedAccessPolicy:
 		if userAccessLevel == tools.AdminLevel {
 			return nil
 		}

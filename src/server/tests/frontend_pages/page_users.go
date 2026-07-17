@@ -1,13 +1,15 @@
 package frontend_pages
 
 import (
+	"fmt"
 	"server/tools"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 )
 
 type UsersPage struct {
@@ -37,24 +39,24 @@ const (
 )
 
 func (u *UsersPage) CreateUser(username, email string) *UsersPage {
-	u.Frame.Assert.PagePath(tools.Paths.FrontendUsers)
+	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
 	u.Frame.Page.MustElement(createUsernameInputSelector).MustInput(username)
 	u.Frame.Page.MustElement(createUserEmailInputSelector).MustInput(email)
 	u.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		u.Frame.Page.MustElement(createUserButtonSelector).MustClick()
 	})
-	u.Frame.Assert.PagePath(tools.Paths.FrontendUsers)
+	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
 	return u
 }
 
 func (u *UsersPage) CreateUserViaEmail(username, email string) *UsersPage {
-	u.Frame.Assert.PagePath(tools.Paths.FrontendUsers)
+	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
 	u.Frame.Page.MustElement(createUsernameInputSelector).MustInput(username)
 	u.Frame.Page.MustElement(createUserEmailInputSelector).MustInput(email)
 	u.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		u.Frame.Page.MustElement(createUserViaEmailButtonSelector).MustClick()
 	})
-	u.Frame.Assert.PagePath(tools.Paths.FrontendUsers)
+	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
 	return u
 }
 
@@ -62,7 +64,7 @@ func (u *UsersPage) ListUsers() []UserListEntry {
 	return listUsers(u.Frame.Page, u.Frame.T)
 }
 
-func listUsers(page *rod.Page, t *testing.T) []UserListEntry {
+func listUsers(page *browsertest.Page, t *testing.T) []UserListEntry {
 	rows, err := page.Elements(`tr.user-row`)
 	assert.Nil(t, err)
 
@@ -137,20 +139,17 @@ func listUsers(page *rod.Page, t *testing.T) []UserListEntry {
 }
 
 func (u *UsersPage) AssertUserInList(username, email string) *UsersPage {
-	p := u.Frame.Page.Timeout(defaultTimeout)
-	defer p.CancelTimeout()
-	for {
-		users := listUsers(p, u.Frame.T)
+	err := tools.EventuallyWithTimeout(defaultTimeout, 50*time.Millisecond, func() error {
+		users := listUsers(u.Frame.Page, u.Frame.T)
 		for _, entry := range users {
 			if entry.Name == username && entry.Email == email {
-				return u
+				return nil
 			}
 		}
-		if p.GetContext().Err() != nil {
-			u.Frame.T.Fatalf("user not found in frontend list (username=%s email=%s)", username, email)
-		}
-		time.Sleep(50 * time.Millisecond)
-	}
+		return fmt.Errorf("user not found in frontend list (username=%s email=%s)", username, email)
+	})
+	assert.Nil(u.Frame.T, err)
+	return u
 }
 
 func (u *UsersPage) GetRequiredUser(username string) *UserListEntry {
@@ -214,7 +213,7 @@ func (u *UsersPage) OpenEditPageForUser(username string) *UserEditPage {
 		u.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 			editButton.MustClick()
 		})
-		u.Frame.Assert.PagePath(tools.Paths.FrontendUserEdit)
+		u.Frame.Assert.PagePath(api.Paths.FrontendUserEdit)
 		return u.Frame.Pages.UserEditPage
 	}
 

@@ -5,18 +5,18 @@ import (
 	"strconv"
 	"strings"
 
-	"server/oidc_provider"
 	"server/tools"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 )
 
 type ClientsPage struct {
 	Frame *FrameType
 }
 
-func (c *ClientsPage) FillCreateClient(client *oidc_provider.OidcRelyingPartyDto) *ClientsPage {
+func (c *ClientsPage) FillCreateClient(client *api.OidcRelyingPartyDto) *ClientsPage {
 	c.Frame.Controls.SetInputValue("#oidc-client-name-input", client.Name)
 	c.Frame.Controls.SetInputValue("#oidc-client-domain-input", client.Domain)
 	return c
@@ -28,7 +28,7 @@ func (c *ClientsPage) CreateClientAndAssertSuccess() *ClientsPage {
 	return c
 }
 
-func (c *ClientsPage) UpdateClient(client *oidc_provider.OidcRelyingPartyDto) *ClientsPage {
+func (c *ClientsPage) UpdateClient(client *api.OidcRelyingPartyDto) *ClientsPage {
 	row := c.findRowByClientId(client.Id)
 	setInputValueInRow(c.Frame.T, row, ".oidc-client-name-edit", client.Name)
 	setInputValueInRow(c.Frame.T, row, ".oidc-client-domain-edit", client.Domain)
@@ -66,8 +66,8 @@ func (c *ClientsPage) AssertClientSecretMasked(name string) *ClientsPage {
 	return c
 }
 
-func (c *ClientsPage) GetRequiredClient(name string) oidc_provider.OidcRelyingPartyDto {
-	var client oidc_provider.OidcRelyingPartyDto
+func (c *ClientsPage) GetRequiredClient(name string) api.OidcRelyingPartyDto {
+	var client api.OidcRelyingPartyDto
 	err := tools.Eventually(func() error {
 		rows := c.Frame.Page.MustElements("tr.oidc-relying-party-row")
 		for _, row := range rows {
@@ -83,7 +83,7 @@ func (c *ClientsPage) GetRequiredClient(name string) oidc_provider.OidcRelyingPa
 	return client
 }
 
-func (c *ClientsPage) readClientEntry(row *rod.Element) oidc_provider.OidcRelyingPartyDto {
+func (c *ClientsPage) readClientEntry(row *browsertest.Element) api.OidcRelyingPartyDto {
 	clientRecordId, err := row.Attribute("data-client-record-id")
 	assert.Nil(c.Frame.T, err)
 	assert.NotNil(c.Frame.T, clientRecordId)
@@ -91,7 +91,7 @@ func (c *ClientsPage) readClientEntry(row *rod.Element) oidc_provider.OidcRelyin
 	id, err := strconv.Atoi(strings.TrimSpace(*clientRecordId))
 	assert.Nil(c.Frame.T, err)
 
-	return oidc_provider.OidcRelyingPartyDto{
+	return api.OidcRelyingPartyDto{
 		Id:       id,
 		Name:     getInputValueInRow(c.Frame.T, row, ".oidc-client-name-edit"),
 		Domain:   getInputValueInRow(c.Frame.T, row, ".oidc-client-domain-edit"),
@@ -99,8 +99,8 @@ func (c *ClientsPage) readClientEntry(row *rod.Element) oidc_provider.OidcRelyin
 	}
 }
 
-func (c *ClientsPage) findRowByClientName(name string) *rod.Element {
-	var foundRow *rod.Element
+func (c *ClientsPage) findRowByClientName(name string) *browsertest.Element {
+	var foundRow *browsertest.Element
 	err := tools.Eventually(func() error {
 		rows := c.Frame.Page.MustElements("tr.oidc-relying-party-row")
 		for _, row := range rows {
@@ -115,8 +115,8 @@ func (c *ClientsPage) findRowByClientName(name string) *rod.Element {
 	return foundRow
 }
 
-func (c *ClientsPage) findRowByClientId(clientId int) *rod.Element {
-	var foundRow *rod.Element
+func (c *ClientsPage) findRowByClientId(clientId int) *browsertest.Element {
+	var foundRow *browsertest.Element
 	expectedClientId := strconv.Itoa(clientId)
 	err := tools.Eventually(func() error {
 		rows := c.Frame.Page.MustElements("tr.oidc-relying-party-row")

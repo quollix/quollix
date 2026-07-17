@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
@@ -196,7 +197,7 @@ func (h *AppStoreClientMock) createNewTestApp(
 		testMaintainer,
 		appName,
 		testVersionName,
-		tools.Policies.AdminOnlyAccessPolicy,
+		api.Policies.AdminOnlyAccessPolicy,
 		port,
 		clientId,
 		clientSecret,

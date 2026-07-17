@@ -6,6 +6,7 @@ import (
 	"server/users"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -43,7 +44,7 @@ func (e *EmailPage) Save() *EmailPage {
 	assert.Nil(e.Frame.T, err)
 	saveButton.MustClick()
 	e.Frame.Assert.SnackbarVisibleWithTextEventually("Email settings saved.")
-	e.Frame.Assert.PagePath(tools.Paths.FrontendEmail)
+	e.Frame.Assert.PagePath(api.Paths.FrontendEmail)
 	return e
 }
 
@@ -69,7 +70,7 @@ func (e *EmailPage) Reset() *EmailPage {
 	button.MustClick()
 	e.Frame.Browser.ConfirmDialog()
 	e.Frame.Assert.SnackbarVisibleWithTextEventually("Email settings have been reset.")
-	e.Frame.Assert.PagePath(tools.Paths.FrontendEmail)
+	e.Frame.Assert.PagePath(api.Paths.FrontendEmail)
 	return e
 }
 
@@ -92,7 +93,7 @@ func (e *EmailPage) ResetInvitationTemplate() *EmailPage {
 	button.MustClick()
 	e.Frame.Browser.ConfirmDialog()
 	e.Frame.Assert.SnackbarVisibleWithTextEventually("Invitation email template has been reset.")
-	e.Frame.Assert.PagePath(tools.Paths.FrontendEmail)
+	e.Frame.Assert.PagePath(api.Paths.FrontendEmail)
 	return e
 }
 

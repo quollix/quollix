@@ -1,5 +1,7 @@
 package certificates
 
+import "github.com/quollix/common/quollix/api"
+
 const (
 	SampleWildcardKeyAuth = "uJi0naVfLcobf2bK_t4-VkS0HFCK0U1WXkpGCGl3irE"
 )
@@ -8,8 +10,8 @@ type WildcardCertificateServiceMock struct {
 	OperationMonitor OperationMonitor
 }
 
-func (s *WildcardCertificateServiceMock) StartDns01Session() (*Dns01Session, *Dns01ChallengeInfo, error) {
-	txtDnsRecordToCreate := &Dns01ChallengeInfo{
+func (s *WildcardCertificateServiceMock) StartDns01Session() (*Dns01Session, *api.Dns01ChallengeInfo, error) {
+	txtDnsRecordToCreate := &api.Dns01ChallengeInfo{
 		RecordName:      acmeChallengePrefix + "localhost",
 		WildcardKeyAuth: SampleWildcardKeyAuth,
 	}

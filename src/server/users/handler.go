@@ -5,6 +5,7 @@ import (
 	"server/tools"
 	"strconv"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -46,7 +47,7 @@ func (s *UserHandler) ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *UserHandler) DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	userIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	userIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -86,7 +87,7 @@ func (s *UserHandler) SignOutHandler(w http.ResponseWriter, r *http.Request) {
 var changeOwnPasswordExpectedErrors = u.MapOf(IncorrectCurrentPasswordError)
 
 func (s *UserHandler) UserSetsOwnPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[tools.SetOwnPasswordRequest](w, r)
+	request, ok := validation.ReadBody[api.SetOwnPasswordRequest](w, r)
 	if !ok {
 		return
 	}
@@ -105,7 +106,7 @@ func (s *UserHandler) UserSetsOwnPasswordHandler(w http.ResponseWriter, r *http.
 }
 
 func (s *UserHandler) UserChangesOwnPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[tools.ChangeOwnPasswordRequest](w, r)
+	request, ok := validation.ReadBody[api.ChangeOwnPasswordRequest](w, r)
 	if !ok {
 		return
 	}
@@ -124,7 +125,7 @@ func (s *UserHandler) UserChangesOwnPasswordHandler(w http.ResponseWriter, r *ht
 }
 
 func (s *UserHandler) SignInHandler(w http.ResponseWriter, r *http.Request) {
-	creds, ok := validation.ReadBody[Credentials](w, r)
+	creds, ok := validation.ReadBody[api.Credentials](w, r)
 	if !ok {
 		return
 	}
@@ -139,7 +140,7 @@ func (s *UserHandler) SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *UserHandler) SecretHandler(w http.ResponseWriter, r *http.Request) {
 	u.Logger.Debug("SecretHandler called")
-	cookie, err := r.Cookie(tools.BrandAppAuthCookieName)
+	cookie, err := r.Cookie(api.BrandAppAuthCookieName)
 	if err != nil {
 		u.WriteResponseError(w, expectedCookieNotFoundError, err)
 		return
@@ -160,7 +161,7 @@ func (s *UserHandler) CheckAuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := r.Context().Value(tools.AuthKey).(tools.User)
+	user, ok := r.Context().Value(tools.AuthKey).(api.User)
 	if !ok {
 		u.WriteResponseErrorAlways(w, u.Logger.NewError(AuthNotFoundInContextError))
 		return
@@ -172,13 +173,8 @@ var expectedUserInvitationError = u.MapOf(UserAlreadyExistsError, EmailAlreadyEx
 var expectedChangeUsernameError = u.MapOf(UserAlreadyExistsError, ReservedEmailRenameConflictError)
 var expectedChangeEmailError = u.MapOf(EmailAlreadyExistsError, ReservedEmailMustMatchUserError)
 
-type InviteUserRequest struct {
-	Username string `json:"username" validate:"username"`
-	Email    string `json:"email" validate:"email"`
-}
-
 func (s *UserHandler) InviteUserHandler(w http.ResponseWriter, r *http.Request) {
-	userInvitationRequest, ok := validation.ReadBody[InviteUserRequest](w, r)
+	userInvitationRequest, ok := validation.ReadBody[api.InviteUserRequest](w, r)
 	if !ok {
 		return
 	}
@@ -189,13 +185,8 @@ func (s *UserHandler) InviteUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-type AcceptNewPasswordViaTokenRequest struct {
-	Password string `validate:"password"`
-	Token    string `validate:"secret"`
-}
-
 func (s *UserHandler) AcceptNewPasswordViaTokenHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[AcceptNewPasswordViaTokenRequest](w, r)
+	request, ok := validation.ReadBody[api.AcceptNewPasswordViaTokenRequest](w, r)
 	if !ok {
 		return
 	}
@@ -207,7 +198,7 @@ func (s *UserHandler) AcceptNewPasswordViaTokenHandler(w http.ResponseWriter, r 
 }
 
 func (s *UserHandler) ResetPasswordAndCreateTokenHandler(w http.ResponseWriter, r *http.Request) {
-	userIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	userIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -229,13 +220,8 @@ func (s *UserHandler) ResetPasswordAndCreateTokenHandler(w http.ResponseWriter, 
 	}
 }
 
-type ChangeUsernameRequest struct {
-	UserId   string `json:"user_id" validate:"number"`
-	Username string `json:"username" validate:"username"`
-}
-
 func (s *UserHandler) ChangeUsernameHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[ChangeUsernameRequest](w, r)
+	request, ok := validation.ReadBody[api.ChangeUsernameRequest](w, r)
 	if !ok {
 		return
 	}
@@ -253,13 +239,8 @@ func (s *UserHandler) ChangeUsernameHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-type ChangeEmailRequest struct {
-	UserId   string `json:"user_id" validate:"number"`
-	NewEmail string `json:"new_email" validate:"email"`
-}
-
 func (s *UserHandler) ChangeEmailHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[ChangeEmailRequest](w, r)
+	request, ok := validation.ReadBody[api.ChangeEmailRequest](w, r)
 	if !ok {
 		return
 	}
@@ -277,13 +258,8 @@ func (s *UserHandler) ChangeEmailHandler(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-type SetUserEnabledRequest struct {
-	UserId    string `json:"user_id" validate:"number"`
-	IsEnabled bool   `json:"is_enabled"`
-}
-
 func (s *UserHandler) SetUserEnabledHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[SetUserEnabledRequest](w, r)
+	request, ok := validation.ReadBody[api.SetUserEnabledRequest](w, r)
 	if !ok {
 		return
 	}

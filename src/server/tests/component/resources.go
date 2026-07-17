@@ -6,10 +6,10 @@ import (
 
 	"server/apps_basic"
 	"server/certificates"
-	"server/oidc_client"
-	"server/oidc_provider"
-	"server/tests/api_client"
 	"server/tools"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/store"
@@ -30,7 +30,7 @@ type AccessPolicyTestCase struct {
 	ShouldAnonymousHaveAccess bool
 }
 
-func hasVisibleSampleApp(apps []apps_basic.AppDto) bool {
+func hasVisibleSampleApp(apps []api.AppDto) bool {
 	for _, app := range apps {
 		if app.AppName == tools.SampleApp {
 			return true
@@ -121,33 +121,33 @@ func RunAccessPoliciesTest(t *testing.T, adminClient *api_client.QuollixClient, 
 	}
 }
 
-func ListUsers(t *testing.T, client *api_client.QuollixClient) []tools.User {
+func ListUsers(t *testing.T, client *api_client.QuollixClient) []api.User {
 	users, err := client.Users.List()
 	assert.Nil(t, err)
 	return users
 }
 
-func GetRequiredUserByUsername(t *testing.T, client *api_client.QuollixClient, username string) tools.User {
+func GetRequiredUserByUsername(t *testing.T, client *api_client.QuollixClient, username string) api.User {
 	user, exists, err := client.Users.GetByUsername(username)
 	assert.Nil(t, err)
 	assert.True(t, exists)
 	return user
 }
 
-func ListInstalledApps(t *testing.T, client *api_client.QuollixClient) []apps_basic.AppDto {
+func ListInstalledApps(t *testing.T, client *api_client.QuollixClient) []api.AppDto {
 	apps, err := client.Apps.ListInstalled()
 	assert.Nil(t, err)
 	return apps
 }
 
-func InstallSample(t *testing.T, client *api_client.QuollixClient, version string) (*apps_basic.AppDto, error) {
+func InstallSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AppDto, error) {
 	if err := client.Apps.InstallFromStore(tools.SampleMaintainer, tools.SampleApp, version); err != nil {
 		return nil, err
 	}
 	return GetInstalledSample(t, client), nil
 }
 
-func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, version string) (*apps_basic.AppDto, error) {
+func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AppDto, error) {
 	app, err := InstallSample(t, client, version)
 	if err != nil {
 		return nil, err
@@ -158,7 +158,7 @@ func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, versi
 	return GetInstalledSample(t, client), nil
 }
 
-func GetInstalledSample(t *testing.T, client *api_client.QuollixClient) *apps_basic.AppDto {
+func GetInstalledSample(t *testing.T, client *api_client.QuollixClient) *api.AppDto {
 	for _, app := range ListInstalledApps(t, client) {
 		if app.AppName == tools.SampleApp {
 			return &app
@@ -183,14 +183,14 @@ func CreateSampleBackup(t *testing.T, client *api_client.QuollixClient) error {
 	return client.Backups.Create(GetInstalledSample(t, client).AppId)
 }
 
-func GetOnlyOidcAuthProvider(t *testing.T, client *api_client.QuollixClient) oidc_client.OidcAuthProviderDto {
+func GetOnlyOidcAuthProvider(t *testing.T, client *api_client.QuollixClient) api.OidcAuthProviderDto {
 	providers, err := client.OidcProviders.List()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(providers))
 	return providers[0]
 }
 
-func GetOnlyOidcRelyingParty(t *testing.T, client *api_client.QuollixClient) oidc_provider.OidcRelyingPartyDto {
+func GetOnlyOidcRelyingParty(t *testing.T, client *api_client.QuollixClient) api.OidcRelyingPartyDto {
 	clients, err := client.OidcClients.List()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(clients))

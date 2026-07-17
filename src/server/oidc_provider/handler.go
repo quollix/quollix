@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"server/tools"
 	"server/users"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -22,7 +22,7 @@ func (h *OidcHandler) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Preserve the full original /authorize request (including state, nonce, PKCE, etc.) so we can resume the exact same OIDC flow after successful sign-in.
 		nextUrl := r.URL.RequestURI()
-		http.Redirect(w, r, tools.Paths.FrontendSignIn+"?next="+url.QueryEscape(nextUrl), http.StatusFound)
+		http.Redirect(w, r, api.Paths.FrontendSignIn+"?next="+url.QueryEscape(nextUrl), http.StatusFound)
 		return
 	}
 	in := AuthorizeInput{

@@ -9,6 +9,7 @@ import (
 	test_tools "server/tests/test_tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -118,7 +119,7 @@ func cleanupOidcRelyingPartyRepoTest() {
 	OidcRelyingPartyRepo.Wipe()
 }
 
-func assertOidcRelyingPartyEquality(t *testing.T, expected, actual *oidc_provider.OidcRelyingPartyDto) {
+func assertOidcRelyingPartyEquality(t *testing.T, expected, actual *api.OidcRelyingPartyDto) {
 	assert.Equal(t, expected.Id, actual.Id)
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, expected.Domain, actual.Domain)

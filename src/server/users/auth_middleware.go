@@ -5,6 +5,7 @@ import (
 	"server/tools"
 	"strings"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -48,7 +49,7 @@ func (r *RouteRegisterer) requireAccessLevel(level tools.UserAccessLevel, path s
 	})
 }
 
-func HasAccess(level tools.UserAccessLevel, auth tools.User) bool {
+func HasAccess(level tools.UserAccessLevel, auth api.User) bool {
 	switch level {
 	case tools.AnonymousLevel:
 		return true
@@ -60,13 +61,13 @@ func HasAccess(level tools.UserAccessLevel, auth tools.User) bool {
 }
 
 func IsFrontendRequest(path string) bool {
-	isBackendRequest := strings.HasPrefix(path, tools.Paths.BackendApi)
+	isBackendRequest := strings.HasPrefix(path, api.Paths.BackendApi)
 	isWebResourceRequestedFromBackend := strings.HasPrefix(path, tools.FrontendResourcesPathWithSlash)
 	isFrontendRequest := !isBackendRequest && !isWebResourceRequestedFromBackend
 	return isFrontendRequest
 }
 
-func GetAuthFromContext(r *http.Request) (*tools.User, error) {
+func GetAuthFromContext(r *http.Request) (*api.User, error) {
 	if r.Context() == nil {
 		return nil, u.Logger.NewError("request context is nil")
 	}
@@ -76,7 +77,7 @@ func GetAuthFromContext(r *http.Request) (*tools.User, error) {
 		return nil, u.Logger.NewError(AuthNotFoundInContextError)
 	}
 
-	user, ok := val.(tools.User)
+	user, ok := val.(api.User)
 	if !ok {
 		return nil, u.Logger.NewError("auth context value is of invalid type")
 	}

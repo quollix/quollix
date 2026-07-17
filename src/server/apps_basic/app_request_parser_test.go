@@ -3,10 +3,10 @@ package apps_basic
 import (
 	"net/http"
 	"net/url"
-	"server/tools"
 	"testing"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -30,10 +30,10 @@ func TestAppRequestParser_GetQuerySecret(t *testing.T) {
 		isPresent   bool
 		isValid     bool
 	}{
-		{"secret present", url.Values{tools.BrandAppQuerySecretName: {sampleSecret}}, sampleSecret, true, true},
+		{"secret present", url.Values{api.BrandAppQuerySecretName: {sampleSecret}}, sampleSecret, true, true},
 		{"secret missing", url.Values{}, "", false, true},
-		{"secret empty", url.Values{tools.BrandAppQuerySecretName: {""}}, "", false, true},
-		{"invalid secret value", url.Values{tools.BrandAppQuerySecretName: {"invalid"}}, "", false, false},
+		{"secret empty", url.Values{api.BrandAppQuerySecretName: {""}}, "", false, true},
+		{"invalid secret value", url.Values{api.BrandAppQuerySecretName: {"invalid"}}, "", false, false},
 	}
 
 	for _, tc := range tests {

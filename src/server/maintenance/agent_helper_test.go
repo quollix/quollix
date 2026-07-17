@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 )
 
 func TestCalculateNextMaintenanceAtUtc_HappyPath(t *testing.T) {
@@ -132,12 +133,12 @@ func TestRetentBackups_BackupsEnabled(t *testing.T) {
 
 	testObjects.SshRepositoryService.EXPECT().IsBackupEnabled().Return(true, nil)
 
-	appOne := tools.MaintainerAndApp{Maintainer: "maintainer-1", AppName: "app-1"}
-	backupInfo := []tools.BackupInfo{
+	appOne := api.MaintainerAndApp{Maintainer: "maintainer-1", AppName: "app-1"}
+	backupInfo := []api.BackupInfo{
 		{BackupId: "123", Maintainer: "maintainer-1", AppName: "app-1"},
 	}
 
-	testObjects.BackupService.EXPECT().ListAppsInBackupRepo().Return([]tools.MaintainerAndApp{appOne}, nil)
+	testObjects.BackupService.EXPECT().ListAppsInBackupRepo().Return([]api.MaintainerAndApp{appOne}, nil)
 
 	testObjects.BackupService.EXPECT().ListBackupsOfApp(appOne).Return(backupInfo, nil)
 	testObjects.BackupDeletionFinder.EXPECT().GetBackupsForRetention(backupInfo).Return([]string{"123"}, nil)

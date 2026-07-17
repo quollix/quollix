@@ -2,9 +2,9 @@ package frontend_pages
 
 import (
 	"fmt"
-	"server/tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 type GroupMembersPage struct {
@@ -17,7 +17,7 @@ func (g *GroupMembersPage) ClickBack() *GroupsPage {
 	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		backButton.MustClick()
 	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroups)
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroups)
 	return g.Frame.Pages.GroupsPage
 }
 
@@ -104,20 +104,18 @@ func (g *GroupMembersPage) SetMemberChecked(username string, checked bool) *Grou
 func (g *GroupMembersPage) ClickAddSelected() *GroupMembersPage {
 	addButton, err := g.Frame.Page.Element("#group-members-add-button")
 	assert.Nil(g.Frame.T, err)
-	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		addButton.MustClick()
-	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroupMembers)
+	addButton.MustClick()
+	g.Frame.Assert.SnackbarVisibleWithTextEventually("Members added successfully.")
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroupMembers)
 	return g
 }
 
 func (g *GroupMembersPage) ClickRemoveSelected() *GroupMembersPage {
 	removeButton, err := g.Frame.Page.Element("#group-members-remove-button")
 	assert.Nil(g.Frame.T, err)
-	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		removeButton.MustClick()
-	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroupMembers)
+	removeButton.MustClick()
+	g.Frame.Assert.SnackbarVisibleWithTextEventually("Members removed successfully.")
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroupMembers)
 	return g
 }
 

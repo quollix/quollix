@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
 func TestOidcAuthProviderServiceImpl_CreateProvider_WhenFieldIsEmptyReturnsError(t *testing.T) {
 	testObjects := newAuthProviderServiceTestObjects(t)
 
-	err := testObjects.Service.CreateProvider(&OidcAuthProviderDto{
+	err := testObjects.Service.CreateProvider(&api.OidcAuthProviderDto{
 		Name:             "Corporate-SSO",
 		IssuerDomainPath: "auth.example.com/realms/main",
 		ClientId:         "client-id",
@@ -46,8 +47,8 @@ func newAuthProviderServiceTestObjects(t *testing.T) authProviderServiceTestObje
 	}
 }
 
-func getSampleServiceOidcAuthProvider() *OidcAuthProviderDto {
-	return &OidcAuthProviderDto{
+func getSampleServiceOidcAuthProvider() *api.OidcAuthProviderDto {
+	return &api.OidcAuthProviderDto{
 		Name:             "Corporate-SSO",
 		IssuerDomainPath: "auth.example.com/realms/main",
 		ClientId:         "client-id",

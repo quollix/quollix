@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"server/tests/api_client"
+	"github.com/quollix/common/quollix/api_client"
 
-	"github.com/go-rod/rod"
+	"github.com/quollix/common/browsertest"
 )
 
 const defaultTimeout = 3 * time.Second
@@ -15,7 +15,7 @@ const backupOperationTimeout = 1 * time.Minute
 type FrameType struct {
 	T        *testing.T
 	BaseUrl  string
-	Page     *rod.Page
+	Page     *browsertest.Page
 	Client   *api_client.QuollixClient
 	Controls *FrameControls
 	Pages    *FramePages
@@ -24,7 +24,7 @@ type FrameType struct {
 	Browser  *FrameBrowser
 }
 
-func NewFrameType(t *testing.T, baseUrl string, page *rod.Page, client *api_client.QuollixClient) *FrameType {
+func NewFrameType(t *testing.T, baseUrl string, page *browsertest.Page, client *api_client.QuollixClient) *FrameType {
 	frame := &FrameType{
 		T:       t,
 		BaseUrl: baseUrl,

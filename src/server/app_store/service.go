@@ -3,8 +3,8 @@ package app_store
 import (
 	"fmt"
 	"server/apps_basic"
-	"server/tools"
 
+	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
@@ -15,7 +15,7 @@ type AppStoreService interface {
 	DownloadAndInstallVersion(versionTree *store.VersionTree) error
 	GetVersions(userName, appName string) ([]store.LeanVersionDto, error)
 	SearchForApps(sr *store.SearchRequest) ([]store.AppWithLatestVersion, error)
-	GetVersionDownload(versionTree *store.VersionTree) (*tools.BinaryFile, error)
+	GetVersionDownload(versionTree *store.VersionTree) (*api.BinaryFile, error)
 }
 
 var AppAlreadyInstalledError = "an app with that name is already installed"
@@ -55,7 +55,7 @@ func (a *AppStoreServiceImpl) DownloadVersion(maintainerName, appName, versionNa
 		fullTagInfo.Maintainer,
 		fullTagInfo.AppName,
 		fullTagInfo.VersionName,
-		tools.Policies.AdminOnlyAccessPolicy,
+		api.Policies.AdminOnlyAccessPolicy,
 		port,
 		clientId,
 		clientSecret,
@@ -82,7 +82,7 @@ func (a *AppStoreServiceImpl) DownloadAndInstallVersion(versionTree *store.Versi
 		return err
 	}
 
-	app.AccessPolicy = tools.Policies.AdminOnlyAccessPolicy
+	app.AccessPolicy = api.Policies.AdminOnlyAccessPolicy
 	_, err = a.AppRepo.CreateApp(app)
 	if err != nil {
 		return u.Logger.NewError(err.Error())
@@ -105,7 +105,7 @@ func (a *AppStoreServiceImpl) SearchForApps(sr *store.SearchRequest) ([]store.Ap
 	return apps, nil
 }
 
-func (a *AppStoreServiceImpl) GetVersionDownload(versionTree *store.VersionTree) (*tools.BinaryFile, error) {
+func (a *AppStoreServiceImpl) GetVersionDownload(versionTree *store.VersionTree) (*api.BinaryFile, error) {
 	repoApp, err := a.DownloadVersion(versionTree.Maintainer, versionTree.AppName, versionTree.VersionName)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (a *AppStoreServiceImpl) GetVersionDownload(versionTree *store.VersionTree)
 	if err != nil {
 		return nil, err
 	}
-	versionDownload := tools.BinaryFile{
+	versionDownload := api.BinaryFile{
 		FileName: fileName,
 		Content:  repoApp.VersionContent,
 	}

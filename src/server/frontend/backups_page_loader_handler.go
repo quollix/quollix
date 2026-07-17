@@ -7,6 +7,7 @@ import (
 	"sort"
 	"sync"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -21,7 +22,7 @@ type BackupsPageLoaderHandler struct {
 	backups    []BackupsDto `wire:"-"`
 }
 
-func (h *BackupsPageLoaderHandler) StartLoading(request tools.MaintainerAndApp, force bool) {
+func (h *BackupsPageLoaderHandler) StartLoading(request api.MaintainerAndApp, force bool) {
 	h.mutex.Lock()
 	if h.isRunning {
 		h.mutex.Unlock()
@@ -44,7 +45,7 @@ func (h *BackupsPageLoaderHandler) StartLoading(request tools.MaintainerAndApp, 
 }
 
 func (h *BackupsPageLoaderHandler) Read(w http.ResponseWriter, r *http.Request) {
-	request := tools.MaintainerAndApp{
+	request := api.MaintainerAndApp{
 		Maintainer: r.URL.Query().Get("maintainer"),
 		AppName:    r.URL.Query().Get("app"),
 	}
@@ -74,7 +75,7 @@ func (h *BackupsPageLoaderHandler) ReadLoad() BackupsPageLoadResponse {
 	}
 }
 
-func (h *BackupsPageLoaderHandler) load(request tools.MaintainerAndApp) {
+func (h *BackupsPageLoaderHandler) load(request api.MaintainerAndApp) {
 	backupsOfApp, err := h.BackupService.ListBackupsOfApp(request)
 	if err != nil {
 		u.Logger.Error(err)

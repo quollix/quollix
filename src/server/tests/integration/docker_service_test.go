@@ -10,8 +10,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/quollix/common/assert"
 	"server/tools"
+
+	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 var (
@@ -62,7 +64,7 @@ func TestDockerService_AttachBrandAppToNetwork(t *testing.T) {
 	defer cleanup(t)
 	host := "example.com"
 	appNetworkAlias := sampleApp + "." + host
-	hostNetworkAlias := tools.BrandAppDomainPrefix + host
+	hostNetworkAlias := api.BrandAppDomainPrefix + host
 
 	err := exec.Command("docker", "rm", "-f", tools.BrandAppContainerName).Run()
 	assert.Nil(t, err)

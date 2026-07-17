@@ -5,11 +5,12 @@ package frontend
 import (
 	"fmt"
 	"server/configs"
-	"server/tests/api_client"
 	"server/tests/component"
 	"server/tests/frontend_pages"
 	"server/tools"
 	"testing"
+
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 )

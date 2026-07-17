@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"server/apps_basic"
 	"server/backup_server"
 	"server/system_config_migrations"
-	"server/tests/api_client"
 	"server/tools"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -94,7 +95,7 @@ func TestAppListingInBackupRepo(t *testing.T) {
 }
 
 func TestFileBackupAndRestore(t *testing.T) {
-	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *apps_basic.AppDto) {
+	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *api.AppDto) {
 		appClient := GetAppClient(t, client)
 		assert.Nil(t, StoreStringInSampleApp(appClient, "sample string"))
 
@@ -137,9 +138,9 @@ func TestDatabaseBackupAndRestore(t *testing.T) {
 }
 
 func TestRestoreAppMetaData(t *testing.T) {
-	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *apps_basic.AppDto) {
-		app.AccessPolicy = tools.Policies.PublicAccessPolicy
-		assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, tools.Policies.PublicAccessPolicy))
+	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *api.AppDto) {
+		app.AccessPolicy = api.Policies.PublicAccessPolicy
+		assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, api.Policies.PublicAccessPolicy))
 		assert.True(t, app.AutomaticUpdatesEnabled)
 		assert.True(t, app.AutomaticBackupsEnabled)
 		app.AutomaticUpdatesEnabled = false
@@ -172,7 +173,7 @@ func prepareSshRemoteServerSetup(t *testing.T) *api_client.QuollixClient {
 	return client
 }
 
-func getSingleBackup(t *testing.T, client *api_client.QuollixClient, maintainer string, appName string) tools.BackupInfo {
+func getSingleBackup(t *testing.T, client *api_client.QuollixClient, maintainer string, appName string) api.BackupInfo {
 	appBackups, err := client.Backups.ListByApp(maintainer, appName)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(appBackups))
@@ -191,7 +192,7 @@ func assertAppsNumbersInBackupRepo(t *testing.T, client *api_client.QuollixClien
 	assert.Equal(t, expectedAppNumberInBackupRepo, len(backupRepoApps))
 }
 
-func assertAppState(t *testing.T, expected *apps_basic.AppDto, actual *apps_basic.AppDto) {
+func assertAppState(t *testing.T, expected *api.AppDto, actual *api.AppDto) {
 	assert.Equal(t, expected.Maintainer, actual.Maintainer)
 	assert.Equal(t, expected.AppName, actual.AppName)
 	assert.Equal(t, expected.VersionName, actual.VersionName)
@@ -207,10 +208,10 @@ func assertAppState(t *testing.T, expected *apps_basic.AppDto, actual *apps_basi
 	assert.Equal(t, expected.AutomaticBackupsEnabled, actual.AutomaticBackupsEnabled)
 }
 
-func assertPostgresDetails(t *testing.T, client *api_client.QuollixClient) apps_basic.AppDto {
+func assertPostgresDetails(t *testing.T, client *api_client.QuollixClient) api.AppDto {
 	installedApps := ListInstalledApps(t, client)
 
-	var postgresApp apps_basic.AppDto
+	var postgresApp api.AppDto
 	for _, app := range installedApps {
 		if app.AppName == u.OfficialDatabaseAppName {
 			postgresApp = app
@@ -221,19 +222,19 @@ func assertPostgresDetails(t *testing.T, client *api_client.QuollixClient) apps_
 	assert.Equal(t, u.OfficialMaintainer, postgresApp.Maintainer)
 	assert.Equal(t, u.OfficialDatabaseAppName, postgresApp.AppName)
 	assert.Equal(t, system_config_migrations.PostgresVersion, postgresApp.VersionName)
-	assert.Equal(t, tools.Policies.AdminOnlyAccessPolicy, postgresApp.AccessPolicy)
+	assert.Equal(t, api.Policies.AdminOnlyAccessPolicy, postgresApp.AccessPolicy)
 
 	return postgresApp
 }
 
 type SampleAppBackupFixture struct {
 	client      *api_client.QuollixClient
-	app         *apps_basic.AppDto
-	originalApp *apps_basic.AppDto
-	backup      tools.BackupInfo
+	app         *api.AppDto
+	originalApp *api.AppDto
+	backup      api.BackupInfo
 }
 
-func createSampleAppWithBackupAndDeleteIt(t *testing.T, beforeBackup func(client *api_client.QuollixClient, app *apps_basic.AppDto)) SampleAppBackupFixture {
+func createSampleAppWithBackupAndDeleteIt(t *testing.T, beforeBackup func(client *api_client.QuollixClient, app *api.AppDto)) SampleAppBackupFixture {
 	client := prepareSshRemoteServerSetup(t)
 
 	app, err := InstallAndStartSample(t, client, "2.0")

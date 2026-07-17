@@ -5,10 +5,10 @@ import (
 
 	"server/configs"
 	"server/groups"
-	"server/tools"
 	"server/users"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 )
 
 type oidcClientServiceTestObjects struct {
@@ -56,16 +56,16 @@ func expectUserAndGroups(
 ) {
 	testObjects.UserRepo.EXPECT().
 		GetUserById(userId).
-		Return(&tools.User{
+		Return(&api.User{
 			Id:       userId,
 			IsAdmin:  isAdmin,
 			Username: username,
 			Email:    email,
 		}, nil)
 
-	returnedGroups := make([]groups.Group, 0, len(returnedGroupNames))
+	returnedGroups := make([]api.Group, 0, len(returnedGroupNames))
 	for index, groupName := range returnedGroupNames {
-		returnedGroups = append(returnedGroups, groups.Group{Id: index + 1, Name: groupName})
+		returnedGroups = append(returnedGroups, api.Group{Id: index + 1, Name: groupName})
 	}
 	testObjects.GroupRepository.EXPECT().
 		ListGroupsForUser(userId).

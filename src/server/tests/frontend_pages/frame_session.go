@@ -5,8 +5,8 @@ import (
 
 	"server/tools"
 
-	"github.com/go-rod/rod/lib/proto"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 type FrameSession struct {
@@ -14,18 +14,11 @@ type FrameSession struct {
 }
 
 func (s *FrameSession) SetBrowserAuthCookie(cookie *http.Cookie) {
-	s.Frame.Page.MustSetCookies(&proto.NetworkCookieParam{
-		Name:     cookie.Name,
-		Value:    cookie.Value,
-		URL:      s.Frame.BaseUrl,
-		Path:     "/",
-		Secure:   cookie.Secure,
-		HTTPOnly: cookie.HttpOnly,
-	})
+	assert.Nil(s.Frame.T, s.Frame.Page.SetCookie(cookie, s.Frame.BaseUrl))
 }
 
 func (s *FrameSession) ClearBrowserCookies() {
-	s.Frame.Page.MustSetCookies()
+	assert.Nil(s.Frame.T, s.Frame.Page.ClearCookies())
 }
 
 func (s *FrameSession) SignOut() *FrameType {
@@ -50,17 +43,19 @@ func (s *FrameSession) SignInAsAdminViaClient() *FrameType {
 }
 
 func (s *FrameSession) SignInViaClient(username, password string) *FrameType {
+	s.Frame.Pages.Visit(api.Paths.FrontendSignIn)
 	err := s.Frame.Client.Auth.SignIn(username, password)
 	assert.Nil(s.Frame.T, err)
 	s.syncBrowserCookieFromClient()
-	s.Frame.Pages.Visit(tools.Paths.FrontendInstalledApps)
+	s.Frame.Pages.Visit(api.Paths.FrontendInstalledApps)
 	return s.Frame
 }
 
 func (s *FrameSession) GetAuthCookie() *http.Cookie {
-	cookies := s.Frame.Page.MustCookies(s.Frame.BaseUrl)
+	cookies, err := s.Frame.Page.Cookies(s.Frame.BaseUrl)
+	assert.Nil(s.Frame.T, err)
 	for _, cookie := range cookies {
-		if cookie.Name == tools.BrandAppAuthCookieName {
+		if cookie.Name == api.BrandAppAuthCookieName {
 			return &http.Cookie{ // #nosec G124: frontend tests reconstruct the browser cookie only for local test replay
 				Name:     cookie.Name,
 				Value:    cookie.Value,

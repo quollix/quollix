@@ -1,8 +1,7 @@
 package backup_server
 
 import (
-	"server/tools"
-
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -10,8 +9,8 @@ const ErrBackupRepoNotConfigured = "backup is not enabled yet, please do this in
 
 type SshRepositoryService interface {
 	IsBackupEnabled() (bool, error)
-	SetRemoteBackupRepository(backupRepo *tools.BackupServerConfigs) error
-	GetRemoteBackupRepository() (*tools.BackupServerConfigs, error)
+	SetRemoteBackupRepository(backupRepo *api.BackupServerConfigs) error
+	GetRemoteBackupRepository() (*api.BackupServerConfigs, error)
 	EnsureBackupIsEnabled() error
 }
 
@@ -24,11 +23,11 @@ func (s *SshRepositoryServiceImpl) IsBackupEnabled() (bool, error) {
 	return s.SshRepository.IsRemoteBackupEnabled()
 }
 
-func (s *SshRepositoryServiceImpl) GetRemoteBackupRepository() (*tools.BackupServerConfigs, error) {
+func (s *SshRepositoryServiceImpl) GetRemoteBackupRepository() (*api.BackupServerConfigs, error) {
 	return s.SshRepository.GetRemoteBackupRepository()
 }
 
-func (s *SshRepositoryServiceImpl) SetRemoteBackupRepository(backupRepo *tools.BackupServerConfigs) error {
+func (s *SshRepositoryServiceImpl) SetRemoteBackupRepository(backupRepo *api.BackupServerConfigs) error {
 	if backupRepo.IsEnabled {
 		if err := s.SshClient.TestWhetherSshAccessWorks(backupRepo.ConvertToSshConnectionTestRequest()); err != nil {
 			return err

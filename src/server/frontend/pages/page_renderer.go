@@ -8,6 +8,7 @@ import (
 	"server/tools"
 
 	"github.com/quollix/common/frontend"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -45,7 +46,7 @@ type PageGlobals struct {
 }
 
 type StaticTemplateGlobals struct {
-	Paths    tools.PathsType
+	Paths    api.PathsType
 	Links    tools.LinksType
 	Policies any
 }
@@ -105,7 +106,7 @@ func infoIconRedirectUrl(infoIconRedirectPath string, isAdmin bool) string {
 	return ""
 }
 
-func getAuthFromContext(r *http.Request) (*tools.User, error) {
+func getAuthFromContext(r *http.Request) (*api.User, error) {
 	if r.Context() == nil {
 		return nil, u.Logger.NewError("request context is nil")
 	}
@@ -115,7 +116,7 @@ func getAuthFromContext(r *http.Request) (*tools.User, error) {
 		return nil, u.Logger.NewError("auth not found in context")
 	}
 
-	user, ok := val.(tools.User)
+	user, ok := val.(api.User)
 	if !ok {
 		return nil, u.Logger.NewError("auth context value is of invalid type")
 	}

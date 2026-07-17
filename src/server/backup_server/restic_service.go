@@ -6,6 +6,7 @@ import (
 
 	"server/tools"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -20,12 +21,12 @@ var (
 )
 
 type ResticService interface {
-	ListBackups() ([]tools.BackupInfo, error)
+	ListBackups() ([]api.BackupInfo, error)
 	DeleteBackup(backupId []string) error
 	CreateBackup(sourceMount string, volumes []string, tags []string, encryptionPassword string) error
 	RestoreFiles(backupId string, targetDir string, encryptionPassword string) error
 	RestoreVolumes(backupId string, volumes []string, encryptionPassword string) error
-	GetSnapshotInfo(backupId string, encryptionPassword string) (*tools.BackupInfo, error)
+	GetSnapshotInfo(backupId string, encryptionPassword string) (*api.BackupInfo, error)
 }
 
 type ResticServiceImpl struct {
@@ -35,7 +36,7 @@ type ResticServiceImpl struct {
 	SshClient               SshClient
 }
 
-func (r *ResticServiceImpl) ListBackups() ([]tools.BackupInfo, error) {
+func (r *ResticServiceImpl) ListBackups() ([]api.BackupInfo, error) {
 	repo, err := r.SshRepository.GetRemoteBackupRepository()
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func (r *ResticServiceImpl) RestoreVolumes(backupId string, volumes []string, en
 	return err
 }
 
-func (r *ResticServiceImpl) GetSnapshotInfo(backupId string, encryptionPassword string) (*tools.BackupInfo, error) {
+func (r *ResticServiceImpl) GetSnapshotInfo(backupId string, encryptionPassword string) (*api.BackupInfo, error) {
 	command := []string{"restic", "snapshots", "--json", backupId}
 	output, err := r.ResticContainerExecutor.Execute(command, nil, nil, encryptionPassword, "")
 	if err != nil {

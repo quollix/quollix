@@ -8,6 +8,7 @@ import (
 	"server/tools"
 	"strconv"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -21,7 +22,7 @@ type BackupHandler struct {
 }
 
 func (b *BackupHandler) CreateBackupHandler(w http.ResponseWriter, r *http.Request) {
-	appIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -54,7 +55,7 @@ func (b *BackupHandler) CreateBackupHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (b *BackupHandler) ListBackupsHandler(w http.ResponseWriter, r *http.Request) {
-	listRequest, ok := validation.ReadBody[tools.MaintainerAndApp](w, r)
+	listRequest, ok := validation.ReadBody[api.MaintainerAndApp](w, r)
 	if !ok {
 		return
 	}
@@ -68,7 +69,7 @@ func (b *BackupHandler) ListBackupsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (b *BackupHandler) RestoreBackupHandler(w http.ResponseWriter, r *http.Request) {
-	backupRestoreRequest, ok := validation.ReadBody[tools.BackupOperationRequest](w, r)
+	backupRestoreRequest, ok := validation.ReadBody[api.BackupOperationRequest](w, r)
 	if !ok {
 		return
 	}
@@ -100,7 +101,7 @@ func (b *BackupHandler) RestoreBackupHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (b *BackupHandler) DeleteBackupHandler(w http.ResponseWriter, r *http.Request) {
-	deleteBackupsRequest, ok := validation.ReadBody[tools.BackupsOperationRequest](w, r)
+	deleteBackupsRequest, ok := validation.ReadBody[api.BackupsOperationRequest](w, r)
 	if !ok {
 		return
 	}

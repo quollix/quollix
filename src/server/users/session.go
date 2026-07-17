@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -24,7 +25,7 @@ type UserSession struct {
 }
 
 type AuthenticatedSession struct {
-	User    tools.User
+	User    api.User
 	Session UserSession
 }
 
@@ -56,7 +57,7 @@ func (s *SessionServiceImpl) GenerateAndSaveCookie(userId int, audience string) 
 	cookie.Secure = true
 	// This line is important. Using a strict cookie policy here would break the feature that when you click the 'Open' button in the GUI, you are redirected to the app web interface. Browsers treat that new tab to the app subdomain as a cross-site navigation, so the exchanged app cookie must be Lax to be sent on the follow-up request.
 	cookie.SameSite = http.SameSiteLaxMode
-	cookie.Name = tools.BrandAppAuthCookieName
+	cookie.Name = api.BrandAppAuthCookieName
 
 	session := &UserSession{
 		UserId:               userId,

@@ -5,6 +5,7 @@ import (
 	"server/configs"
 	"server/tools"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -32,7 +33,7 @@ func (s *CertificateHandler) WildcardCertificateGenerationHandler(w http.Respons
 }
 
 func (s *CertificateHandler) CertificateUploadHandler(w http.ResponseWriter, r *http.Request) {
-	certificateFile, ok := validation.ReadBody[tools.BinaryFile](w, r)
+	certificateFile, ok := validation.ReadBody[api.BinaryFile](w, r)
 	if !ok {
 		return
 	}
@@ -56,7 +57,7 @@ func (s *CertificateHandler) CertificateDownloadHandler(w http.ResponseWriter, r
 		return
 	}
 
-	u.SendJsonResponse(w, tools.BinaryFile{
+	u.SendJsonResponse(w, api.BinaryFile{
 		FileName: "certificate.pem",
 		Content:  bundle.GetBytes(),
 	})

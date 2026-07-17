@@ -13,11 +13,11 @@ import (
 	"strings"
 	"testing"
 
-	"server/apps_basic"
 	"server/oidc_provider"
 	"server/tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -58,9 +58,9 @@ func TestOIDC_Discovery(t *testing.T) {
 
 	ctx := NewOidcTestClient(t)
 	assert.Equal(t, baseURL, ctx.Config.Issuer)
-	assert.Equal(t, baseURL+tools.Paths.BackendOidcAuthorize, ctx.Config.AuthorizationEndpoint)
-	assert.Equal(t, baseURL+tools.Paths.BackendOidcToken, ctx.Config.TokenEndpoint)
-	assert.Equal(t, baseURL+tools.Paths.BackendOidcJwks, ctx.Config.JwksURI)
+	assert.Equal(t, baseURL+api.Paths.BackendOidcAuthorize, ctx.Config.AuthorizationEndpoint)
+	assert.Equal(t, baseURL+api.Paths.BackendOidcToken, ctx.Config.TokenEndpoint)
+	assert.Equal(t, baseURL+api.Paths.BackendOidcJwks, ctx.Config.JwksURI)
 	assert.Equal(t, []string{"code"}, ctx.Config.ResponseTypesSupported)
 	assert.Equal(t, []string{"public"}, ctx.Config.SubjectTypesSupported)
 	assert.Equal(t, []string{"RS256"}, ctx.Config.IDTokenSigningAlgValuesSupported)
@@ -75,7 +75,7 @@ func TestOIDC_JWKS(t *testing.T) {
 
 	ctx := NewOidcTestClient(t)
 	assert.Equal(t, baseURL, ctx.Config.Issuer)
-	assert.Equal(t, baseURL+tools.Paths.BackendOidcJwks, ctx.Config.JwksURI)
+	assert.Equal(t, baseURL+api.Paths.BackendOidcJwks, ctx.Config.JwksURI)
 
 	req, err := http.NewRequest("GET", ctx.Config.JwksURI, nil)
 	assert.Nil(t, err)
@@ -135,9 +135,9 @@ func TestOIDC_AuthorizeRedirectsToLoginWhenUnauthenticated(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "https", loc.Scheme)
 	assert.Equal(t, "quollix.localhost", loc.Host)
-	assert.Equal(t, tools.Paths.FrontendSignIn, loc.Path)
+	assert.Equal(t, api.Paths.FrontendSignIn, loc.Path)
 
-	expectedNext := tools.Paths.BackendOidcAuthorize + "?" + params.Encode()
+	expectedNext := api.Paths.BackendOidcAuthorize + "?" + params.Encode()
 	assert.Equal(t, expectedNext, loc.Query().Get("next"))
 }
 
@@ -242,7 +242,7 @@ func TestOIDC_HappyPath_AuthorizationCodeFlow_ClientSecretPost(t *testing.T) {
 	runAuthorizationCodeFlowWithAuthMethod(t, ClientAuthMethodPost)
 }
 
-func assertOidcEmailClaim(t *testing.T, app *apps_basic.AppDto, expectedEmail string) {
+func assertOidcEmailClaim(t *testing.T, app *api.AppDto, expectedEmail string) {
 	ctx := NewOidcTestClient(t)
 	ctx.SignIn(SampleUsername, SampleUserPassword)
 	authRes, verifier := ctx.AuthorizeWithPKCE(app.ClientId)

@@ -3,8 +3,8 @@ package frontend_pages
 import (
 	"strings"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
 )
 
 type SelectionTableHelper struct {
@@ -58,14 +58,14 @@ func (h SelectionTableHelper) SetRowCheckbox(value string, checked bool) {
 	}
 }
 
-func (h SelectionTableHelper) getRequiredRow(value string) *rod.Element {
+func (h SelectionTableHelper) getRequiredRow(value string) *browsertest.Element {
 	tableBody := h.Frame.Controls.GetRequiredElement(h.TableBody)
 	row, err := tableBody.Element(h.RowSelector(value))
 	assert.Nil(h.Frame.T, err)
 	return row
 }
 
-func isCheckboxChecked(frame *FrameType, checkbox *rod.Element) bool {
+func isCheckboxChecked(frame *FrameType, checkbox *browsertest.Element) bool {
 	checkedProperty, err := checkbox.Property("checked")
 	assert.Nil(frame.T, err)
 	return checkedProperty.Bool()

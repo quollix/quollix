@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"server/tests/api_client"
-	"server/tools"
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -70,7 +70,7 @@ func sendOidcGetRequest(t *testing.T, client *api_client.QuollixClient, targetUr
 
 func getAuthCookie(resp *http.Response) (*http.Cookie, error) {
 	for _, cookie := range resp.Cookies() {
-		if cookie.Name == tools.BrandAppAuthCookieName {
+		if cookie.Name == api.BrandAppAuthCookieName {
 			return cookie, nil
 		}
 	}

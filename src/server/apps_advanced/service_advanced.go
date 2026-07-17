@@ -7,6 +7,7 @@ import (
 	"server/backups"
 	"server/tools"
 
+	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 )
@@ -17,8 +18,8 @@ const (
 )
 
 type AppsServiceAdvanced interface {
-	UploadAppToApplication(versionFile *tools.BinaryFile, composeArchive *apps_basic.ComposeArchiveName) error
-	DownloadAppFromApplication(appId int) (*tools.BinaryFile, error)
+	UploadAppToApplication(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName) error
+	DownloadAppFromApplication(appId int) (*api.BinaryFile, error)
 	UpdateAppViaAppStore(appId int) error
 }
 
@@ -35,7 +36,7 @@ type AppsServiceAdvancedImpl struct {
 	AppDetector                apps_basic.AppDetector
 }
 
-func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *tools.BinaryFile, composeArchive *apps_basic.ComposeArchiveName) error {
+func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName) error {
 	port, err := a.AppServiceHelper.GetPortFromComposeYaml(versionFile.Content, composeArchive.AppName)
 	if err != nil {
 		return err
@@ -67,7 +68,7 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *tools.Bina
 		composeArchive.Maintainer,
 		composeArchive.AppName,
 		composeArchive.Version,
-		tools.Policies.AdminOnlyAccessPolicy,
+		api.Policies.AdminOnlyAccessPolicy,
 		port,
 		clientId, clientSecret,
 		composeArchive.VersionCreationTimestamp,
@@ -81,7 +82,7 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *tools.Bina
 	return err
 }
 
-func (a *AppsServiceAdvancedImpl) conductAppUpdate(versionFile *tools.BinaryFile, composeArchive *apps_basic.ComposeArchiveName, port string) error {
+func (a *AppsServiceAdvancedImpl) conductAppUpdate(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName, port string) error {
 	appFromDatabase, err := a.AppRepo.GetAppByName(composeArchive.AppName)
 	if err != nil {
 		return err
@@ -109,7 +110,7 @@ func (a *AppsServiceAdvancedImpl) conductAppUpdate(versionFile *tools.BinaryFile
 	return a.AppRepo.UpdateApp(appFromDatabase)
 }
 
-func (a *AppsServiceAdvancedImpl) DownloadAppFromApplication(appId int) (*tools.BinaryFile, error) {
+func (a *AppsServiceAdvancedImpl) DownloadAppFromApplication(appId int) (*api.BinaryFile, error) {
 	app, err := a.AppRepo.GetAppById(appId)
 	if err != nil {
 		return nil, err
@@ -126,7 +127,7 @@ func (a *AppsServiceAdvancedImpl) DownloadAppFromApplication(appId int) (*tools.
 		return nil, err
 	}
 
-	versionFile := &tools.BinaryFile{
+	versionFile := &api.BinaryFile{
 		FileName: fileName,
 		Content:  app.VersionContent,
 	}

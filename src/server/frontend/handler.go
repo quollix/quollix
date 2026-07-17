@@ -14,6 +14,7 @@ import (
 	"server/users"
 
 	"github.com/quollix/common/frontend"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -331,7 +332,7 @@ func (t *TemplateHandlerImpl) renderPage(w http.ResponseWriter, r *http.Request,
 }
 
 func (t *TemplateHandlerImpl) ListBackupsHandler(w http.ResponseWriter, r *http.Request) {
-	request := tools.MaintainerAndApp{
+	request := api.MaintainerAndApp{
 		Maintainer: r.URL.Query().Get("maintainer"),
 		AppName:    r.URL.Query().Get("app"),
 	}

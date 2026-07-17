@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"server/apps_basic"
 	"server/tools"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -54,11 +54,11 @@ func (i *InstalledAppsPage) AssertHasApp(maintainer, appName, versionPrefix stri
 	return i
 }
 
-func (i *InstalledAppsPage) ListApps() []apps_basic.AppDto {
+func (i *InstalledAppsPage) ListApps() []api.AppDto {
 	entries := i.listAppEntries()
-	out := make([]apps_basic.AppDto, 0, len(entries))
+	out := make([]api.AppDto, 0, len(entries))
 	for _, entry := range entries {
-		out = append(out, apps_basic.AppDto{
+		out = append(out, api.AppDto{
 			Maintainer:  entry.Maintainer,
 			AppName:     entry.AppName,
 			VersionName: entry.Version,
@@ -311,8 +311,7 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 	const appName = "sampleapp"
 	waitForNewTab := i.Frame.Page.MustWaitOpen()
 	i.ClickOpenButton(appName)
-	newTab := waitForNewTab().Timeout(browserTimeout)
-	defer newTab.CancelTimeout()
+	newTab := waitForNewTab()
 	defer func() {
 		assert.Nil(i.Frame.T, newTab.Close())
 	}()
@@ -320,10 +319,13 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 	// After app start, Docker/network handover can briefly surface Chrome's transient ERR_NETWORK_CHANGED page
 	// even though the backend operation already finished. Retry until the tab shows the actual app content.
 	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
-		if err := newTab.WaitLoad(); err != nil {
+		timedTab := newTab.Timeout(browserTimeout)
+		defer timedTab.CancelTimeout()
+
+		if err := timedTab.WaitLoad(); err != nil {
 			return err
 		}
-		info, err := newTab.Info()
+		info, err := timedTab.Info()
 		if err != nil {
 			return err
 		}
@@ -338,7 +340,7 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 			return fmt.Errorf("unexpected sample app path: %q", parsedURL.Path)
 		}
 
-		bodyText, err := newTab.Element("body")
+		bodyText, err := timedTab.Element("body")
 		if err != nil {
 			return err
 		}
@@ -348,7 +350,9 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 		}
 		text = strings.TrimSpace(text)
 		if strings.Contains(text, "ERR_NETWORK_CHANGED") {
-			newTab.MustReload()
+			if err := timedTab.Reload(); err != nil {
+				return err
+			}
 			return fmt.Errorf("sample app tab still shows transient ERR_NETWORK_CHANGED page")
 		}
 		if text != sampleAppExpectedBodyText {
@@ -362,7 +366,9 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 
 func (i *InstalledAppsPage) AssertAppStatusAndOpenButtonEventually(appName string, expectedIsRunning bool, expectedOpenButtonEnabled bool) *InstalledAppsPage {
 	err := tools.Eventually(func() error {
-		i.Frame.Browser.ReloadPage()
+		if err := i.Frame.Page.Reload(); err != nil {
+			return err
+		}
 
 		row, rowErr := i.findRowByAppName(appName)
 		if rowErr != nil {
@@ -393,7 +399,7 @@ func (i *InstalledAppsPage) GetRequiredApp(appName string) *InstalledAppEntry {
 	return app
 }
 
-func (i *InstalledAppsPage) readAppEntry(row *rod.Element) (*InstalledAppEntry, error) {
+func (i *InstalledAppsPage) readAppEntry(row *browsertest.Element) (*InstalledAppEntry, error) {
 	nameCell, err := row.Element(".app-name")
 	if err != nil {
 		return nil, u.Logger.NewError("unexpected installed apps row")
@@ -477,7 +483,7 @@ func (i *InstalledAppsPage) readAppEntry(row *rod.Element) (*InstalledAppEntry, 
 	}, nil
 }
 
-func getOptionalCellText(row *rod.Element, selector string) (string, error) {
+func getOptionalCellText(row *browsertest.Element, selector string) (string, error) {
 	hasCell, _, hasErr := row.Has(selector)
 	if hasErr != nil {
 		return "", u.Logger.NewError(hasErr.Error())
@@ -496,7 +502,7 @@ func getOptionalCellText(row *rod.Element, selector string) (string, error) {
 	return text, nil
 }
 
-func (i *InstalledAppsPage) findRowByAppName(appName string) (*rod.Element, error) {
+func (i *InstalledAppsPage) findRowByAppName(appName string) (*browsertest.Element, error) {
 	rows, err := i.Frame.Page.Elements(`#installed-apps-tbody tr`)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())

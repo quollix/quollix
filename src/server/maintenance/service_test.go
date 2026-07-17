@@ -8,6 +8,7 @@ import (
 	"server/tools"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -58,13 +59,13 @@ func TestSaveMaintenanceConfig_HappyPath(t *testing.T) {
 	nowUtc := time.Date(2026, 2, 5, 12, 0, 0, 0, time.UTC)
 	newNextMaintenanceAtUtc := time.Date(2026, 2, 6, 1, 0, 0, 0, time.UTC)
 
-	databaseConfig := &configs.MaintenanceConfig{
+	databaseConfig := &api.MaintenanceConfig{
 		MaintenanceWindowStartHour: 5,
 		NextMaintenanceAt:          time.Date(2026, 2, 5, 11, 0, 0, 0, time.UTC),
 		IanaTimezone:               "UTC",
 	}
 
-	expectedConfig := &configs.MaintenanceConfig{
+	expectedConfig := &api.MaintenanceConfig{
 		IanaTimezone:               timezone,
 		MaintenanceWindowStartHour: hour,
 		NextMaintenanceAt:          newNextMaintenanceAtUtc,
@@ -76,7 +77,7 @@ func TestSaveMaintenanceConfig_HappyPath(t *testing.T) {
 	testObjects.AgentHelper.EXPECT().CalculateNextMaintenanceAtUtc(nowUtc, timezone, hour).Return(&newNextMaintenanceAtUtc, nil)
 	testObjects.Repository.EXPECT().
 		SetMaintenanceConfig(mock.Anything).
-		Run(func(configPassedToDependency *configs.MaintenanceConfig) {
+		Run(func(configPassedToDependency *api.MaintenanceConfig) {
 			assert.Equal(t, expectedConfig, configPassedToDependency)
 		}).
 		Return(nil)

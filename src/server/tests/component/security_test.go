@@ -9,9 +9,11 @@ import (
 
 	"server/apps_basic"
 	"server/ingress"
-	"server/tests/api_client"
 	"server/tools"
 	"server/users"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -224,7 +226,7 @@ func TestAppSessionCookieIsSeparatedFromQuollixSessionCookie(t *testing.T) {
 	app, err := InstallSample(t, quollixClient, "2.0")
 	assert.Nil(t, err)
 	assert.Nil(t, quollixClient.Apps.Start(app.AppId))
-	assert.Nil(t, quollixClient.Apps.SetAccessPolicy(app.AppId, tools.Policies.AuthenticatedAccessPolicy))
+	assert.Nil(t, quollixClient.Apps.SetAccessPolicy(app.AppId, api.Policies.AuthenticatedAccessPolicy))
 
 	quollixCookie := *quollixClient.Parent.Cookie
 	err = AssertSampleAppContentWithCookie(&quollixCookie)
@@ -310,5 +312,5 @@ func TestPasswordResetInvalidatesQuollixAndAppSessions(t *testing.T) {
 func prepareAuthenticatedSampleApp(t *testing.T, client *api_client.QuollixClient) {
 	app, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, tools.Policies.AuthenticatedAccessPolicy))
+	assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, api.Policies.AuthenticatedAccessPolicy))
 }

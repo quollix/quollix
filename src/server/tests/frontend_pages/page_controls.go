@@ -1,18 +1,23 @@
 package frontend_pages
 
 import (
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
 )
 
 type FrameControls struct {
 	Frame *FrameType
 }
 
-func (c *FrameControls) GetRequiredElement(selector string) *rod.Element {
+func (c *FrameControls) GetRequiredElement(selector string) *browsertest.Element {
 	element, err := c.Frame.Page.Element(selector)
 	assert.Nil(c.Frame.T, err)
 	return element
+}
+
+func (c *FrameControls) GetRequiredElementEventually(selector string) *browsertest.Element {
+	c.Frame.Browser.WaitForElement(selector)
+	return c.GetRequiredElement(selector)
 }
 
 func (c *FrameControls) SetInputValue(selector, value string) {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,7 +18,7 @@ func TestAppSessionService_AuthorizeAppRequestSkipsAuthForPublicApp(t *testing.T
 	service := &AppSessionServiceImpl{}
 	app := &AppRequestData{
 		AppName:      "sample-app",
-		AccessPolicy: tools.Policies.PublicAccessPolicy,
+		AccessPolicy: api.Policies.PublicAccessPolicy,
 	}
 	request := httptest.NewRequest(http.MethodGet, "https://sample-app.example.com", nil)
 
@@ -42,18 +43,18 @@ func TestAppSessionService_AuthorizeAppRequestUsesAppAudience(t *testing.T) {
 	app := &AppRequestData{
 		Maintainer:   "maintainer",
 		AppName:      "sample-app",
-		AccessPolicy: tools.Policies.AuthenticatedAccessPolicy,
+		AccessPolicy: api.Policies.AuthenticatedAccessPolicy,
 	}
 	request := httptest.NewRequest(http.MethodGet, "https://sample-app.example.com", nil)
 	request.AddCookie(&http.Cookie{
-		Name:  tools.BrandAppAuthCookieName,
+		Name:  api.BrandAppAuthCookieName,
 		Value: "app-cookie-value",
 	})
 	hashedCookie := authHelper.GetSHA256Hash("app-cookie-value")
 	sessionRepo.EXPECT().
 		GetAuthenticatedSession(hashedCookie, users.SessionAudience(app.Maintainer, app.AppName)).
 		Return(&users.AuthenticatedSession{
-			User: tools.User{
+			User: api.User{
 				Id:        42,
 				IsEnabled: true,
 			},
@@ -92,7 +93,7 @@ func TestAppSessionService_CreateAppSessionCookieFromSecretCreatesAppAudienceSes
 	sessionRepo.EXPECT().
 		GetAuthenticatedSession(authHelper.GetSHA256Hash(quollixCookieValue), users.QuollixSessionAudience()).
 		Return(&users.AuthenticatedSession{
-			User: tools.User{
+			User: api.User{
 				Id:        42,
 				IsEnabled: true,
 			},
@@ -111,7 +112,7 @@ func TestAppSessionService_CreateAppSessionCookieFromSecretCreatesAppAudienceSes
 
 	cookie, err := service.CreateAppSessionCookieFromSecret(secret, app)
 	assert.Nil(t, err)
-	assert.Equal(t, tools.BrandAppAuthCookieName, cookie.Name)
+	assert.Equal(t, api.BrandAppAuthCookieName, cookie.Name)
 	assert.NotEqual(t, quollixCookieValue, cookie.Value)
 	assert.True(t, cookie.Secure)
 	assert.Equal(t, http.SameSiteLaxMode, cookie.SameSite)

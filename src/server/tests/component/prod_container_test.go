@@ -4,9 +4,11 @@ package component
 
 import (
 	"net/http"
-	"server/tests/api_client"
 	"server/tools"
 	"testing"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/deepstack"
@@ -17,9 +19,9 @@ func TestDevelopmentRoutesAreAbsentInProdProfile(t *testing.T) {
 	assert.Nil(t, cloud.Auth.SignIn(tools.DefaultAdminName, tools.DefaultAdminPassword))
 
 	developmentRoutePaths := []string{
-		tools.Paths.BackendResetTestState,
-		tools.Paths.BackendReloadFrontendTemplatesFromFileSystem,
-		tools.Paths.BackendStoreReloadPublishedApps,
+		api.Paths.BackendResetTestState,
+		api.Paths.BackendReloadFrontendTemplatesFromFileSystem,
+		api.Paths.BackendStoreReloadPublishedApps,
 	}
 
 	for _, path := range developmentRoutePaths {

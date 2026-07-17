@@ -5,13 +5,12 @@ package frontend
 import (
 	"server/backup_server"
 	"server/certificates"
-	"server/maintenance/retention"
 	"server/tests/component"
 	"server/tests/frontend_pages"
-	"server/tools"
 	"testing"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/validation"
 )
 
@@ -67,7 +66,7 @@ func TestSettingsBackupServerFlow(t *testing.T) {
 	expected := backup_server.GetSampleRemoteRepo()
 
 	page := frame.Pages.GoToSettingsPage().
-		AssertBackupServerFormValues(&tools.BackupServerConfigs{}).
+		AssertBackupServerFormValues(&api.BackupServerConfigs{}).
 		EnterBackupServerHostAndPort(expected.Host, expected.SshPort).
 		AssertBackupServerKnownHostsValue("").
 		GetKnownHostsAndAssertValid()
@@ -89,7 +88,7 @@ func TestSettingsBackupServerFlow(t *testing.T) {
 	frame.Browser.ReloadPage()
 	page.AssertBackupServerFormValues(expected)
 
-	emptyConfig := &tools.BackupServerConfigs{}
+	emptyConfig := &api.BackupServerConfigs{}
 	frame.Pages.SettingsPage.
 		ResetBackupServerAndAssertSuccessSnackbar().
 		AssertBackupServerFormValues(emptyConfig)
@@ -114,11 +113,11 @@ func TestSettingsBackupServerPurgeFlow(t *testing.T) {
 		SetBackupServerEnabled(true).
 		SaveBackupServerAndAssertErrorSnackbar(backup_server.WrongEncryptionPasswordErr)
 
-	_, err = frame.Client.Parent.DoRequest(tools.Paths.BackendSettingsSshConfigsReset, nil)
+	_, err = frame.Client.Parent.DoRequest(api.Paths.BackendSettingsSshConfigsReset, nil)
 	assert.Nil(t, err)
 
 	frame.Browser.ReloadPage()
-	emptyConfig := &tools.BackupServerConfigs{}
+	emptyConfig := &api.BackupServerConfigs{}
 	frame.Pages.SettingsPage.AssertBackupServerFormValues(emptyConfig)
 
 	frame.Pages.SettingsPage.
@@ -199,7 +198,7 @@ func TestSettingsRetentionPolicyFlow(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 
-	expected := &retention.RetentionPolicy{
+	expected := &api.RetentionPolicy{
 		KeepPreUpdate: 10,
 		KeepDaily:     11,
 		KeepWeekly:    12,

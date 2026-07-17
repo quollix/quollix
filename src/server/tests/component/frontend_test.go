@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"server/tests/api_client"
 	"server/tools"
 	"strings"
 	"testing"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -57,7 +59,7 @@ func TestFrontendAdminPageAndMissingPage(t *testing.T) {
 
 	anonymousClient := api_client.NewQuollixClient()
 
-	adminPage := tools.Paths.FrontendUsers
+	adminPage := api.Paths.FrontendUsers
 	missingPage := "/page-that-does-not-exist"
 
 	adminResponse, err := adminClient.Frontend.GetPage(adminPage)
@@ -68,12 +70,12 @@ func TestFrontendAdminPageAndMissingPage(t *testing.T) {
 	userResponse, err := userClient.Frontend.GetPage(adminPage)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusFound, userResponse.StatusCode)
-	assert.Equal(t, tools.Paths.FrontendSignIn, userResponse.Header.Get("Location"))
+	assert.Equal(t, api.Paths.FrontendSignIn, userResponse.Header.Get("Location"))
 
 	anonymousResponse, err := anonymousClient.Frontend.GetPage(adminPage)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusFound, anonymousResponse.StatusCode)
-	assert.Equal(t, tools.Paths.FrontendSignIn, anonymousResponse.Header.Get("Location"))
+	assert.Equal(t, api.Paths.FrontendSignIn, anonymousResponse.Header.Get("Location"))
 
 	for _, client := range []*api_client.QuollixClient{adminClient, userClient, anonymousClient} {
 		response, responseErr := client.Frontend.GetPage(missingPage)

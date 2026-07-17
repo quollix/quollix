@@ -3,6 +3,7 @@ package oidc_client
 import (
 	"server/tools"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -18,25 +19,13 @@ const oidcAuthProviderSelect = `
 
 const OidcAuthProviderNotFoundError = "OIDC provider not found"
 
-type OidcAuthProviderDto struct {
-	Id               int    `json:"id"`
-	Name             string `json:"name" validate:"loose"`
-	IssuerDomainPath string `json:"issuer_domain_path" validate:"domain_path"`
-	ClientId         string `json:"client_id" validate:"credential"`
-	ClientSecret     string `json:"client_secret" validate:"credential"`
-}
-
-type OidcAuthProviderDiscoveryRequest struct {
-	IssuerDomainPath string `json:"issuer_domain_path" validate:"domain_path"`
-}
-
 type OidcAuthProviderRepository interface {
-	CreateProvider(provider *OidcAuthProviderDto) (int, error)
-	UpdateProvider(provider *OidcAuthProviderDto) error
-	GetProviderById(providerId int) (*OidcAuthProviderDto, error)
-	GetProviderByName(name string) (*OidcAuthProviderDto, bool, error)
-	GetProviderByIssuerDomainPath(issuerDomainPath string) (*OidcAuthProviderDto, bool, error)
-	ListProviders() ([]OidcAuthProviderDto, error)
+	CreateProvider(provider *api.OidcAuthProviderDto) (int, error)
+	UpdateProvider(provider *api.OidcAuthProviderDto) error
+	GetProviderById(providerId int) (*api.OidcAuthProviderDto, error)
+	GetProviderByName(name string) (*api.OidcAuthProviderDto, bool, error)
+	GetProviderByIssuerDomainPath(issuerDomainPath string) (*api.OidcAuthProviderDto, bool, error)
+	ListProviders() ([]api.OidcAuthProviderDto, error)
 	DeleteProvider(providerId int) error
 }
 
@@ -44,7 +33,7 @@ type OidcAuthProviderRepositoryImpl struct {
 	DbConnector tools.DatabaseConnector
 }
 
-func (r *OidcAuthProviderRepositoryImpl) CreateProvider(provider *OidcAuthProviderDto) (int, error) {
+func (r *OidcAuthProviderRepositoryImpl) CreateProvider(provider *api.OidcAuthProviderDto) (int, error) {
 	var id int
 	err := r.DbConnector.GetDB().QueryRow(
 		`INSERT INTO oidc_auth_providers (name, issuer_domain_path, client_id, client_secret)
@@ -61,7 +50,7 @@ func (r *OidcAuthProviderRepositoryImpl) CreateProvider(provider *OidcAuthProvid
 	return id, nil
 }
 
-func (r *OidcAuthProviderRepositoryImpl) UpdateProvider(provider *OidcAuthProviderDto) error {
+func (r *OidcAuthProviderRepositoryImpl) UpdateProvider(provider *api.OidcAuthProviderDto) error {
 	result, err := r.DbConnector.GetDB().Exec(
 		`UPDATE oidc_auth_providers
          SET name = $2, issuer_domain_path = $3, client_id = $4, client_secret = $5
@@ -85,7 +74,7 @@ func (r *OidcAuthProviderRepositoryImpl) UpdateProvider(provider *OidcAuthProvid
 	return nil
 }
 
-func (r *OidcAuthProviderRepositoryImpl) GetProviderById(providerId int) (*OidcAuthProviderDto, error) {
+func (r *OidcAuthProviderRepositoryImpl) GetProviderById(providerId int) (*api.OidcAuthProviderDto, error) {
 	providers, err := r.queryProviders("WHERE oidc_auth_provider_id = $1", providerId)
 	if err != nil {
 		return nil, err
@@ -96,7 +85,7 @@ func (r *OidcAuthProviderRepositoryImpl) GetProviderById(providerId int) (*OidcA
 	return &providers[0], nil
 }
 
-func (r *OidcAuthProviderRepositoryImpl) GetProviderByName(name string) (*OidcAuthProviderDto, bool, error) {
+func (r *OidcAuthProviderRepositoryImpl) GetProviderByName(name string) (*api.OidcAuthProviderDto, bool, error) {
 	providers, err := r.queryProviders("WHERE name = $1", name)
 	if err != nil {
 		return nil, false, err
@@ -107,7 +96,7 @@ func (r *OidcAuthProviderRepositoryImpl) GetProviderByName(name string) (*OidcAu
 	return &providers[0], true, nil
 }
 
-func (r *OidcAuthProviderRepositoryImpl) GetProviderByIssuerDomainPath(issuerDomainPath string) (*OidcAuthProviderDto, bool, error) {
+func (r *OidcAuthProviderRepositoryImpl) GetProviderByIssuerDomainPath(issuerDomainPath string) (*api.OidcAuthProviderDto, bool, error) {
 	providers, err := r.queryProviders("WHERE issuer_domain_path = $1", issuerDomainPath)
 	if err != nil {
 		return nil, false, err
@@ -118,20 +107,20 @@ func (r *OidcAuthProviderRepositoryImpl) GetProviderByIssuerDomainPath(issuerDom
 	return &providers[0], true, nil
 }
 
-func (r *OidcAuthProviderRepositoryImpl) ListProviders() ([]OidcAuthProviderDto, error) {
+func (r *OidcAuthProviderRepositoryImpl) ListProviders() ([]api.OidcAuthProviderDto, error) {
 	return r.queryProviders("ORDER BY name")
 }
 
-func (r *OidcAuthProviderRepositoryImpl) queryProviders(where string, args ...any) ([]OidcAuthProviderDto, error) {
+func (r *OidcAuthProviderRepositoryImpl) queryProviders(where string, args ...any) ([]api.OidcAuthProviderDto, error) {
 	rows, err := r.DbConnector.GetDB().Query(oidcAuthProviderSelect+" "+where, args...)
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
 	defer u.Close(rows)
 
-	var providers []OidcAuthProviderDto
+	var providers []api.OidcAuthProviderDto
 	for rows.Next() {
-		var provider OidcAuthProviderDto
+		var provider api.OidcAuthProviderDto
 		if err := rows.Scan(&provider.Id, &provider.Name, &provider.IssuerDomainPath, &provider.ClientId, &provider.ClientSecret); err != nil {
 			return nil, u.Logger.NewError(err.Error())
 		}

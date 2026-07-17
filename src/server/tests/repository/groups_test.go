@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 const (
@@ -313,7 +314,7 @@ func TestListUsersByGroupMembership(t *testing.T) {
 	assert.False(t, containsMember(usersByGroup.NotIn, uname))
 }
 
-func containsMember(members []groups.Member, name string) bool {
+func containsMember(members []api.Member, name string) bool {
 	for _, member := range members {
 		if member.Name == name {
 			return true

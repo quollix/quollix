@@ -2,10 +2,12 @@ package retention
 
 import (
 	"server/tools"
+
+	api "github.com/quollix/common/quollix/api"
 )
 
 type BackupDeletionFinder interface {
-	GetBackupsForRetention(backups []tools.BackupInfo) ([]string, error)
+	GetBackupsForRetention(backups []api.BackupInfo) ([]string, error)
 }
 
 type BackupDeletionFinderImpl struct {
@@ -13,15 +15,7 @@ type BackupDeletionFinderImpl struct {
 	RetentionPolicyRepo RetentionPolicyRepository
 }
 
-type RetentionPolicy struct {
-	KeepPreUpdate int `json:"keep_pre_update"`
-	KeepDaily     int `json:"keep_daily"`
-	KeepWeekly    int `json:"keep_weekly"`
-	KeepMonthly   int `json:"keep_monthly"`
-	KeepYearly    int `json:"keep_yearly"`
-}
-
-func (b *BackupDeletionFinderImpl) GetBackupsForRetention(backups []tools.BackupInfo) ([]string, error) {
+func (b *BackupDeletionFinderImpl) GetBackupsForRetention(backups []api.BackupInfo) ([]string, error) {
 	scheduledBackups, preUpdateBackups, backupIdsToPotentiallyRetent := b.splitUpBackups(backups)
 	policy, err := b.RetentionPolicyRepo.GetRetentionPolicy()
 	if err != nil {
@@ -31,7 +25,7 @@ func (b *BackupDeletionFinderImpl) GetBackupsForRetention(backups []tools.Backup
 	return b.SelectionHelper.FindBackupIdsToRetent(backupIdsToPotentiallyRetent, backupIdsToKeep), nil
 }
 
-func (b *BackupDeletionFinderImpl) findBackupIdsToKeep(preUpdateBackups []tools.BackupInfo, policy *RetentionPolicy, scheduledBackups []tools.BackupInfo) map[string]struct{} {
+func (b *BackupDeletionFinderImpl) findBackupIdsToKeep(preUpdateBackups []api.BackupInfo, policy *api.RetentionPolicy, scheduledBackups []api.BackupInfo) map[string]struct{} {
 	preUpdateRetainedBackupIds := b.SelectionHelper.FindPreUpdateBackupsToRetain(preUpdateBackups, policy.KeepPreUpdate)
 	dailyRetainedBackupIds := b.SelectionHelper.FindDailyBackupsToRetain(scheduledBackups, policy.KeepDaily)
 	weeklyRetainedBackupIds := b.SelectionHelper.FindWeeklyBackupsToRetain(scheduledBackups, policy.KeepWeekly)
@@ -48,8 +42,8 @@ func (b *BackupDeletionFinderImpl) findBackupIdsToKeep(preUpdateBackups []tools.
 	return backupIdsToKeep
 }
 
-func (b *BackupDeletionFinderImpl) splitUpBackups(backups []tools.BackupInfo) ([]tools.BackupInfo, []tools.BackupInfo, []string) {
-	var nonManualBackups []tools.BackupInfo
+func (b *BackupDeletionFinderImpl) splitUpBackups(backups []api.BackupInfo) ([]api.BackupInfo, []api.BackupInfo, []string) {
+	var nonManualBackups []api.BackupInfo
 	for _, backup := range backups {
 		if backup.Description == tools.ManualBackupDescription {
 			continue
@@ -59,8 +53,8 @@ func (b *BackupDeletionFinderImpl) splitUpBackups(backups []tools.BackupInfo) ([
 
 	sortedNonManualBackups := b.SelectionHelper.CopyAndSortBackupsByNewestFirst(nonManualBackups)
 
-	var scheduledBackups []tools.BackupInfo
-	var preUpdateBackups []tools.BackupInfo
+	var scheduledBackups []api.BackupInfo
+	var preUpdateBackups []api.BackupInfo
 	var backupIdsToPotentiallyRetent []string
 
 	for _, backup := range sortedNonManualBackups {

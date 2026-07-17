@@ -5,11 +5,13 @@ package component
 import (
 	"fmt"
 	"server/apps_basic"
-	"server/tests/api_client"
 	"server/tools"
 	"server/users"
 	"testing"
 	"time"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -76,7 +78,7 @@ func TestDisablingUserBlocksLoginAndInvalidatesSessions(t *testing.T) {
 	assert.Nil(t, userClient.Auth.SignIn(SampleUsername, SampleUserPassword))
 }
 
-func getNormalUser(userList []tools.User) (*tools.User, error) {
+func getNormalUser(userList []api.User) (*api.User, error) {
 	for _, user := range userList {
 		if !user.IsAdmin {
 			userCopy := user

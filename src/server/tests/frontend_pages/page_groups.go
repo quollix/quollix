@@ -1,11 +1,11 @@
 package frontend_pages
 
 import (
-	"server/tools"
 	"strings"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 )
 
 type GroupsPage struct {
@@ -17,17 +17,16 @@ type GroupRow struct {
 }
 
 func (g *GroupsPage) CreateGroup(groupName string) *GroupsPage {
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroups)
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroups)
 	nameInput, err := g.Frame.Page.Element("#create-group-name-input")
 	assert.Nil(g.Frame.T, err)
 	nameInput.MustInput(groupName)
 
 	createButton, err := g.Frame.Page.Element("#create-group-button")
 	assert.Nil(g.Frame.T, err)
-	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		createButton.MustClick()
-	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroups)
+	createButton.MustClick()
+	g.Frame.Assert.SnackbarVisibleWithTextEventually("Group created successfully.")
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroups)
 	return g
 }
 
@@ -36,11 +35,10 @@ func (g *GroupsPage) DeleteGroup(groupName string) *GroupsPage {
 	deleteButton, err := row.Element("button.group-delete-button")
 	assert.Nil(g.Frame.T, err)
 
-	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		deleteButton.MustClick()
-		g.Frame.Browser.ConfirmDialog()
-	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroups)
+	deleteButton.MustClick()
+	g.Frame.Browser.ConfirmDialog()
+	g.Frame.Assert.SnackbarVisibleWithTextEventually("Group deleted successfully.")
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroups)
 	return g
 }
 
@@ -51,7 +49,7 @@ func (g *GroupsPage) OpenGroupMembersPage(groupName string) *GroupMembersPage {
 	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		manageMembersButton.MustClick()
 	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroupMembers)
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroupMembers)
 	return g.Frame.Pages.GroupMembersPage
 }
 
@@ -62,7 +60,7 @@ func (g *GroupsPage) OpenGroupAppsPage(groupName string) *GroupAppsPage {
 	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		manageAppsButton.MustClick()
 	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroupApps)
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroupApps)
 	return g.Frame.Pages.GroupAppsPage
 }
 
@@ -114,7 +112,7 @@ func (g *GroupsPage) AssertGroupAbsent(groupName string) *GroupsPage {
 	return g
 }
 
-func (g *GroupsPage) getRequiredGroupRowElement(groupName string) *rod.Element {
+func (g *GroupsPage) getRequiredGroupRowElement(groupName string) *browsertest.Element {
 	rows, err := g.Frame.Page.Elements("tr.group-row")
 	assert.Nil(g.Frame.T, err)
 

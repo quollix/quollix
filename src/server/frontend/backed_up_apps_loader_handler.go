@@ -3,19 +3,19 @@ package frontend
 import (
 	"net/http"
 	"server/backups"
-	"server/tools"
 	"sort"
 	"sync"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
 type BackedUpAppsLoaderHandler struct {
 	BackupService backups.BackupService
 
-	mutex     sync.Mutex               `wire:"-"`
-	isRunning bool                     `wire:"-"`
-	apps      []tools.MaintainerAndApp `wire:"-"`
+	mutex     sync.Mutex             `wire:"-"`
+	isRunning bool                   `wire:"-"`
+	apps      []api.MaintainerAndApp `wire:"-"`
 }
 
 func (h *BackedUpAppsLoaderHandler) StartLoading() {
@@ -39,7 +39,7 @@ func (h *BackedUpAppsLoaderHandler) ReadLoad() BackedUpAppsPageLoadResponse {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 
-	apps := make([]tools.MaintainerAndApp, len(h.apps))
+	apps := make([]api.MaintainerAndApp, len(h.apps))
 	copy(apps, h.apps)
 
 	return BackedUpAppsPageLoadResponse{

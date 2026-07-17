@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 func TestSignInAndSignOut(t *testing.T) {
@@ -15,15 +16,15 @@ func TestSignInAndSignOut(t *testing.T) {
 	defer frame.Client.Test.ResetTestState()
 	frame.Session.SignOutViaClient()
 
-	frame.Pages.VisitSignInPage().SignInAsAdmin().Frame.Assert.PagePath(tools.Paths.FrontendInstalledApps)
-	frame.Pages.GoToUsersPage().Frame.Assert.PagePath(tools.Paths.FrontendUsers)
+	frame.Pages.VisitSignInPage().SignInAsAdmin().Frame.Assert.PagePath(api.Paths.FrontendInstalledApps)
+	frame.Pages.GoToUsersPage().Frame.Assert.PagePath(api.Paths.FrontendUsers)
 	assert.NotNil(t, frame.Client.Parent.Cookie)
 
 	cookie := frame.Session.GetAuthCookie()
 	assert.NotNil(t, cookie)
 	assert.Equal(t, frame.Client.Parent.Cookie.Value, cookie.Value)
 	assert.Nil(t, checkAuthWithCookie(t, cookie))
-	frame.Session.SignOut().Assert.PagePath(tools.Paths.FrontendInstalledApps)
+	frame.Session.SignOut().Assert.PagePath(api.Paths.FrontendInstalledApps)
 	assert.Nil(t, frame.Client.Parent.Cookie)
 }
 

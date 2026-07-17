@@ -7,6 +7,7 @@ import (
 	"server/apps_basic"
 	"server/configs"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -83,7 +84,7 @@ func (r *OidcRelyingPartyResolverImpl) checkAppRedirectUri(app *apps_basic.RepoA
 	return nil
 }
 
-func (r *OidcRelyingPartyResolverImpl) checkGenericClientRedirectUri(client *OidcRelyingPartyDto, redirectUri string) error {
+func (r *OidcRelyingPartyResolverImpl) checkGenericClientRedirectUri(client *api.OidcRelyingPartyDto, redirectUri string) error {
 	redirectUrl, err := parseRedirectUri(redirectUri)
 	if err != nil {
 		return err

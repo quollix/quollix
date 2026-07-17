@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 )
 
 func TestScheduledBackupsHappyPath(t *testing.T) {
@@ -15,7 +16,7 @@ func TestScheduledBackupsHappyPath(t *testing.T) {
 		RetentionPolicyRepo: retentionPolicyRepo,
 	}
 
-	inputBackups := []tools.BackupInfo{
+	inputBackups := []api.BackupInfo{
 		{BackupId: "scheduled-daily", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-weekly", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-monthly", Description: tools.ScheduledBackupDescription},
@@ -24,7 +25,7 @@ func TestScheduledBackupsHappyPath(t *testing.T) {
 		{BackupId: "manual-1", Description: tools.ManualBackupDescription},
 	}
 
-	nonManualBackups := []tools.BackupInfo{
+	nonManualBackups := []api.BackupInfo{
 		{BackupId: "scheduled-daily", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-weekly", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-monthly", Description: tools.ScheduledBackupDescription},
@@ -32,7 +33,7 @@ func TestScheduledBackupsHappyPath(t *testing.T) {
 		{BackupId: "preupdate-1", Description: tools.PreUpdateBackupDescription},
 	}
 
-	sortedNonManualBackups := []tools.BackupInfo{
+	sortedNonManualBackups := []api.BackupInfo{
 		{BackupId: "preupdate-1", Description: tools.PreUpdateBackupDescription},
 		{BackupId: "scheduled-daily", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-weekly", Description: tools.ScheduledBackupDescription},
@@ -48,14 +49,14 @@ func TestScheduledBackupsHappyPath(t *testing.T) {
 		"scheduled-yearly",
 	}
 
-	scheduledBackups := []tools.BackupInfo{
+	scheduledBackups := []api.BackupInfo{
 		{BackupId: "scheduled-daily", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-weekly", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-monthly", Description: tools.ScheduledBackupDescription},
 		{BackupId: "scheduled-yearly", Description: tools.ScheduledBackupDescription},
 	}
 
-	preUpdateBackups := []tools.BackupInfo{
+	preUpdateBackups := []api.BackupInfo{
 		{BackupId: "preupdate-1", Description: tools.PreUpdateBackupDescription},
 	}
 

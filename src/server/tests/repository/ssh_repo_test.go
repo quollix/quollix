@@ -4,10 +4,10 @@ package repository
 
 import (
 	"server/backup_server"
-	"server/tools"
 	"testing"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 func TestSshRepo(t *testing.T) {
@@ -34,7 +34,7 @@ func TestSshRepo(t *testing.T) {
 	assertRepoState(t, sample)
 }
 
-func assertRepoState(t *testing.T, expected *tools.BackupServerConfigs) {
+func assertRepoState(t *testing.T, expected *api.BackupServerConfigs) {
 	repo, err := SshRepo.GetRemoteBackupRepository()
 	assert.Nil(t, err)
 	assert.Equal(t, expected, repo)

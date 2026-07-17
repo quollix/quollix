@@ -11,6 +11,7 @@ import (
 	"server/tools"
 	"server/users"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -71,7 +72,7 @@ func (e *UserEmailServiceImpl) buildSetPasswordLink(token string) (string, error
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s%s?token=%s", serverURL, tools.Paths.FrontendSetPassword, token), nil
+	return fmt.Sprintf("%s%s?token=%s", serverURL, api.Paths.FrontendSetPassword, token), nil
 }
 
 func (e *UserEmailServiceImpl) InviteUserViaEmail(username, targetEmail string) error {

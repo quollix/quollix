@@ -2,9 +2,9 @@ package frontend_pages
 
 import (
 	"fmt"
-	"server/tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 type GroupAppsPage struct {
@@ -17,7 +17,7 @@ func (g *GroupAppsPage) ClickBack() *GroupsPage {
 	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		backButton.MustClick()
 	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroups)
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroups)
 	return g.Frame.Pages.GroupsPage
 }
 
@@ -104,20 +104,18 @@ func (g *GroupAppsPage) SetGrantedChecked(appName string, checked bool) *GroupAp
 func (g *GroupAppsPage) ClickAddSelected() *GroupAppsPage {
 	addButton, err := g.Frame.Page.Element("#group-apps-add-button")
 	assert.Nil(g.Frame.T, err)
-	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		addButton.MustClick()
-	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroupApps)
+	addButton.MustClick()
+	g.Frame.Assert.SnackbarVisibleWithTextEventually("Access granted successfully.")
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroupApps)
 	return g
 }
 
 func (g *GroupAppsPage) ClickRemoveSelected() *GroupAppsPage {
 	removeButton, err := g.Frame.Page.Element("#group-apps-remove-button")
 	assert.Nil(g.Frame.T, err)
-	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		removeButton.MustClick()
-	})
-	g.Frame.Assert.PagePath(tools.Paths.FrontendGroupApps)
+	removeButton.MustClick()
+	g.Frame.Assert.SnackbarVisibleWithTextEventually("Access revoked successfully.")
+	g.Frame.Assert.PagePath(api.Paths.FrontendGroupApps)
 	return g
 }
 

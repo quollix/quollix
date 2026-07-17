@@ -6,18 +6,18 @@ import (
 	"strings"
 	"testing"
 
-	"server/oidc_client"
 	"server/tools"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 )
 
 type ProvidersPage struct {
 	Frame *FrameType
 }
 
-func (e *ProvidersPage) FillCreateProvider(provider *oidc_client.OidcAuthProviderDto) *ProvidersPage {
+func (e *ProvidersPage) FillCreateProvider(provider *api.OidcAuthProviderDto) *ProvidersPage {
 	e.Frame.Controls.SetInputValue("#oidc-provider-name-input", provider.Name)
 	e.Frame.Controls.SetInputValue("#oidc-provider-issuer-domain-path-input", provider.IssuerDomainPath)
 	e.Frame.Controls.SetInputValue("#oidc-provider-client-id-input", provider.ClientId)
@@ -37,7 +37,7 @@ func (e *ProvidersPage) TestCreateProviderDiscoveryAndAssertSuccess() *Providers
 	return e
 }
 
-func (e *ProvidersPage) UpdateProvider(provider *oidc_client.OidcAuthProviderDto) *ProvidersPage {
+func (e *ProvidersPage) UpdateProvider(provider *api.OidcAuthProviderDto) *ProvidersPage {
 	row := e.findRowByProviderId(provider.Id)
 	setInputValueInRow(e.Frame.T, row, ".oidc-provider-name-edit", provider.Name)
 	setInputValueInRow(e.Frame.T, row, ".oidc-provider-issuer-domain-path-edit", provider.IssuerDomainPath)
@@ -80,8 +80,8 @@ func (e *ProvidersPage) AssertClientSecretVisibility(name string, visible bool) 
 	return e
 }
 
-func (e *ProvidersPage) GetRequiredProvider(name string) oidc_client.OidcAuthProviderDto {
-	var provider oidc_client.OidcAuthProviderDto
+func (e *ProvidersPage) GetRequiredProvider(name string) api.OidcAuthProviderDto {
+	var provider api.OidcAuthProviderDto
 	err := tools.Eventually(func() error {
 		rows := e.Frame.Page.MustElements("tr.oidc-auth-provider-row")
 		for _, row := range rows {
@@ -97,7 +97,7 @@ func (e *ProvidersPage) GetRequiredProvider(name string) oidc_client.OidcAuthPro
 	return provider
 }
 
-func (e *ProvidersPage) readProviderEntry(row *rod.Element) oidc_client.OidcAuthProviderDto {
+func (e *ProvidersPage) readProviderEntry(row *browsertest.Element) api.OidcAuthProviderDto {
 	providerId, err := row.Attribute("data-provider-id")
 	assert.Nil(e.Frame.T, err)
 	assert.NotNil(e.Frame.T, providerId)
@@ -105,7 +105,7 @@ func (e *ProvidersPage) readProviderEntry(row *rod.Element) oidc_client.OidcAuth
 	id, err := strconv.Atoi(strings.TrimSpace(*providerId))
 	assert.Nil(e.Frame.T, err)
 
-	return oidc_client.OidcAuthProviderDto{
+	return api.OidcAuthProviderDto{
 		Id:               id,
 		Name:             getInputValueInRow(e.Frame.T, row, ".oidc-provider-name-edit"),
 		IssuerDomainPath: getInputValueInRow(e.Frame.T, row, ".oidc-provider-issuer-domain-path-edit"),
@@ -114,8 +114,8 @@ func (e *ProvidersPage) readProviderEntry(row *rod.Element) oidc_client.OidcAuth
 	}
 }
 
-func (e *ProvidersPage) findRowByProviderName(name string) *rod.Element {
-	var foundRow *rod.Element
+func (e *ProvidersPage) findRowByProviderName(name string) *browsertest.Element {
+	var foundRow *browsertest.Element
 	err := tools.Eventually(func() error {
 		rows := e.Frame.Page.MustElements("tr.oidc-auth-provider-row")
 		for _, row := range rows {
@@ -130,8 +130,8 @@ func (e *ProvidersPage) findRowByProviderName(name string) *rod.Element {
 	return foundRow
 }
 
-func (e *ProvidersPage) findRowByProviderId(providerId int) *rod.Element {
-	var foundRow *rod.Element
+func (e *ProvidersPage) findRowByProviderId(providerId int) *browsertest.Element {
+	var foundRow *browsertest.Element
 	expectedProviderId := strconv.Itoa(providerId)
 	err := tools.Eventually(func() error {
 		rows := e.Frame.Page.MustElements("tr.oidc-auth-provider-row")
@@ -149,23 +149,23 @@ func (e *ProvidersPage) findRowByProviderId(providerId int) *rod.Element {
 	return foundRow
 }
 
-func GetRequiredElementInRow(t *testing.T, row *rod.Element, selector string) *rod.Element {
+func GetRequiredElementInRow(t *testing.T, row *browsertest.Element, selector string) *browsertest.Element {
 	element, err := row.Element(selector)
 	assert.Nil(t, err)
 	return element
 }
 
-func setInputValueInRow(t *testing.T, row *rod.Element, selector, value string) {
+func setInputValueInRow(t *testing.T, row *browsertest.Element, selector, value string) {
 	GetRequiredElementInRow(t, row, selector).MustSelectAllText().MustInput(value)
 }
 
-func getInputValueInRow(t *testing.T, row *rod.Element, selector string) string {
+func getInputValueInRow(t *testing.T, row *browsertest.Element, selector string) string {
 	value, err := GetRequiredElementInRow(t, row, selector).Property("value")
 	assert.Nil(t, err)
 	return value.String()
 }
 
-func getInputTypeInRow(t *testing.T, row *rod.Element, selector string) string {
+func getInputTypeInRow(t *testing.T, row *browsertest.Element, selector string) string {
 	value, err := GetRequiredElementInRow(t, row, selector).Property("type")
 	assert.Nil(t, err)
 	return value.String()

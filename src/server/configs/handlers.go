@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"server/tools"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -33,7 +34,7 @@ func (s *SettingsHandler) ReadBaseDomainHandler(w http.ResponseWriter, r *http.R
 }
 
 func (s *SettingsHandler) SaveBaseDomainHandler(w http.ResponseWriter, r *http.Request) {
-	baseDomainString, ok := validation.ReadBody[tools.BaseDomainString](w, r)
+	baseDomainString, ok := validation.ReadBody[api.BaseDomainString](w, r)
 	if !ok {
 		return
 	}

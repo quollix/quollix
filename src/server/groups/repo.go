@@ -5,28 +5,9 @@ import (
 	"testing"
 
 	"github.com/lib/pq"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
-
-type Group struct {
-	Id   int
-	Name string `validate:"default"`
-}
-
-type Member struct {
-	Id   int
-	Name string `validate:"default"`
-}
-
-type UsersByGroupMembership struct {
-	In    []Member
-	NotIn []Member
-}
-
-type AppsAccessByGroup struct {
-	Granted    []string
-	NotGranted []string
-}
 
 const GroupAlreadyExistsError = "group already exists"
 
@@ -35,17 +16,17 @@ type GroupRepository interface {
 	CreateGroup(name string) (int, error)
 	DeleteGroup(groupId int) error
 
-	GetGroupById(groupId int) (Group, error)
-	ListAllGroups() ([]Group, error)
-	ListGroupsForUser(userId int) ([]Group, error)
+	GetGroupById(groupId int) (api.Group, error)
+	ListAllGroups() ([]api.Group, error)
+	ListGroupsForUser(userId int) ([]api.Group, error)
 
 	AddUsersToGroup(groupId int, userIds []int) error
 	RemoveUsersFromGroup(groupId int, userIds []int) error
-	ListUsersByGroupMembership(groupId int) (*UsersByGroupMembership, error)
+	ListUsersByGroupMembership(groupId int) (*api.UsersByGroupMembership, error)
 
 	GrantAppAccess(groupId int, appNames []string) error
 	RevokeAppAccess(groupId int, appNames []string) error
-	ListAppsAccessByGroup(groupId int) (*AppsAccessByGroup, error)
+	ListAppsAccessByGroup(groupId int) (*api.AppsAccessByGroup, error)
 
 	HasAccess(userId int, appName string) (bool, error)
 }
@@ -66,7 +47,7 @@ func (r *GroupRepositoryImpl) DoesGroupExist(name string) (bool, error) {
 	return exists, nil
 }
 
-func (r *GroupRepositoryImpl) ListGroupsForUser(userId int) ([]Group, error) {
+func (r *GroupRepositoryImpl) ListGroupsForUser(userId int) ([]api.Group, error) {
 	rows, err := r.DbConnector.GetDB().Query(
 		`SELECT g.group_id, g.group_name
          FROM memberships m
@@ -80,9 +61,9 @@ func (r *GroupRepositoryImpl) ListGroupsForUser(userId int) ([]Group, error) {
 	}
 	defer u.Close(rows)
 
-	var groups []Group
+	var groups []api.Group
 	for rows.Next() {
-		var g Group
+		var g api.Group
 		if err := rows.Scan(&g.Id, &g.Name); err != nil {
 			return nil, u.Logger.NewError(err.Error())
 		}
@@ -117,7 +98,7 @@ func (r *GroupRepositoryImpl) DeleteGroup(groupId int) error {
 	return nil
 }
 
-func (r *GroupRepositoryImpl) ListAllGroups() ([]Group, error) {
+func (r *GroupRepositoryImpl) ListAllGroups() ([]api.Group, error) {
 	rows, err := r.DbConnector.GetDB().Query(
 		`SELECT group_id, group_name FROM groups ORDER BY group_name`,
 	)
@@ -126,9 +107,9 @@ func (r *GroupRepositoryImpl) ListAllGroups() ([]Group, error) {
 	}
 	defer u.Close(rows)
 
-	var groups []Group
+	var groups []api.Group
 	for rows.Next() {
-		var g Group
+		var g api.Group
 		if err := rows.Scan(&g.Id, &g.Name); err != nil {
 			return nil, u.Logger.NewError(err.Error())
 		}
@@ -255,7 +236,7 @@ func (r *GroupRepositoryImpl) AssertTableEmpty(t *testing.T, table string) {
 	}
 }
 
-func (r *GroupRepositoryImpl) ListUsersByGroupMembership(groupId int) (*UsersByGroupMembership, error) {
+func (r *GroupRepositoryImpl) ListUsersByGroupMembership(groupId int) (*api.UsersByGroupMembership, error) {
 	rows, err := r.DbConnector.GetDB().Query(
 		`SELECT u.user_id, u.username,
 		        EXISTS (
@@ -272,9 +253,9 @@ func (r *GroupRepositoryImpl) ListUsersByGroupMembership(groupId int) (*UsersByG
 	}
 	defer u.Close(rows)
 
-	res := &UsersByGroupMembership{}
+	res := &api.UsersByGroupMembership{}
 	for rows.Next() {
-		var m Member
+		var m api.Member
 		var inGroup bool
 		if err := rows.Scan(&m.Id, &m.Name, &inGroup); err != nil {
 			return nil, u.Logger.NewError(err.Error())
@@ -291,7 +272,7 @@ func (r *GroupRepositoryImpl) ListUsersByGroupMembership(groupId int) (*UsersByG
 	return res, nil
 }
 
-func (r *GroupRepositoryImpl) ListAppsAccessByGroup(groupId int) (*AppsAccessByGroup, error) {
+func (r *GroupRepositoryImpl) ListAppsAccessByGroup(groupId int) (*api.AppsAccessByGroup, error) {
 	rows, err := r.DbConnector.GetDB().Query(
 		`SELECT a.app_name,
 		        EXISTS (
@@ -309,7 +290,7 @@ func (r *GroupRepositoryImpl) ListAppsAccessByGroup(groupId int) (*AppsAccessByG
 	}
 	defer u.Close(rows)
 
-	res := &AppsAccessByGroup{}
+	res := &api.AppsAccessByGroup{}
 	for rows.Next() {
 		var name string
 		var granted bool
@@ -328,14 +309,14 @@ func (r *GroupRepositoryImpl) ListAppsAccessByGroup(groupId int) (*AppsAccessByG
 	return res, nil
 }
 
-func (r *GroupRepositoryImpl) GetGroupById(groupId int) (Group, error) {
-	var group Group
+func (r *GroupRepositoryImpl) GetGroupById(groupId int) (api.Group, error) {
+	var group api.Group
 	err := r.DbConnector.GetDB().QueryRow(
 		`SELECT group_id, group_name FROM groups WHERE group_id = $1`,
 		groupId,
 	).Scan(&group.Id, &group.Name)
 	if err != nil {
-		return Group{}, u.Logger.NewError(err.Error())
+		return api.Group{}, u.Logger.NewError(err.Error())
 	}
 	return group, nil
 }

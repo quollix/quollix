@@ -7,6 +7,7 @@ import (
 	"server/configs"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -52,7 +53,7 @@ func expectNoAppClient(testObjects oidcRelyingPartyResolverTestObjects) {
 }
 
 func expectGenericClient(testObjects oidcRelyingPartyResolverTestObjects) {
-	testObjects.ClientRepo.EXPECT().GetClientByClientId(oidcResolverClientId).Return(&OidcRelyingPartyDto{
+	testObjects.ClientRepo.EXPECT().GetClientByClientId(oidcResolverClientId).Return(&api.OidcRelyingPartyDto{
 		Domain:       "client.example.com",
 		ClientSecret: oidcResolverClientSecret,
 	}, true, nil)

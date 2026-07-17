@@ -3,8 +3,7 @@ package users
 import (
 	"net/http"
 
-	"server/tools"
-
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -18,7 +17,7 @@ func (r *RouteRegisterer) writeAuthFailure(w http.ResponseWriter, req *http.Requ
 	isFrontendRoute := IsFrontendRequest(path)
 	u.Logger.Debug("printing component addressed", "is_frontend_request", isFrontendRoute, "path", req.URL.Path)
 	if isFrontendRoute {
-		http.Redirect(w, req, tools.Paths.FrontendSignIn, http.StatusFound)
+		http.Redirect(w, req, api.Paths.FrontendSignIn, http.StatusFound)
 		return
 	}
 	u.WriteResponseError(w, expectedAuthProtectionErrors, err)

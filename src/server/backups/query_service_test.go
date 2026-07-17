@@ -1,16 +1,16 @@
 package backups
 
 import (
-	"server/tools"
 	"testing"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 func TestFindUniqueMaintainerAndAppNamePairs(t *testing.T) {
 	service := &BackupQueryServiceImpl{}
 
-	input := []tools.BackupInfo{
+	input := []api.BackupInfo{
 		{Maintainer: "a", AppName: "x"},
 		{Maintainer: "a", AppName: "y"},
 		{Maintainer: "b", AppName: "y"},
@@ -18,7 +18,7 @@ func TestFindUniqueMaintainerAndAppNamePairs(t *testing.T) {
 		{Maintainer: "a", AppName: "z"},
 	}
 
-	expected := []tools.MaintainerAndApp{
+	expected := []api.MaintainerAndApp{
 		{Maintainer: "a", AppName: "x"},
 		{Maintainer: "a", AppName: "y"},
 		{Maintainer: "b", AppName: "y"},

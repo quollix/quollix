@@ -5,12 +5,12 @@ package frontend
 import (
 	"testing"
 
-	"server/oidc_client"
 	"server/tests/component"
 	"server/tests/frontend_pages"
 	test_tools "server/tests/test_tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 func TestProvidersPageProviderCrud(t *testing.T) {
@@ -46,7 +46,7 @@ func TestProvidersPageProviderCrud(t *testing.T) {
 	assert.Equal(t, 0, len(providers))
 }
 
-func assertOidcAuthProvider(t *testing.T, expected oidc_client.OidcAuthProviderDto, actual oidc_client.OidcAuthProviderDto) {
+func assertOidcAuthProvider(t *testing.T, expected api.OidcAuthProviderDto, actual api.OidcAuthProviderDto) {
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, expected.IssuerDomainPath, actual.IssuerDomainPath)
 	assert.Equal(t, expected.ClientId, actual.ClientId)

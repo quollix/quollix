@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -46,7 +47,7 @@ func getUserServiceTestObjects(t *testing.T) *userServiceTestObjects {
 func newRequestWithAuthCookie() *http.Request {
 	request := httptest.NewRequest("GET", "/", nil)
 	request.AddCookie(&http.Cookie{
-		Name:  tools.BrandAppAuthCookieName,
+		Name:  api.BrandAppAuthCookieName,
 		Value: requestAuthCookieValue,
 	})
 	return request
@@ -151,7 +152,7 @@ func TestGetUserIdAndRoleFromQuollixRequest_DisabledUserReturnsAnonymousUser(t *
 
 func getAuthenticatedSession(userId int, isAdmin bool, cookieExpirationDate time.Time) *AuthenticatedSession {
 	return &AuthenticatedSession{
-		User: tools.User{
+		User: api.User{
 			Id:        userId,
 			IsAdmin:   isAdmin,
 			IsEnabled: true,
@@ -164,7 +165,7 @@ func getAuthenticatedSession(userId int, isAdmin bool, cookieExpirationDate time
 
 func TestChangeUsername_WhenReservedEmailTargetExistsReturnsSpecificError(t *testing.T) {
 	testObjects := getUserServiceTestObjects(t)
-	user := &tools.User{
+	user := &api.User{
 		Id:       42,
 		Username: "tom",
 		Email:    "tom@example.invalid",
@@ -179,13 +180,13 @@ func TestChangeUsername_WhenReservedEmailTargetExistsReturnsSpecificError(t *tes
 
 func TestAcceptNewPasswordViaToken_ValidTokenUpdatesPasswordAndClearsInvitationState(t *testing.T) {
 	testObjects := getUserServiceTestObjects(t)
-	user := &tools.User{
+	user := &api.User{
 		Id:                             42,
 		SetPasswordToken:               "token-123",
 		SetPasswordTokenExpirationDate: time.Now().Add(time.Hour),
 	}
 	testObjects.UserRepo.EXPECT().GetUserByToken("token-123").Return(user, nil)
-	testObjects.UserRepo.EXPECT().UpdateUser(user).Run(func(info *tools.User) {
+	testObjects.UserRepo.EXPECT().UpdateUser(user).Run(func(info *api.User) {
 		assert.True(t, testObjects.Service.AuthHelper.DoesMatchSaltedHash("new-password", info.HashedPassword))
 		assert.Equal(t, "", info.SetPasswordToken)
 		assert.Equal(t, tools.DefaultTime, info.SetPasswordTokenExpirationDate)
@@ -197,7 +198,7 @@ func TestAcceptNewPasswordViaToken_ValidTokenUpdatesPasswordAndClearsInvitationS
 
 func TestAcceptNewPasswordViaToken_ExpiredTokenReturnsError(t *testing.T) {
 	testObjects := getUserServiceTestObjects(t)
-	user := &tools.User{
+	user := &api.User{
 		Id:                             42,
 		SetPasswordToken:               "token-123",
 		SetPasswordTokenExpirationDate: time.Now().Add(-time.Hour),

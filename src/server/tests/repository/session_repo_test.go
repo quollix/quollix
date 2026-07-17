@@ -3,12 +3,12 @@
 package repository
 
 import (
-	"server/tools"
 	"server/users"
 	"testing"
 	"time"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 func TestSessionReadings(t *testing.T) {
@@ -149,7 +149,7 @@ func TestExpiredSessionDeletion(t *testing.T) {
 	assertSessionEquality(t, futureSession, &actualSession.Session)
 }
 
-func initSessionRepoTest(t *testing.T) *tools.User {
+func initSessionRepoTest(t *testing.T) *api.User {
 	InitDeps()
 
 	user := GetSampleAdminUser()

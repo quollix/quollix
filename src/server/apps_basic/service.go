@@ -3,6 +3,7 @@ package apps_basic
 import (
 	"server/tools"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -20,8 +21,8 @@ type AppService interface {
 	SetAppShouldBeRunning(appId int, shouldBeRunning bool) error
 	SetAccessPolicy(appId int, policy string) error
 	UpsertAppInDatabase(app *RepoApp) error
-	ListAppsForRole(userId int, role tools.UserAccessLevel) ([]AppDto, error)
-	ListAppsForAdmin() ([]AppDto, error)
+	ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AppDto, error)
+	ListAppsForAdmin() ([]api.AppDto, error)
 	UpdateAppAutoMaintenanceSettings(appId int, autoUpdateEnabled, autoBackupEnabled bool) error
 	RegenerateOidcClientCredentials(appId int) error
 }
@@ -181,7 +182,7 @@ func (a *AppServiceImpl) UpsertAppInDatabase(app *RepoApp) error {
 	return nil
 }
 
-func (a *AppServiceImpl) ListAppsForRole(userId int, role tools.UserAccessLevel) ([]AppDto, error) {
+func (a *AppServiceImpl) ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AppDto, error) {
 	repoApps, err := a.AppRepo.ListApps()
 	if err != nil {
 		return nil, err
@@ -196,7 +197,7 @@ func (a *AppServiceImpl) ListAppsForRole(userId int, role tools.UserAccessLevel)
 	return appDtos, nil
 }
 
-func (a *AppServiceImpl) ListAppsForAdmin() ([]AppDto, error) {
+func (a *AppServiceImpl) ListAppsForAdmin() ([]api.AppDto, error) {
 	repoApps, err := a.AppRepo.ListApps()
 	if err != nil {
 		return nil, err

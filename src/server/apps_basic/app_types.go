@@ -28,14 +28,6 @@ func NewRepoApp(
 	return app
 }
 
-type AppDto struct {
-	AppId, Maintainer, AppName, VersionName, AccessPolicy,
-	Port, ClientId, ClientSecret, DocsUrl, VersionCreationTimestampFormatted, VersionCreationTimestampTooltip string
-	IsRunning, IsOfficialDatabaseApp, AutomaticBackupsEnabled, AutomaticUpdatesEnabled, IsOfficial bool
-	VersionCreationTimestamp                                                                       time.Time
-	VersionContent                                                                                 []byte
-}
-
 type RepoApp struct {
 	AppId                                                                        int
 	Maintainer, AppName, VersionName, AccessPolicy, ClientId, ClientSecret, Port string

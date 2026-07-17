@@ -5,6 +5,7 @@ import (
 
 	"server/apps_basic"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -15,8 +16,8 @@ const (
 )
 
 type OidcRelyingPartyService interface {
-	CreateClient(client *OidcRelyingPartyRequest) error
-	UpdateClient(client *OidcRelyingPartyRequest) error
+	CreateClient(client *api.OidcRelyingPartyRequest) error
+	UpdateClient(client *api.OidcRelyingPartyRequest) error
 	RegenerateClientCredentials(clientId int) error
 }
 
@@ -25,7 +26,7 @@ type OidcRelyingPartyServiceImpl struct {
 	ClientCredentialsGenerator apps_basic.ClientCredentialsGenerator
 }
 
-func (s *OidcRelyingPartyServiceImpl) CreateClient(client *OidcRelyingPartyRequest) error {
+func (s *OidcRelyingPartyServiceImpl) CreateClient(client *api.OidcRelyingPartyRequest) error {
 	if err := validateRelyingParty(client.Name, client.Domain); err != nil {
 		return err
 	}
@@ -36,7 +37,7 @@ func (s *OidcRelyingPartyServiceImpl) CreateClient(client *OidcRelyingPartyReque
 	if err != nil {
 		return err
 	}
-	fullClient := &OidcRelyingPartyDto{
+	fullClient := &api.OidcRelyingPartyDto{
 		Name:         client.Name,
 		Domain:       client.Domain,
 		ClientId:     clientId,
@@ -49,7 +50,7 @@ func (s *OidcRelyingPartyServiceImpl) CreateClient(client *OidcRelyingPartyReque
 	return err
 }
 
-func (s *OidcRelyingPartyServiceImpl) UpdateClient(client *OidcRelyingPartyRequest) error {
+func (s *OidcRelyingPartyServiceImpl) UpdateClient(client *api.OidcRelyingPartyRequest) error {
 	clientId, err := strconv.Atoi(client.Id)
 	if err != nil {
 		return err
@@ -106,7 +107,7 @@ func (s *OidcRelyingPartyServiceImpl) validateUpdatedClientNameIsUnique(clientNa
 	return nil
 }
 
-func (s *OidcRelyingPartyServiceImpl) validateClientIdUniqueness(client *OidcRelyingPartyDto) error {
+func (s *OidcRelyingPartyServiceImpl) validateClientIdUniqueness(client *api.OidcRelyingPartyDto) error {
 	existingClient, exists, err := s.ClientRepo.GetClientByClientId(client.ClientId)
 	if err != nil {
 		return err

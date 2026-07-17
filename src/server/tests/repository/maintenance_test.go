@@ -3,11 +3,11 @@
 package repository
 
 import (
-	"server/configs"
 	"testing"
 	"time"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 func TestMaintenanceRepository(t *testing.T) {
@@ -20,7 +20,7 @@ func TestMaintenanceRepository(t *testing.T) {
 	_, err = MaintenanceRepo.GetMaintenanceConfig()
 	assert.NotNil(t, err)
 
-	maintenanceConfig := &configs.MaintenanceConfig{
+	maintenanceConfig := &api.MaintenanceConfig{
 		MaintenanceWindowStartHour: 6,
 		NextMaintenanceAt:          time.Date(2024, time.June, 30, 6, 0, 0, 0, time.UTC),
 		IanaTimezone:               "Europe/Berlin",

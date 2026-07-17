@@ -2,10 +2,10 @@ package apps_basic
 
 import (
 	"net/http"
-	"server/tools"
 	"server/users"
 	"time"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -22,7 +22,7 @@ type AppSessionServiceImpl struct {
 }
 
 func (a *AppSessionServiceImpl) AuthorizeAppRequest(r *http.Request, app *AppRequestData) error {
-	if app.AccessPolicy == tools.Policies.PublicAccessPolicy {
+	if app.AccessPolicy == api.Policies.PublicAccessPolicy {
 		return nil
 	}
 

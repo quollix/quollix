@@ -2,9 +2,9 @@ package groups
 
 import (
 	"net/http"
-	"server/tools"
 	"strconv"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -16,7 +16,7 @@ type GroupHandler struct {
 var expectedGroupCreationErrors = u.MapOf(GroupAlreadyExistsError)
 
 func (g *GroupHandler) CreateGroupHandler(w http.ResponseWriter, r *http.Request) {
-	groupString, ok := validation.ReadBody[tools.DefaultString](w, r)
+	groupString, ok := validation.ReadBody[api.DefaultString](w, r)
 	if !ok {
 		return
 	}
@@ -38,7 +38,7 @@ func (g *GroupHandler) CreateGroupHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (g *GroupHandler) DeleteGroupHandler(w http.ResponseWriter, r *http.Request) {
-	groupString, ok := validation.ReadBody[tools.NumberString](w, r)
+	groupString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -52,13 +52,8 @@ func (g *GroupHandler) DeleteGroupHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
-type GroupIdAndUserIds struct {
-	GroupId string   `json:"group_id" validate:"number"`
-	UserIds []string `json:"user_ids" validate:"number"`
-}
-
 func (g *GroupHandler) AddUserToGroupHandler(w http.ResponseWriter, r *http.Request) {
-	groupIdAndUserIds, ok := validation.ReadBody[GroupIdAndUserIds](w, r)
+	groupIdAndUserIds, ok := validation.ReadBody[api.GroupIdAndUserIds](w, r)
 	if !ok {
 		return
 	}
@@ -86,7 +81,7 @@ func (g *GroupHandler) AddUserToGroupHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (g *GroupHandler) RemoveUserFromGroupHandler(w http.ResponseWriter, r *http.Request) {
-	groupIdAndUserIds, ok := validation.ReadBody[GroupIdAndUserIds](w, r)
+	groupIdAndUserIds, ok := validation.ReadBody[api.GroupIdAndUserIds](w, r)
 	if !ok {
 		return
 	}
@@ -113,13 +108,8 @@ func (g *GroupHandler) RemoveUserFromGroupHandler(w http.ResponseWriter, r *http
 	}
 }
 
-type GroupIdAndAppNames struct {
-	GroupId  string   `json:"group_id" validate:"number"`
-	AppNames []string `json:"app_names" validate:"default"`
-}
-
 func (g *GroupHandler) GrantAppAccessHandler(w http.ResponseWriter, r *http.Request) {
-	appNameAndGroupId, ok := validation.ReadBody[GroupIdAndAppNames](w, r)
+	appNameAndGroupId, ok := validation.ReadBody[api.GroupIdAndAppNames](w, r)
 	if !ok {
 		return
 	}
@@ -134,22 +124,22 @@ func (g *GroupHandler) GrantAppAccessHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (g *GroupHandler) RevokeAppAccessHandler(w http.ResponseWriter, r *http.Request) {
-	GroupIdAndAppNames, ok := validation.ReadBody[GroupIdAndAppNames](w, r)
+	groupIdAndAppNames, ok := validation.ReadBody[api.GroupIdAndAppNames](w, r)
 	if !ok {
 		return
 	}
-	groupId, err := strconv.Atoi(GroupIdAndAppNames.GroupId)
+	groupId, err := strconv.Atoi(groupIdAndAppNames.GroupId)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
 	}
-	if err = g.Repo.RevokeAppAccess(groupId, GroupIdAndAppNames.AppNames); err != nil {
+	if err = g.Repo.RevokeAppAccess(groupId, groupIdAndAppNames.AppNames); err != nil {
 		u.WriteResponseError(w, nil, err)
 	}
 }
 
 func (g *GroupHandler) ListUsersByGroupMembership(w http.ResponseWriter, r *http.Request) {
-	groupString, ok := validation.ReadBody[tools.NumberString](w, r)
+	groupString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -167,7 +157,7 @@ func (g *GroupHandler) ListUsersByGroupMembership(w http.ResponseWriter, r *http
 }
 
 func (g *GroupHandler) ListAppsAccessByGroup(w http.ResponseWriter, r *http.Request) {
-	groupString, ok := validation.ReadBody[tools.NumberString](w, r)
+	groupString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}

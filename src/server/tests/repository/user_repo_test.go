@@ -3,12 +3,12 @@
 package repository
 
 import (
-	"server/tools"
 	"server/users"
 	"testing"
 	"time"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 func TestUserReadings(t *testing.T) {
@@ -173,7 +173,7 @@ func TestUpdateUser(t *testing.T) {
 	sampleUser.Id, err = UserRepo.CreateUser(sampleUser)
 	assert.Nil(t, err)
 
-	updatedUser := &tools.User{
+	updatedUser := &api.User{
 		Id:                             sampleUser.Id,
 		Username:                       "updated-name",
 		Email:                          "updated-name@example.com",
@@ -208,7 +208,7 @@ func TestDoesEmailExist(t *testing.T) {
 	assert.True(t, exists)
 }
 
-func assertUserEquality(t *testing.T, expectedUser *tools.User, actualUser *tools.User) {
+func assertUserEquality(t *testing.T, expectedUser *api.User, actualUser *api.User) {
 	assert.Equal(t, expectedUser.Id, actualUser.Id)
 	assert.Equal(t, expectedUser.Username, actualUser.Username)
 	assert.Equal(t, expectedUser.Email, actualUser.Email)

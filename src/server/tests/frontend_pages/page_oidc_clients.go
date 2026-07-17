@@ -3,8 +3,8 @@ package frontend_pages
 import (
 	"strings"
 
-	"github.com/go-rod/rod"
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
 	u "github.com/quollix/common/utils"
 )
 
@@ -52,7 +52,7 @@ func (o *OidcClientsPage) RegenerateCredentials(appName string) *OidcClientsPage
 	return o
 }
 
-func (o *OidcClientsPage) readAppEntry(row *rod.Element) *OidcClientEntry {
+func (o *OidcClientsPage) readAppEntry(row *browsertest.Element) *OidcClientEntry {
 	maintainerCell, err := row.Element(".oidc-maintainer-cell")
 	assert.Nil(o.Frame.T, err)
 	maintainer, err := maintainerCell.Text()
@@ -81,7 +81,7 @@ func (o *OidcClientsPage) readAppEntry(row *rod.Element) *OidcClientEntry {
 	}
 }
 
-func (o *OidcClientsPage) findRowByAppName(appName string) *rod.Element {
+func (o *OidcClientsPage) findRowByAppName(appName string) *browsertest.Element {
 	rows, err := o.Frame.Page.Elements("tr.oidc-client-row")
 	assert.Nil(o.Frame.T, err)
 	for _, row := range rows {

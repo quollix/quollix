@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"server/oidc_client"
-	"server/tests/api_client"
 	"server/users"
+
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"

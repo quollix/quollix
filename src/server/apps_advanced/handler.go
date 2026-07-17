@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"server/apps_basic"
-	"server/tools"
 	"strconv"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -26,7 +26,7 @@ type AppsAdvancedHandler struct {
 }
 
 func (a *AppsAdvancedHandler) UploadVersionFileToApplicationHandler(w http.ResponseWriter, r *http.Request) {
-	versionFile, ok := validation.ReadBody[tools.BinaryFile](w, r)
+	versionFile, ok := validation.ReadBody[api.BinaryFile](w, r)
 	if !ok {
 		return
 	}
@@ -50,7 +50,7 @@ func (a *AppsAdvancedHandler) UploadVersionFileToApplicationHandler(w http.Respo
 }
 
 func (a *AppsAdvancedHandler) DownloadVersionFileFromApplicationHandler(w http.ResponseWriter, r *http.Request) {
-	appIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -70,7 +70,7 @@ func (a *AppsAdvancedHandler) DownloadVersionFileFromApplicationHandler(w http.R
 }
 
 func (a *AppsAdvancedHandler) VersionUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	appIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	appIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}

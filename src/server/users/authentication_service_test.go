@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/stretchr/testify/mock"
 )
@@ -39,7 +40,7 @@ func getAuthenticationServiceTestObjects(t *testing.T) *authenticationServiceTes
 func newAuthenticationServiceRequest() *http.Request {
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	request.AddCookie(&http.Cookie{
-		Name:  tools.BrandAppAuthCookieName,
+		Name:  api.BrandAppAuthCookieName,
 		Value: authenticationServiceCookieValue,
 	})
 	return request
@@ -47,7 +48,7 @@ func newAuthenticationServiceRequest() *http.Request {
 
 func getAuthenticationServiceSession(id int, isAdmin bool, expirationTime time.Time) *AuthenticatedSession {
 	return &AuthenticatedSession{
-		User: tools.User{
+		User: api.User{
 			Id:        id,
 			IsAdmin:   isAdmin,
 			IsEnabled: true,
@@ -71,7 +72,7 @@ func TestAuthenticationService_GetRequestWithAuthContextAddsAuthenticatedUserToC
 
 	requestWithAuth, err := testObjects.Service.GetRequestWithAuthContext(httptest.NewRecorder(), request)
 	assert.Nil(t, err)
-	authenticatedUser := requestWithAuth.Context().Value(tools.AuthKey).(tools.User)
+	authenticatedUser := requestWithAuth.Context().Value(tools.AuthKey).(api.User)
 	assert.Equal(t, 42, authenticatedUser.Id)
 	assert.True(t, authenticatedUser.IsAdmin)
 	assert.True(t, authenticatedUser.CookieExpirationDate.After(time.Now().UTC()))

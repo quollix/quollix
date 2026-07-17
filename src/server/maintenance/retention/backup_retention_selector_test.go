@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 )
 
 var backupRetentionSelector = BackupRetentionSelectorImpl{}
 
 func TestFindDailyBackupsToRetain(t *testing.T) {
-	backups := []tools.BackupInfo{
+	backups := []api.BackupInfo{
 		{BackupId: "d1a", BackupCreationTimestamp: time.Date(2023, 12, 31, 12, 0, 0, 0, time.UTC)},
 		{BackupId: "d1b", BackupCreationTimestamp: time.Date(2023, 12, 31, 11, 0, 0, 0, time.UTC)},
 		{BackupId: "d2", BackupCreationTimestamp: time.Date(2023, 12, 30, 12, 0, 0, 0, time.UTC)},
@@ -25,7 +26,7 @@ func TestFindDailyBackupsToRetain(t *testing.T) {
 }
 
 func TestFindWeeklyBackupsToRetain(t *testing.T) {
-	backups := []tools.BackupInfo{
+	backups := []api.BackupInfo{
 		{BackupId: "w1a", BackupCreationTimestamp: time.Date(2023, 12, 31, 12, 0, 0, 0, time.UTC)},
 		{BackupId: "w1b", BackupCreationTimestamp: time.Date(2023, 12, 31, 11, 0, 0, 0, time.UTC)},
 		{BackupId: "w2", BackupCreationTimestamp: time.Date(2023, 12, 24, 12, 0, 0, 0, time.UTC)},
@@ -40,7 +41,7 @@ func TestFindWeeklyBackupsToRetain(t *testing.T) {
 }
 
 func TestFindMonthlyBackupsToRetain(t *testing.T) {
-	backups := []tools.BackupInfo{
+	backups := []api.BackupInfo{
 		{BackupId: "mDecA", BackupCreationTimestamp: time.Date(2023, 12, 31, 12, 0, 0, 0, time.UTC)},
 		{BackupId: "mDecB", BackupCreationTimestamp: time.Date(2023, 12, 30, 12, 0, 0, 0, time.UTC)},
 		{BackupId: "mNov", BackupCreationTimestamp: time.Date(2023, 11, 30, 12, 0, 0, 0, time.UTC)},
@@ -55,7 +56,7 @@ func TestFindMonthlyBackupsToRetain(t *testing.T) {
 }
 
 func TestFindYearlyBackupsToRetain(t *testing.T) {
-	backups := []tools.BackupInfo{
+	backups := []api.BackupInfo{
 		{BackupId: "y2023", BackupCreationTimestamp: time.Date(2023, 12, 31, 12, 0, 0, 0, time.UTC)},
 		{BackupId: "y2022", BackupCreationTimestamp: time.Date(2022, 10, 30, 12, 0, 0, 0, time.UTC)},
 		{BackupId: "y2021a", BackupCreationTimestamp: time.Date(2021, 6, 15, 12, 0, 0, 0, time.UTC)},
@@ -69,13 +70,13 @@ func TestFindYearlyBackupsToRetain(t *testing.T) {
 }
 
 func TestCopyAndSortBackupsByNewestFirst(t *testing.T) {
-	oldest := tools.BackupInfo{BackupId: "oldest", BackupCreationTimestamp: time.Date(2026, 2, 1, 10, 0, 0, 0, time.UTC)}
-	newest := tools.BackupInfo{BackupId: "newest", BackupCreationTimestamp: time.Date(2026, 2, 5, 10, 0, 0, 0, time.UTC)}
-	inputBackups := []tools.BackupInfo{oldest, newest}
+	oldest := api.BackupInfo{BackupId: "oldest", BackupCreationTimestamp: time.Date(2026, 2, 1, 10, 0, 0, 0, time.UTC)}
+	newest := api.BackupInfo{BackupId: "newest", BackupCreationTimestamp: time.Date(2026, 2, 5, 10, 0, 0, 0, time.UTC)}
+	inputBackups := []api.BackupInfo{oldest, newest}
 
 	sortedBackups := backupRetentionSelector.CopyAndSortBackupsByNewestFirst(inputBackups)
 
-	assert.Equal(t, []tools.BackupInfo{newest, oldest}, sortedBackups)
+	assert.Equal(t, []api.BackupInfo{newest, oldest}, sortedBackups)
 }
 
 func TestMergeUniqueBackupIds(t *testing.T) {
@@ -106,7 +107,7 @@ func TestFindBackupIdsNotInIdSet(t *testing.T) {
 }
 
 func TestFindPreUpdateBackupsToRetain(t *testing.T) {
-	backups := []tools.BackupInfo{
+	backups := []api.BackupInfo{
 		{BackupId: "p1a", Description: tools.PreUpdateBackupDescription, BackupCreationTimestamp: time.Date(2023, 12, 31, 12, 0, 0, 0, time.UTC)},
 		{BackupId: "p1b", Description: tools.PreUpdateBackupDescription, BackupCreationTimestamp: time.Date(2023, 12, 31, 11, 0, 0, 0, time.UTC)},
 		{BackupId: "p2", Description: tools.PreUpdateBackupDescription, BackupCreationTimestamp: time.Date(2023, 12, 30, 12, 0, 0, 0, time.UTC)},

@@ -16,6 +16,7 @@ import (
 	"server/tools"
 	"server/users"
 
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -209,7 +210,7 @@ func (s *SystemConfigMigrationsProviderImpl) createOfficialDatabaseAppEntryIfNot
 		u.OfficialMaintainer,
 		u.OfficialDatabaseAppName,
 		PostgresVersion,
-		tools.Policies.AdminOnlyAccessPolicy,
+		api.Policies.AdminOnlyAccessPolicy,
 		"1",
 		clientId,
 		clientSecret,
@@ -375,7 +376,7 @@ func (s *SystemConfigMigrationsProviderImpl) createMaintenanceConfigIfNotExist()
 		return err
 	}
 
-	config := &configs.MaintenanceConfig{
+	config := &api.MaintenanceConfig{
 		MaintenanceWindowStartHour: maintenanceWindowStartHour,
 		NextMaintenanceAt:          *nextMaintenanceAtUtc,
 		IanaTimezone:               defaultIanaTimeZone,

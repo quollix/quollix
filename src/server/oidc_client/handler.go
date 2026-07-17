@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"server/tools"
 	"server/users"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -18,12 +18,8 @@ type OidcClientHandler struct {
 	AuthProviderService OidcAuthProviderService
 }
 
-type OidcStartLoginResponse struct {
-	RedirectUrl string `json:"redirect_url"`
-}
-
 func (h *OidcClientHandler) StartLogin(w http.ResponseWriter, r *http.Request) {
-	providerIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	providerIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}
@@ -38,7 +34,7 @@ func (h *OidcClientHandler) StartLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, start.StateCookie)
-	u.SendJsonResponse(w, OidcStartLoginResponse{RedirectUrl: start.RedirectUrl})
+	u.SendJsonResponse(w, api.OidcStartLoginResponse{RedirectUrl: start.RedirectUrl})
 }
 
 func (h *OidcClientHandler) Callback(w http.ResponseWriter, r *http.Request) {
@@ -59,11 +55,11 @@ func (h *OidcClientHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, clearOidcLoginStateCookie())
 	http.SetCookie(w, sessionCookie)
-	http.Redirect(w, r, tools.Paths.FrontendIndex, http.StatusFound)
+	http.Redirect(w, r, api.Paths.FrontendIndex, http.StatusFound)
 }
 
 func (h *OidcClientHandler) CreateAuthProvider(w http.ResponseWriter, r *http.Request) {
-	provider, ok := validation.ReadBody[OidcAuthProviderDto](w, r)
+	provider, ok := validation.ReadBody[api.OidcAuthProviderDto](w, r)
 	if !ok {
 		return
 	}
@@ -74,7 +70,7 @@ func (h *OidcClientHandler) CreateAuthProvider(w http.ResponseWriter, r *http.Re
 }
 
 func (h *OidcClientHandler) UpdateAuthProvider(w http.ResponseWriter, r *http.Request) {
-	provider, ok := validation.ReadBody[OidcAuthProviderDto](w, r)
+	provider, ok := validation.ReadBody[api.OidcAuthProviderDto](w, r)
 	if !ok {
 		return
 	}
@@ -94,7 +90,7 @@ func (h *OidcClientHandler) ListAuthProviders(w http.ResponseWriter, _ *http.Req
 }
 
 func (h *OidcClientHandler) TestAuthProviderDiscovery(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[OidcAuthProviderDiscoveryRequest](w, r)
+	request, ok := validation.ReadBody[api.OidcAuthProviderDiscoveryRequest](w, r)
 	if !ok {
 		return
 	}
@@ -105,7 +101,7 @@ func (h *OidcClientHandler) TestAuthProviderDiscovery(w http.ResponseWriter, r *
 }
 
 func (h *OidcClientHandler) DeleteAuthProvider(w http.ResponseWriter, r *http.Request) {
-	providerIdString, ok := validation.ReadBody[tools.NumberString](w, r)
+	providerIdString, ok := validation.ReadBody[api.NumberString](w, r)
 	if !ok {
 		return
 	}

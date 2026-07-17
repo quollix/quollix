@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"server/tests/frontend_pages"
-	"server/tools"
+
+	"github.com/quollix/common/quollix/api"
 )
 
 const (
@@ -35,46 +36,46 @@ func TestSidebarNavigationAsAdmin(t *testing.T) {
 	defer frame.Client.Test.ResetTestState()
 
 	frame.Pages.OpenInstalledAppsPage()
-	frame.Assert.PagePath(tools.Paths.FrontendInstalledApps)
+	frame.Assert.PagePath(api.Paths.FrontendInstalledApps)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupApps, sidebarLinkStore)
-	frame.Assert.PagePath(tools.Paths.FrontendStore)
+	frame.Assert.PagePath(api.Paths.FrontendStore)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupApps, sidebarLinkMaintenance)
-	frame.Assert.PagePath(tools.Paths.FrontendMaintenance)
+	frame.Assert.PagePath(api.Paths.FrontendMaintenance)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupApps, sidebarLinkAppSso)
-	frame.Assert.PagePath(tools.Paths.FrontendAppSso)
+	frame.Assert.PagePath(api.Paths.FrontendAppSso)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupIdentity, sidebarLinkUsers)
-	frame.Assert.PagePath(tools.Paths.FrontendUsers)
+	frame.Assert.PagePath(api.Paths.FrontendUsers)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupFederation, sidebarLinkProviders)
-	frame.Assert.PagePath(tools.Paths.FrontendProviders)
+	frame.Assert.PagePath(api.Paths.FrontendProviders)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupFederation, sidebarLinkClients)
-	frame.Assert.PagePath(tools.Paths.FrontendClients)
+	frame.Assert.PagePath(api.Paths.FrontendClients)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupSystem, sidebarLinkBackups)
-	frame.Assert.PagePath(tools.Paths.FrontendBackedUpApps)
+	frame.Assert.PagePath(api.Paths.FrontendBackedUpApps)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupSystem, sidebarLinkSettings)
-	frame.Assert.PagePath(tools.Paths.FrontendSettings)
+	frame.Assert.PagePath(api.Paths.FrontendSettings)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupIdentity, sidebarLinkGroups)
-	frame.Assert.PagePath(tools.Paths.FrontendGroups)
+	frame.Assert.PagePath(api.Paths.FrontendGroups)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupSystem, sidebarLinkTerminal)
-	frame.Assert.PagePath(tools.Paths.FrontendTerminalApps)
+	frame.Assert.PagePath(api.Paths.FrontendTerminalApps)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupSystem, sidebarLinkEmail)
-	frame.Assert.PagePath(tools.Paths.FrontendEmail)
+	frame.Assert.PagePath(api.Paths.FrontendEmail)
 
 	frame.Browser.ClickSidebarUserLink()
-	frame.Assert.PagePath(tools.Paths.FrontendAccount)
+	frame.Assert.PagePath(api.Paths.FrontendAccount)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupApps, sidebarLinkInstalledApps)
-	frame.Assert.PagePath(tools.Paths.FrontendInstalledApps)
+	frame.Assert.PagePath(api.Paths.FrontendInstalledApps)
 }
 
 func TestAccountTabVisibilityForAnonymousAndAuthenticated(t *testing.T) {
@@ -82,10 +83,10 @@ func TestAccountTabVisibilityForAnonymousAndAuthenticated(t *testing.T) {
 	defer frame.Client.Test.ResetTestState()
 
 	frame.Browser.ClickSidebarUserLink()
-	frame.Assert.PagePath(tools.Paths.FrontendAccount)
+	frame.Assert.PagePath(api.Paths.FrontendAccount)
 
 	frame.Session.SignOutViaClient()
-	frame.Pages.GoToInstalledAppsPage().Frame.Assert.PagePath(tools.Paths.FrontendInstalledApps)
+	frame.Pages.GoToInstalledAppsPage().Frame.Assert.PagePath(api.Paths.FrontendInstalledApps)
 	frame.Assert.ElementNotPresent("#" + sidebarUserLink)
 	frame.Assert.ElementNotPresent("#" + sidebarLinkFeedback)
 }

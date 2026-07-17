@@ -3,8 +3,10 @@
 package component
 
 import (
-	"server/tests/api_client"
 	"testing"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"server/apps_basic"
 	"server/groups"
@@ -79,7 +81,7 @@ func TestGroupMembershipCRUDViaHTTP(t *testing.T) {
 	assert.False(t, containsMember(usersByGroup.In, SampleUsername))
 }
 
-func containsMember(ms []groups.Member, name string) bool {
+func containsMember(ms []api.Member, name string) bool {
 	for _, m := range ms {
 		if m.Name == name {
 			return true
@@ -128,7 +130,7 @@ func TestQuollixClient_FullAccessViaGroupFlow(t *testing.T) {
 	app, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 
-	assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, tools.Policies.GroupRestrictedAccessPolicy))
+	assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, api.Policies.GroupRestrictedAccessPolicy))
 
 	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleUserEmail)
 	user := GetRequiredUserByUsername(t, client, SampleUsername)
@@ -193,7 +195,7 @@ func TestAccessPolicy_GroupRestricted(t *testing.T) {
 	adminClient := GetClientAndLogin(t)
 	RunAccessPoliciesTest(t, adminClient, []AccessPolicyTestCase{
 		{
-			AccessPolicy:              tools.Policies.GroupRestrictedAccessPolicy,
+			AccessPolicy:              api.Policies.GroupRestrictedAccessPolicy,
 			ShouldAdminHaveAccess:     true,
 			ShouldUserHaveAccess:      false,
 			ShouldAnonymousHaveAccess: false,

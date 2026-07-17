@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"server/configs"
-	"server/tools"
 	"server/users"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -273,10 +273,10 @@ func (s *OidcServiceImpl) Discovery() (*DiscoveryConfig, error) {
 
 	return &DiscoveryConfig{
 		Issuer:                            issuer,
-		AuthorizationEndpoint:             issuer + tools.Paths.BackendOidcAuthorize,
-		TokenEndpoint:                     issuer + tools.Paths.BackendOidcToken,
-		JwksURI:                           issuer + tools.Paths.BackendOidcJwks,
-		UserinfoEndpoint:                  issuer + tools.Paths.BackendOidcUserinfo,
+		AuthorizationEndpoint:             issuer + api.Paths.BackendOidcAuthorize,
+		TokenEndpoint:                     issuer + api.Paths.BackendOidcToken,
+		JwksURI:                           issuer + api.Paths.BackendOidcJwks,
+		UserinfoEndpoint:                  issuer + api.Paths.BackendOidcUserinfo,
 		ResponseTypesSupported:            []string{"code"},
 		SubjectTypesSupported:             []string{"public"},
 		IDTokenSigningAlgValuesSupported:  []string{"RS256"},

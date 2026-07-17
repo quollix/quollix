@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"server/oidc_client"
-	"server/oidc_provider"
-	"server/tests/api_client"
 	"server/tools"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 )
@@ -107,32 +107,32 @@ func renameProviderAdmin(providerAdmin *api_client.QuollixClient) error {
 	return nil
 }
 
-func createRelyingPartyInProviderInstance(providerAdmin *api_client.QuollixClient) (oidc_provider.OidcRelyingPartyDto, error) {
-	relyingParty := &oidc_provider.OidcRelyingPartyDto{
+func createRelyingPartyInProviderInstance(providerAdmin *api_client.QuollixClient) (api.OidcRelyingPartyDto, error) {
+	relyingParty := &api.OidcRelyingPartyDto{
 		Name:   OidcClientName,
 		Domain: ClientDomain,
 	}
 	if err := providerAdmin.OidcClients.Create(relyingParty); err != nil {
-		return oidc_provider.OidcRelyingPartyDto{}, fmt.Errorf("create relying party in OIDC provider server: %w", err)
+		return api.OidcRelyingPartyDto{}, fmt.Errorf("create relying party in OIDC provider server: %w", err)
 	}
 	return getRelyingPartyByName(providerAdmin, OidcClientName)
 }
 
-func getRelyingPartyByName(providerAdmin *api_client.QuollixClient, name string) (oidc_provider.OidcRelyingPartyDto, error) {
+func getRelyingPartyByName(providerAdmin *api_client.QuollixClient, name string) (api.OidcRelyingPartyDto, error) {
 	clients, err := providerAdmin.OidcClients.List()
 	if err != nil {
-		return oidc_provider.OidcRelyingPartyDto{}, fmt.Errorf("list OIDC relying parties: %w", err)
+		return api.OidcRelyingPartyDto{}, fmt.Errorf("list OIDC relying parties: %w", err)
 	}
 	for _, relyingParty := range clients {
 		if relyingParty.Name == name {
 			return relyingParty, nil
 		}
 	}
-	return oidc_provider.OidcRelyingPartyDto{}, fmt.Errorf("find created OIDC relying party: created relying party was not found")
+	return api.OidcRelyingPartyDto{}, fmt.Errorf("find created OIDC relying party: created relying party was not found")
 }
 
-func createExternalProviderInClientInstance(clientAdmin *api_client.QuollixClient, relyingParty oidc_provider.OidcRelyingPartyDto) error {
-	provider := &oidc_client.OidcAuthProviderDto{
+func createExternalProviderInClientInstance(clientAdmin *api_client.QuollixClient, relyingParty api.OidcRelyingPartyDto) error {
+	provider := &api.OidcAuthProviderDto{
 		Name:             OidcProviderName,
 		IssuerDomainPath: ProviderDomain,
 		ClientId:         relyingParty.ClientId,

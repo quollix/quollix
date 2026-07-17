@@ -13,6 +13,7 @@ import (
 	"server/tools"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -95,7 +96,7 @@ func TestStartMaintenanceJob_HappyPath_RunsAndReschedules(t *testing.T) {
 
 	testObjects.Repository.EXPECT().
 		SetMaintenanceConfig(mock.Anything).
-		Run(func(configPassedToDependency *configs.MaintenanceConfig) {
+		Run(func(configPassedToDependency *api.MaintenanceConfig) {
 			assert.Equal(t, expectedConfig, *configPassedToDependency)
 		}).
 		Return(nil).
@@ -114,8 +115,8 @@ func TestStartMaintenanceJob_HappyPath_RunsAndReschedules(t *testing.T) {
 	testObjects.Agent.considerRunningMaintenanceJob()
 }
 
-func getSampleMaintenanceConfig(oldNextMaintenanceAt time.Time) *configs.MaintenanceConfig {
-	config := &configs.MaintenanceConfig{
+func getSampleMaintenanceConfig(oldNextMaintenanceAt time.Time) *api.MaintenanceConfig {
+	config := &api.MaintenanceConfig{
 		MaintenanceWindowStartHour: 2,
 		NextMaintenanceAt:          oldNextMaintenanceAt,
 		IanaTimezone:               "Europe/Berlin",

@@ -1,9 +1,9 @@
 package test_tools
 
-import "server/oidc_client"
+import "github.com/quollix/common/quollix/api"
 
-func GetSampleOidcAuthProvider() *oidc_client.OidcAuthProviderDto {
-	return &oidc_client.OidcAuthProviderDto{
+func GetSampleOidcAuthProvider() *api.OidcAuthProviderDto {
+	return &api.OidcAuthProviderDto{
 		Name:             "Corporate-SSO",
 		IssuerDomainPath: "auth.example.com/realms/main",
 		ClientId:         "client-id",
@@ -11,8 +11,8 @@ func GetSampleOidcAuthProvider() *oidc_client.OidcAuthProviderDto {
 	}
 }
 
-func GetUpdatedSampleOidcAuthProvider() *oidc_client.OidcAuthProviderDto {
-	return &oidc_client.OidcAuthProviderDto{
+func GetUpdatedSampleOidcAuthProvider() *api.OidcAuthProviderDto {
+	return &api.OidcAuthProviderDto{
 		Name:             "Updated-SSO",
 		IssuerDomainPath: "updated-auth.example.com/realms/main",
 		ClientId:         "updated-client-id",

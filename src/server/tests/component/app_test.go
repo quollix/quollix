@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"server/apps_advanced"
 	"server/apps_basic"
-	"server/tests/api_client"
 	"server/tools"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -143,7 +145,7 @@ func TestCantChangeAccessPolicyOfDatabaseApp(t *testing.T) {
 	installedApps := ListInstalledApps(t, client)
 	assert.Equal(t, 1, len(installedApps))
 	databaseApp := installedApps[0]
-	err := client.Apps.SetAccessPolicy(databaseApp.AppId, tools.Policies.PublicAccessPolicy)
+	err := client.Apps.SetAccessPolicy(databaseApp.AppId, api.Policies.PublicAccessPolicy)
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.OperationNotAllowedOnOfficialDatabaseAppError)
 }
@@ -152,19 +154,19 @@ func TestAccessPolicy_NonGroupRestricted(t *testing.T) {
 	adminClient := GetClientAndLogin(t)
 	RunAccessPoliciesTest(t, adminClient, []AccessPolicyTestCase{
 		{
-			AccessPolicy:              tools.Policies.AdminOnlyAccessPolicy,
+			AccessPolicy:              api.Policies.AdminOnlyAccessPolicy,
 			ShouldAdminHaveAccess:     true,
 			ShouldUserHaveAccess:      false,
 			ShouldAnonymousHaveAccess: false,
 		},
 		{
-			AccessPolicy:              tools.Policies.PublicAccessPolicy,
+			AccessPolicy:              api.Policies.PublicAccessPolicy,
 			ShouldAdminHaveAccess:     true,
 			ShouldUserHaveAccess:      true,
 			ShouldAnonymousHaveAccess: true,
 		},
 		{
-			AccessPolicy:              tools.Policies.AuthenticatedAccessPolicy,
+			AccessPolicy:              api.Policies.AuthenticatedAccessPolicy,
 			ShouldAdminHaveAccess:     true,
 			ShouldUserHaveAccess:      true,
 			ShouldAnonymousHaveAccess: false,
@@ -194,19 +196,19 @@ func TestInstalledAppListing_ByAccessPolicy(t *testing.T) {
 
 	testCases := []listingExpectation{
 		{
-			policy:                   tools.Policies.AdminOnlyAccessPolicy,
+			policy:                   api.Policies.AdminOnlyAccessPolicy,
 			adminVisibleAppCount:     2,
 			userVisibleAppCount:      0,
 			anonymousVisibleAppCount: 0,
 		},
 		{
-			policy:                   tools.Policies.AuthenticatedAccessPolicy,
+			policy:                   api.Policies.AuthenticatedAccessPolicy,
 			adminVisibleAppCount:     2,
 			userVisibleAppCount:      1,
 			anonymousVisibleAppCount: 0,
 		},
 		{
-			policy:                   tools.Policies.PublicAccessPolicy,
+			policy:                   api.Policies.PublicAccessPolicy,
 			adminVisibleAppCount:     2,
 			userVisibleAppCount:      1,
 			anonymousVisibleAppCount: 1,
@@ -240,7 +242,7 @@ func TestSetUnknownAccessPolicy(t *testing.T) {
 	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.InvalidAccessPolicyError)
 
 	app = GetInstalledSample(t, client)
-	assert.Equal(t, tools.Policies.AdminOnlyAccessPolicy, app.AccessPolicy)
+	assert.Equal(t, api.Policies.AdminOnlyAccessPolicy, app.AccessPolicy)
 }
 
 func TestAppOperation(t *testing.T) {
@@ -289,7 +291,7 @@ func TestUploadToAndDownloadFromApplication(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	originalVersionFile := tools.BinaryFile{
+	originalVersionFile := api.BinaryFile{
 		FileName: getSampleFileNameForAppUpload(),
 		Content:  sampleAppContent,
 	}
@@ -311,7 +313,7 @@ func TestUploadToAndDownloadFromApplication(t *testing.T) {
 	assert.True(t, sampleApp.AutomaticBackupsEnabled)
 	assert.False(t, sampleApp.AutomaticUpdatesEnabled)
 
-	assert.Equal(t, tools.Policies.AdminOnlyAccessPolicy, sampleApp.AccessPolicy)
+	assert.Equal(t, api.Policies.AdminOnlyAccessPolicy, sampleApp.AccessPolicy)
 
 	downloadedVersionFile, err := client.Apps.DownloadVersionFile(sampleApp.AppId)
 	assert.Nil(t, err)
@@ -332,7 +334,7 @@ func TestUploadWithBadContent(t *testing.T) {
 	replacementContainerName := fmt.Sprintf("container_name: %s2_%s_%s", tools.SampleMaintainer, tools.SampleApp, tools.SampleApp)
 	badSampleAppContent := []byte(strings.Replace(sampleAppContentString, invalidContainerName, replacementContainerName, 1))
 
-	originalVersionFile := tools.BinaryFile{
+	originalVersionFile := api.BinaryFile{
 		FileName: getSampleFileNameForAppUpload(),
 		Content:  badSampleAppContent,
 	}
@@ -355,7 +357,7 @@ func TestUploadWithBadFileNameFormat(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	originalVersionFile := tools.BinaryFile{
+	originalVersionFile := api.BinaryFile{
 		FileName: getSampleFileNameForAppUpload() + "2",
 		Content:  getSampleAppContent(),
 	}
@@ -374,7 +376,7 @@ func TestUploadingAppAlreadyExistingUpdatesIt(t *testing.T) {
 	assert.Equal(t, tools.SampleAppVersion1CreationTimestamp, sampleAppOld.VersionCreationTimestamp)
 	assert.Equal(t, "3000", sampleAppOld.Port)
 
-	originalVersionFile := tools.BinaryFile{
+	originalVersionFile := api.BinaryFile{
 		FileName: getSampleFileNameForAppUpload(),
 		Content:  getSampleAppContent(),
 	}
@@ -408,7 +410,7 @@ func TestUploadingAppAlreadyExistWithDifferentMaintainerIsRejected(t *testing.T)
 	fileNameWithDifferentMaintainer := strings.ReplaceAll(getSampleFileNameForAppUpload(), tools.SampleMaintainer, tools.SampleMaintainer+"2")
 	sampleAppContentWithDifferentMaintainer := strings.ReplaceAll(string(getSampleAppContent()), tools.SampleMaintainer, tools.SampleMaintainer+"2")
 
-	originalVersionFile := tools.BinaryFile{
+	originalVersionFile := api.BinaryFile{
 		FileName: fileNameWithDifferentMaintainer,
 		Content:  []byte(sampleAppContentWithDifferentMaintainer),
 	}
@@ -426,7 +428,7 @@ func TestUploadingOlderVersionMakesUpdateFail(t *testing.T) {
 	sampleNameWithOlderVersion := getSampleFileNameForAppUpload()
 	sampleNameWithOlderVersion = strings.ReplaceAll(sampleNameWithOlderVersion, "2021", "1999")
 
-	originalVersionFile := tools.BinaryFile{
+	originalVersionFile := api.BinaryFile{
 		FileName: sampleNameWithOlderVersion,
 		Content:  getSampleAppContent(),
 	}
@@ -442,7 +444,7 @@ func TestUploadingSystemAppFails(t *testing.T) {
 	sampleSystemAppName := getSampleFileNameForAppUpload()
 	sampleSystemAppName = strings.ReplaceAll(sampleSystemAppName, tools.SampleApp, u.OfficialDatabaseAppName)
 
-	originalVersionFile := tools.BinaryFile{
+	originalVersionFile := api.BinaryFile{
 		FileName: sampleSystemAppName,
 		Content:  getSampleAppContent(),
 	}

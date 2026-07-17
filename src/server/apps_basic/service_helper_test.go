@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -63,7 +64,7 @@ func TestIsAppVisibleToUser_AuthorizedVisible(t *testing.T) {
 
 	testObjects.AppDetectorMock.EXPECT().IsSystemApp(sampleAppName).Return(false)
 	testObjects.AuthorizerMock.EXPECT().
-		Authorize(tools.Policies.PublicAccessPolicy, tools.UserLevel, sampleUserId, sampleAppName).
+		Authorize(api.Policies.PublicAccessPolicy, tools.UserLevel, sampleUserId, sampleAppName).
 		Return(nil)
 
 	isVisible := testObjects.AppServiceHelper.IsAppVisibleToUser(sampleUserId, tools.UserLevel, *repoApp)
@@ -76,7 +77,7 @@ func TestIsAppVisibleToUser_UnauthorizedNotVisible(t *testing.T) {
 
 	testObjects.AppDetectorMock.EXPECT().IsSystemApp(sampleAppName).Return(false)
 	testObjects.AuthorizerMock.EXPECT().
-		Authorize(tools.Policies.PublicAccessPolicy, tools.UserLevel, sampleUserId, sampleAppName).
+		Authorize(api.Policies.PublicAccessPolicy, tools.UserLevel, sampleUserId, sampleAppName).
 		Return(errors.New("denied"))
 
 	isVisible := testObjects.AppServiceHelper.IsAppVisibleToUser(sampleUserId, tools.UserLevel, *repoApp)
@@ -105,7 +106,7 @@ func TestConvertToAppDtos(t *testing.T) {
 	appDtos := testObjects.AppServiceHelper.ConvertToAppDtos([]RepoApp{*officialDatabaseApp, *customApp})
 
 	assert.Equal(t, 2, len(appDtos))
-	expectedOfficialDatabaseApp := AppDto{
+	expectedOfficialDatabaseApp := api.AppDto{
 		AppId:                    strconv.Itoa(officialDatabaseApp.AppId),
 		Maintainer:               officialDatabaseApp.Maintainer,
 		AppName:                  officialDatabaseApp.AppName,
@@ -123,7 +124,7 @@ func TestConvertToAppDtos(t *testing.T) {
 		IsOfficial:               true,
 		DocsUrl:                  tools.InstalledAppDocsUrl(officialDatabaseApp.AppName),
 	}
-	expectedCustomApp := AppDto{
+	expectedCustomApp := api.AppDto{
 		AppId:                    strconv.Itoa(customApp.AppId),
 		Maintainer:               customApp.Maintainer,
 		AppName:                  customApp.AppName,

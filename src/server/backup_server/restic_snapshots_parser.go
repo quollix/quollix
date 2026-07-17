@@ -2,10 +2,10 @@ package backup_server
 
 import (
 	"encoding/json"
-	"server/tools"
 	"strings"
 	"time"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -18,18 +18,18 @@ const (
 )
 
 type ResticSnapshotsParser interface {
-	Parse(jsonStr string) ([]tools.BackupInfo, error)
+	Parse(jsonStr string) ([]api.BackupInfo, error)
 }
 
 type ResticSnapshotsParserImpl struct{}
 
-func (p *ResticSnapshotsParserImpl) Parse(jsonStr string) ([]tools.BackupInfo, error) {
+func (p *ResticSnapshotsParserImpl) Parse(jsonStr string) ([]api.BackupInfo, error) {
 	var snapshots []Snapshot
 	if err := json.Unmarshal([]byte(jsonStr), &snapshots); err != nil {
 		return nil, err
 	}
 
-	var backups []tools.BackupInfo
+	var backups []api.BackupInfo
 	for _, snap := range snapshots {
 		parsedTime, err := time.Parse(time.RFC3339, snap.Time)
 		if err != nil {
@@ -44,7 +44,7 @@ func (p *ResticSnapshotsParserImpl) Parse(jsonStr string) ([]tools.BackupInfo, e
 			}
 		}
 
-		backups = append(backups, tools.BackupInfo{
+		backups = append(backups, api.BackupInfo{
 			BackupId:                snap.Id,
 			Maintainer:              tagMap[MaintainerResticTag],
 			AppName:                 tagMap[AppResticTag],

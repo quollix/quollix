@@ -10,6 +10,7 @@ import (
 	test_tools "server/tests/test_tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -182,7 +183,7 @@ func TestOidcRelyingParty_OidcFlowWithDeletedClientReturnsError(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func assertOidcRelyingPartyConfiguration(t *testing.T, expected oidc_provider.OidcRelyingPartyDto, actual oidc_provider.OidcRelyingPartyDto) {
+func assertOidcRelyingPartyConfiguration(t *testing.T, expected api.OidcRelyingPartyDto, actual api.OidcRelyingPartyDto) {
 	assert.Equal(t, expected.Name, actual.Name)
 	assert.Equal(t, expected.Domain, actual.Domain)
 }

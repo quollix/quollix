@@ -15,6 +15,7 @@ import (
 	"server/users"
 
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 )
@@ -98,7 +99,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 
 func TestBuildSignInPage_ReturnsOidcAuthProvidersWithoutSecrets(t *testing.T) {
 	testObjects := getTestObjects(t)
-	testObjects.OidcAuthProviderRepo.EXPECT().ListProviders().Return([]oidc_client.OidcAuthProviderDto{
+	testObjects.OidcAuthProviderRepo.EXPECT().ListProviders().Return([]api.OidcAuthProviderDto{
 		{Id: 2, Name: "Keycloak", IssuerDomainPath: "issuer.example", ClientId: "client-id", ClientSecret: "secret"},
 	}, nil)
 
@@ -114,7 +115,7 @@ func TestBuildInstalledAppsPage_SortsByMaintainerThenAppName(t *testing.T) {
 
 	testObjects.AppService.EXPECT().
 		ListAppsForRole(123, tools.UserLevel).
-		Return([]apps_basic.AppDto{
+		Return([]api.AppDto{
 			{Maintainer: "b-maintainer", AppName: "a-app", VersionCreationTimestamp: now.Add(-3 * time.Hour)},
 			{Maintainer: "a-maintainer", AppName: "z-app", VersionCreationTimestamp: now.Add(-2 * time.Hour)},
 			{Maintainer: "a-maintainer", AppName: "a-app", VersionCreationTimestamp: now.Add(-1 * time.Hour)},
@@ -142,7 +143,7 @@ func TestBuildInstalledAppsPage_SortsByMaintainerThenAppName(t *testing.T) {
 func TestBuildInstalledAppsPage_WhenBackupEnabled_SetsFlag(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	testObjects.AppService.EXPECT().ListAppsForRole(123, tools.UserLevel).Return([]apps_basic.AppDto{}, nil)
+	testObjects.AppService.EXPECT().ListAppsForRole(123, tools.UserLevel).Return([]api.AppDto{}, nil)
 	testObjects.SshRepo.EXPECT().IsRemoteBackupEnabled().Return(true, nil)
 	testObjects.OsWrapper.EXPECT().Now().Return(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC))
 
@@ -158,7 +159,7 @@ func TestBuildUsersPage_SortsAndBuildsSetPasswordLink(t *testing.T) {
 
 	testObjects.UserRepo.EXPECT().
 		ListUsers().
-		Return([]tools.User{
+		Return([]api.User{
 			{
 				Id:                             2,
 				Username:                       "zara",
@@ -223,13 +224,13 @@ func TestBuildBackedUpAppsPage_WhenBackupDisabled_ReturnsDisabledPage(t *testing
 func TestBuildSettingsPage(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	expectedRemoteRepository := &tools.BackupServerConfigs{}
-	expectedMaintenanceConfig := &configs.MaintenanceConfig{
+	expectedRemoteRepository := &api.BackupServerConfigs{}
+	expectedMaintenanceConfig := &api.MaintenanceConfig{
 		IanaTimezone:               "Europe/Berlin",
 		MaintenanceWindowStartHour: 7,
 		NextMaintenanceAt:          time.Date(2026, time.January, 15, 12, 30, 0, 0, time.UTC),
 	}
-	expectedRetentionPolicy := &retention.RetentionPolicy{}
+	expectedRetentionPolicy := &api.RetentionPolicy{}
 	expectedIanaTimezones := []string{"UTC", "Europe/Berlin"}
 
 	testObjects.SshRepositoryConfigService.EXPECT().GetRemoteBackupRepository().Return(expectedRemoteRepository, nil)
@@ -282,7 +283,7 @@ func TestBuildAppSsoPage_FiltersOfficialDatabaseApp_AndSortsByMaintainerThenAppN
 
 	testObjects.AppService.EXPECT().
 		ListAppsForAdmin().
-		Return([]apps_basic.AppDto{
+		Return([]api.AppDto{
 			{Maintainer: "b-maintainer", AppName: "a-app"},
 			{Maintainer: "a-maintainer", AppName: u.OfficialDatabaseAppName},
 			{Maintainer: "a-maintainer", AppName: "z-app"},
@@ -304,7 +305,7 @@ func TestBuildAppSsoPage_FiltersOfficialDatabaseApp_AndSortsByMaintainerThenAppN
 func TestBuildBackupsPage_ReturnsLoadingShell(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	request := tools.MaintainerAndApp{Maintainer: "maintainer", AppName: "app"}
+	request := api.MaintainerAndApp{Maintainer: "maintainer", AppName: "app"}
 
 	pageContent, err := testObjects.Builder.BuildBackupsPage(request)
 	assert.Nil(t, err)
@@ -318,12 +319,12 @@ func TestBuildBackupsPage_ReturnsLoadingShell(t *testing.T) {
 func TestBuildAppSsoPage_ReturnsAppsForAdmin(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	expectedAppDtos := []apps_basic.AppDto{
+	expectedAppDtos := []api.AppDto{
 		{Maintainer: "m1", AppName: "a1"},
 		{Maintainer: "m2", AppName: "a2"},
 	}
 	appDtosReturnedByMock := expectedAppDtos
-	appDtosReturnedByMock = append(appDtosReturnedByMock, apps_basic.AppDto{Maintainer: u.OfficialMaintainer, AppName: u.OfficialDatabaseAppName})
+	appDtosReturnedByMock = append(appDtosReturnedByMock, api.AppDto{Maintainer: u.OfficialMaintainer, AppName: u.OfficialDatabaseAppName})
 
 	testObjects.AppService.EXPECT().
 		ListAppsForAdmin().
@@ -338,27 +339,27 @@ func TestBuildAppSsoPage_ReturnsAppsForAdmin(t *testing.T) {
 func TestBuildProvidersPage_ReturnsAuthProviders(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	testObjects.OidcAuthProviderRepo.EXPECT().ListProviders().Return([]oidc_client.OidcAuthProviderDto{
+	testObjects.OidcAuthProviderRepo.EXPECT().ListProviders().Return([]api.OidcAuthProviderDto{
 		{Id: 3, Name: "Keycloak"},
 	}, nil)
 
 	pageContent, err := testObjects.Builder.BuildProvidersPage()
 
 	assert.Nil(t, err)
-	assert.Equal(t, []oidc_client.OidcAuthProviderDto{{Id: 3, Name: "Keycloak"}}, pageContent.AuthProviders)
+	assert.Equal(t, []api.OidcAuthProviderDto{{Id: 3, Name: "Keycloak"}}, pageContent.AuthProviders)
 }
 
 func TestBuildOidcClientsPage_ReturnsClients(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	testObjects.OidcRelyingPartyRepo.EXPECT().ListClients().Return([]oidc_provider.OidcRelyingPartyDto{
+	testObjects.OidcRelyingPartyRepo.EXPECT().ListClients().Return([]api.OidcRelyingPartyDto{
 		{Id: 4, Name: "Client"},
 	}, nil)
 
 	pageContent, err := testObjects.Builder.BuildOidcClientsPage()
 
 	assert.Nil(t, err)
-	assert.Equal(t, []oidc_provider.OidcRelyingPartyDto{{Id: 4, Name: "Client"}}, pageContent.Clients)
+	assert.Equal(t, []api.OidcRelyingPartyDto{{Id: 4, Name: "Client"}}, pageContent.Clients)
 }
 
 func TestBuildStorePage_WhenNotSearch_ReturnsEmptyAppsAndEchoesInputs(t *testing.T) {
@@ -494,7 +495,7 @@ func TestBuildSetPasswordPage_ReturnsUsername(t *testing.T) {
 
 	testObjects.UserRepo.EXPECT().
 		GetUserByToken("token-123").
-		Return(&tools.User{Username: "alice"}, nil)
+		Return(&api.User{Username: "alice"}, nil)
 
 	pageContent, err := testObjects.Builder.BuildSetPasswordPage("token-123")
 	assert.Nil(t, err)
@@ -518,7 +519,7 @@ func TestBuildMaintenancePage_SortsByMaintainerThenAppName(t *testing.T) {
 
 	testObjects.AppService.EXPECT().
 		ListAppsForAdmin().
-		Return([]apps_basic.AppDto{
+		Return([]api.AppDto{
 			{Maintainer: "b-maintainer", AppName: "a-app"},
 			{Maintainer: "a-maintainer", AppName: "z-app"},
 			{Maintainer: "a-maintainer", AppName: "a-app"},
@@ -541,7 +542,7 @@ func TestBuildMaintenancePage_SortsByMaintainerThenAppName(t *testing.T) {
 
 func TestBuildUserEditPageData(t *testing.T) {
 	testObjects := getTestObjects(t)
-	expectedUser := &tools.User{Id: 42, Username: "alice", Email: "alice@example.com"}
+	expectedUser := &api.User{Id: 42, Username: "alice", Email: "alice@example.com"}
 
 	testObjects.UserRepo.EXPECT().GetUserById(42).Return(expectedUser, nil)
 
@@ -562,7 +563,7 @@ func TestBuildUserEditPageData_WhenUserIdIsInvalid_ReturnsError(t *testing.T) {
 func TestBuildAccountPageData(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	adminPage := testObjects.Builder.BuildAccountPageData(&tools.User{
+	adminPage := testObjects.Builder.BuildAccountPageData(&api.User{
 		Username:       "admin-user",
 		Email:          "admin@example.com",
 		IsAdmin:        true,
@@ -573,7 +574,7 @@ func TestBuildAccountPageData(t *testing.T) {
 	assert.Equal(t, "admin", adminPage.Role)
 	assert.True(t, adminPage.IsPasswordSet)
 
-	userPage := testObjects.Builder.BuildAccountPageData(&tools.User{
+	userPage := testObjects.Builder.BuildAccountPageData(&api.User{
 		Username:       "normal-user",
 		Email:          "user@example.com",
 		IsAdmin:        false,
