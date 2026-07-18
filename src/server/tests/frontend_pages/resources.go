@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/quollix/common/quollix/api_client"
+	quollixbrowser "github.com/quollix/common/quollix/browser"
 
 	"github.com/quollix/common/browsertest"
 )
@@ -17,6 +18,7 @@ type FrameType struct {
 	BaseUrl  string
 	Page     *browsertest.Page
 	Client   *api_client.QuollixClient
+	Quollix  *quollixbrowser.Browser
 	Controls *FrameControls
 	Pages    *FramePages
 	Assert   *FrameAssertions
@@ -30,6 +32,12 @@ func NewFrameType(t *testing.T, baseUrl string, page *browsertest.Page, client *
 		BaseUrl: baseUrl,
 		Page:    page,
 		Client:  client,
+	}
+	frame.Quollix = &quollixbrowser.Browser{
+		BaseURL:       baseUrl,
+		Client:        client,
+		Page:          page,
+		InstalledApps: &quollixbrowser.InstalledAppsPageHelpers{Page: page},
 	}
 	frame.Controls = &FrameControls{Frame: frame}
 	frame.Pages = newFramePages(frame)

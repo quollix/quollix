@@ -97,13 +97,7 @@ func (i *InstalledAppsPage) IsOpenButtonPresent(appName string) bool {
 }
 
 func (i *InstalledAppsPage) ClickOpenButton(appName string) *InstalledAppsPage {
-	row, err := i.findRowByAppName(appName)
-	assert.Nil(i.Frame.T, err)
-	accessCell, err := row.Element(".app-access")
-	assert.Nil(i.Frame.T, err)
-	openButton, err := accessCell.Element("button.open-btn")
-	assert.Nil(i.Frame.T, err)
-	openButton.MustClick()
+	assert.Nil(i.Frame.T, i.Frame.Quollix.InstalledApps.ClickOpenButton(appName))
 	return i
 }
 
@@ -309,16 +303,15 @@ func (i *InstalledAppsPage) getSelectedAccessPolicyLabel(appName string) (string
 
 func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *InstalledAppsPage {
 	const appName = "sampleapp"
-	waitForNewTab := i.Frame.Page.MustWaitOpen()
-	i.ClickOpenButton(appName)
-	newTab := waitForNewTab()
+	newTab, err := i.Frame.Quollix.InstalledApps.OpenAppInNewTab(appName)
+	assert.Nil(i.Frame.T, err)
 	defer func() {
 		assert.Nil(i.Frame.T, newTab.Close())
 	}()
 
 	// After app start, Docker/network handover can briefly surface Chrome's transient ERR_NETWORK_CHANGED page
 	// even though the backend operation already finished. Retry until the tab shows the actual app content.
-	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+	err = tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		timedTab := newTab.Timeout(browserTimeout)
 		defer timedTab.CancelTimeout()
 
