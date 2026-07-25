@@ -1,12 +1,12 @@
 package frontend_pages
 
 import (
-	"server/tools"
-	"strings"
 	"time"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 )
 
 type FramePages struct {
@@ -64,9 +64,9 @@ func newFramePages(frame *FrameType) *FramePages {
 func (p *FramePages) Visit(path string) *FrameType {
 	url := p.Frame.BaseUrl + path
 	var fatalNavigationErr error
-	err := tools.EventuallyWithTimeout(browserTimeout, 100*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(browserTimeout, 100*time.Millisecond, func() error {
 		if navigationErr := p.Frame.Page.Navigate(url); navigationErr != nil {
-			if isNetworkChangedNavigationError(navigationErr) {
+			if browsertest.IsNetworkChangedError(navigationErr) {
 				return navigationErr
 			}
 			fatalNavigationErr = navigationErr
@@ -77,13 +77,6 @@ func (p *FramePages) Visit(path string) *FrameType {
 	assert.Nil(p.Frame.T, fatalNavigationErr)
 	assert.Nil(p.Frame.T, err)
 	return p.Frame
-}
-
-func isNetworkChangedNavigationError(err error) bool {
-	if err == nil {
-		return false
-	}
-	return strings.Contains(err.Error(), "NETWORK_CHANGED")
 }
 
 func (p *FramePages) GoToAccountPage() *AccountPage {

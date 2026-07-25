@@ -2,7 +2,6 @@ package frontend_pages
 
 import (
 	"fmt"
-	"server/tools"
 	"strings"
 	"testing"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
+	utils "github.com/quollix/common/utils"
 )
 
 type UsersPage struct {
@@ -139,7 +139,7 @@ func listUsers(page *browsertest.Page, t *testing.T) []UserListEntry {
 }
 
 func (u *UsersPage) AssertUserInList(username, email string) *UsersPage {
-	err := tools.EventuallyWithTimeout(defaultTimeout, 50*time.Millisecond, func() error {
+	err := utils.EventuallyWithTimeout(defaultTimeout, 50*time.Millisecond, func() error {
 		users := listUsers(u.Frame.Page, u.Frame.T)
 		for _, entry := range users {
 			if entry.Name == username && entry.Email == email {

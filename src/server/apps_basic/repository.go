@@ -21,6 +21,7 @@ var (
 			apps.access_policy,
 			apps.client_id,
 			apps.client_secret,
+			apps.app_secret,
 			apps.port,
 			apps.automatic_backups_enabled,
 			apps.automatic_updates_enabled
@@ -51,10 +52,11 @@ var (
 			access_policy = $7,
 			client_id = $8,
 			client_secret = $9,
-			port = $10,
-			automatic_backups_enabled = $11,
-			automatic_updates_enabled = $12
-		WHERE app_id = $13
+			app_secret = $10,
+			port = $11,
+			automatic_backups_enabled = $12,
+			automatic_updates_enabled = $13
+		WHERE app_id = $14
 	`
 
 	appInsert = `
@@ -68,11 +70,12 @@ var (
 			access_policy,
 			client_id,
 			client_secret,
+			app_secret,
 			port,
 			automatic_backups_enabled,
 			automatic_updates_enabled
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
 		RETURNING app_id
 	`
 )
@@ -182,6 +185,7 @@ func appArgsNoId(app *RepoApp) []any {
 		app.AccessPolicy,
 		app.ClientId,
 		app.ClientSecret,
+		app.AppSecret,
 		app.Port,
 		app.AutomaticBackupsEnabled,
 		app.AutomaticUpdatesEnabled,
@@ -245,6 +249,7 @@ func scanAppIfExists(scanner appRowScanner) (*RepoApp, bool, error) {
 		&app.AccessPolicy,
 		&app.ClientId,
 		&app.ClientSecret,
+		&app.AppSecret,
 		&app.Port,
 		&app.AutomaticBackupsEnabled,
 		&app.AutomaticUpdatesEnabled,

@@ -53,6 +53,10 @@ func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, app.ClientSecret, clientSecret)
 
+	appSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
+	assert.Nil(t, err)
+	assert.Equal(t, app.AppSecret, appSecret)
+
 	ianaTimezone, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.IanaTimeZone)
 	assert.Nil(t, err)
 	assert.Equal(t, "Europe/London", ianaTimezone)
@@ -309,6 +313,7 @@ func TestUploadToAndDownloadFromApplication(t *testing.T) {
 	assert.Equal(t, "3001", sampleApp.Port)
 	assert.Equal(t, 16, len(sampleApp.ClientId))
 	assert.Equal(t, 64, len(sampleApp.ClientSecret))
+	assert.Equal(t, 64, len(sampleApp.AppSecret))
 
 	assert.True(t, sampleApp.AutomaticBackupsEnabled)
 	assert.False(t, sampleApp.AutomaticUpdatesEnabled)

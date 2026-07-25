@@ -13,6 +13,7 @@ import (
 	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
+	u "github.com/quollix/common/utils"
 )
 
 func TestUsersPageInvitationStateChangesAfterSetPasswordViaClient(t *testing.T) {
@@ -88,7 +89,7 @@ func TestUsersPageCanDisableAndEnableUser(t *testing.T) {
 }
 
 func waitForBackendUserEnabledState(t *testing.T, client *api_client.QuollixClient, username string, expectedIsEnabled bool) {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		user, exists, err := client.Users.GetByUsername(username)
 		if err != nil {
 			return err

@@ -206,6 +206,10 @@ func (s *SystemConfigMigrationsProviderImpl) createOfficialDatabaseAppEntryIfNot
 	if err != nil {
 		return err
 	}
+	appSecret, err := s.AuthHelper.GenerateSecret()
+	if err != nil {
+		return err
+	}
 	app := apps_basic.NewRepoApp(
 		u.OfficialMaintainer,
 		u.OfficialDatabaseAppName,
@@ -214,6 +218,7 @@ func (s *SystemConfigMigrationsProviderImpl) createOfficialDatabaseAppEntryIfNot
 		"1",
 		clientId,
 		clientSecret,
+		appSecret,
 		SamplePostgresCreationDate,
 		appBytes,
 		true,

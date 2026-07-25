@@ -16,12 +16,13 @@ func (c *FrameControls) GetRequiredElement(selector string) *browsertest.Element
 }
 
 func (c *FrameControls) GetRequiredElementEventually(selector string) *browsertest.Element {
-	c.Frame.Browser.WaitForElement(selector)
-	return c.GetRequiredElement(selector)
+	element, err := c.Frame.Page.WaitElementWithin(selector, browserTimeout)
+	assert.Nil(c.Frame.T, err)
+	return element
 }
 
 func (c *FrameControls) SetInputValue(selector, value string) {
-	c.GetRequiredElement(selector).MustSelectAllText().MustInput(value)
+	assert.Nil(c.Frame.T, c.Frame.Page.SetInputValue(selector, value))
 }
 
 func (c *FrameControls) GetInputValue(selector string) string {
@@ -37,9 +38,7 @@ func (c *FrameControls) GetCheckboxValue(selector string) bool {
 }
 
 func (c *FrameControls) SetCheckboxValue(selector string, checked bool) {
-	if c.GetCheckboxValue(selector) != checked {
-		c.GetRequiredElement(selector).MustClick()
-	}
+	assert.Nil(c.Frame.T, c.Frame.Page.SetCheckboxChecked(selector, checked))
 }
 
 func (c *FrameControls) GetInputType(selector string) string {

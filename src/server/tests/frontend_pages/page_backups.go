@@ -1,7 +1,6 @@
 package frontend_pages
 
 import (
-	"server/tools"
 	"strings"
 	"time"
 
@@ -112,7 +111,7 @@ func (b *BackupsPage) ClickRestoreFirstBackup() *BackupsPage {
 }
 
 func (b *BackupsPage) WaitUntilAppAbsent(appName string) *BackupsPage {
-	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		apps, err := b.Frame.Client.Apps.ListInstalled()
 		assert.Nil(b.Frame.T, err)
 		for _, app := range apps {
@@ -144,7 +143,7 @@ func (b *BackupsPage) DeleteFirstBackupUntilRemoved() *BackupsPage {
 
 func (b *BackupsPage) waitForSingleBackupRow() *browsertest.Element {
 	var row *browsertest.Element
-	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		rows, listErr := b.Frame.Page.Elements("tr.backup-row")
 		if listErr != nil {
 			return listErr
@@ -160,7 +159,7 @@ func (b *BackupsPage) waitForSingleBackupRow() *browsertest.Element {
 }
 
 func (b *BackupsPage) waitUntilBackupsLoaded() {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		isLoading, _, err := b.Frame.Page.Has("#backups-loading-message")
 		if err != nil {
 			return err

@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"server/tools"
-
 	"github.com/quollix/common/assert"
+	u "github.com/quollix/common/utils"
 )
 
 type FrameAssertions struct {
@@ -16,7 +15,7 @@ type FrameAssertions struct {
 }
 
 func (a *FrameAssertions) HostEventually(expectedHost string) *FrameType {
-	err := tools.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
 		currentUrl, err := a.currentPageUrl()
 		if err != nil {
 			return err
@@ -31,7 +30,7 @@ func (a *FrameAssertions) HostEventually(expectedHost string) *FrameType {
 }
 
 func (a *FrameAssertions) PathEventually(expectedPath string) *FrameType {
-	err := tools.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
 		currentUrl, err := a.currentPageUrl()
 		if err != nil {
 			return err
@@ -46,12 +45,8 @@ func (a *FrameAssertions) PathEventually(expectedPath string) *FrameType {
 }
 
 func (a *FrameAssertions) PageContainsEventually(expectedText string) *FrameType {
-	err := tools.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
-		body, err := a.Frame.Page.Element("body")
-		if err != nil {
-			return err
-		}
-		text, err := body.Text()
+	err := u.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
+		text, err := a.Frame.Page.BodyText()
 		if err != nil {
 			return err
 		}
@@ -69,7 +64,7 @@ func (a *FrameAssertions) SnackbarVisibleWithTextEventually(expectedText string)
 }
 
 func (a *FrameAssertions) SnackbarVisibleWithTextEventuallyWithin(expectedText string, timeout time.Duration) *FrameType {
-	err := tools.EventuallyWithTimeout(timeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(timeout, 50*time.Millisecond, func() error {
 		snackbars, findErr := a.Frame.Page.Elements(`.snackbar[data-visible="true"]`)
 		if findErr != nil {
 			return findErr
@@ -113,7 +108,7 @@ func (a *FrameAssertions) ElementNotPresent(selector string) *FrameType {
 }
 
 func (a *FrameAssertions) AppOperationStarted() *FrameType {
-	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		_, isOngoing, err := a.Frame.Client.Apps.GetCurrentOperations()
 		assert.Nil(a.Frame.T, err)
 		if !isOngoing {
@@ -126,7 +121,7 @@ func (a *FrameAssertions) AppOperationStarted() *FrameType {
 }
 
 func (a *FrameAssertions) AppOperationFinished() *FrameType {
-	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		_, isOngoing, err := a.Frame.Client.Apps.GetCurrentOperations()
 		assert.Nil(a.Frame.T, err)
 		if isOngoing {

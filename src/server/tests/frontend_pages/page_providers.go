@@ -6,11 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"server/tools"
-
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 )
 
 type ProvidersPage struct {
@@ -68,7 +67,7 @@ func (e *ProvidersPage) AssertClientSecretVisibility(name string, visible bool) 
 		expectedType = "text"
 	}
 
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		row := e.findRowByProviderName(name)
 		actualType := getInputTypeInRow(e.Frame.T, row, ".oidc-provider-client-secret-edit")
 		if actualType != expectedType {
@@ -82,7 +81,7 @@ func (e *ProvidersPage) AssertClientSecretVisibility(name string, visible bool) 
 
 func (e *ProvidersPage) GetRequiredProvider(name string) api.OidcAuthProviderDto {
 	var provider api.OidcAuthProviderDto
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		rows := e.Frame.Page.MustElements("tr.oidc-auth-provider-row")
 		for _, row := range rows {
 			entry := e.readProviderEntry(row)
@@ -116,7 +115,7 @@ func (e *ProvidersPage) readProviderEntry(row *browsertest.Element) api.OidcAuth
 
 func (e *ProvidersPage) findRowByProviderName(name string) *browsertest.Element {
 	var foundRow *browsertest.Element
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		rows := e.Frame.Page.MustElements("tr.oidc-auth-provider-row")
 		for _, row := range rows {
 			if getInputValueInRow(e.Frame.T, row, ".oidc-provider-name-edit") == name {
@@ -133,7 +132,7 @@ func (e *ProvidersPage) findRowByProviderName(name string) *browsertest.Element 
 func (e *ProvidersPage) findRowByProviderId(providerId int) *browsertest.Element {
 	var foundRow *browsertest.Element
 	expectedProviderId := strconv.Itoa(providerId)
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		rows := e.Frame.Page.MustElements("tr.oidc-auth-provider-row")
 		for _, row := range rows {
 			actualProviderId, err := row.Attribute("data-provider-id")

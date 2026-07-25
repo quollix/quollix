@@ -33,38 +33,6 @@ type AuthKeyType string
 
 const AuthKey = AuthKeyType("auth")
 
-func WaitOneHundredMilliseconds() {
-	time.Sleep(100 * time.Millisecond)
-}
-
-func WaitOneSecond() {
-	time.Sleep(1 * time.Second)
-}
-
-func Eventually(check func() error) error {
-	return EventuallyWithTimeout(3*time.Second, 50*time.Millisecond, check)
-}
-
-func EventuallyWithTimeout(timeout time.Duration, interval time.Duration, check func() error) error {
-	deadline := time.Now().Add(timeout)
-	var lastErr error
-
-	for time.Now().Before(deadline) {
-		err := check()
-		if err == nil {
-			return nil
-		}
-		lastErr = err
-		time.Sleep(interval)
-	}
-
-	if lastErr == nil {
-		return nil
-	}
-
-	return lastErr
-}
-
 type UserAccessLevel int
 
 const (

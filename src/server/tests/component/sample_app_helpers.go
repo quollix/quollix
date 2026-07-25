@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"server/tools"
-
 	"github.com/quollix/common/quollix/api_client"
 
 	u "github.com/quollix/common/utils"
@@ -57,7 +55,7 @@ func ExchangeAppAccessSecretForCookie(client *api_client.QuollixClient, secret s
 }
 
 func ExchangeAppAccessSecretForCookieWithUrl(client *api_client.QuollixClient, secret string, appUrl string) error {
-	return tools.EventuallyWithTimeout(contentRetryTimeout, contentRetryInterval, func() error {
+	return u.EventuallyWithTimeout(contentRetryTimeout, contentRetryInterval, func() error {
 		cookie, err := client.AppAccess.ExchangeSecretForAppAccessCookie(secret, appUrl)
 		if err != nil {
 			return err
@@ -77,7 +75,7 @@ func ReadSampleAppHeaderValue(client *api_client.QuollixClient, baseUrl string, 
 
 func readSampleAppUrl(client *api_client.QuollixClient, appUrl string) (string, error) {
 	var body string
-	err := tools.EventuallyWithTimeout(contentRetryTimeout, contentRetryInterval, func() error {
+	err := u.EventuallyWithTimeout(contentRetryTimeout, contentRetryInterval, func() error {
 		status, responseBody, requestErr := requestSampleAppWithClientUrl(client, appUrl)
 		if requestErr != nil {
 			return requestErr
@@ -129,7 +127,7 @@ func ReadStringFromSampleApp(client *api_client.QuollixClient) (string, error) {
 }
 
 func assertSampleAppEndpoint(expected string, cookie *http.Cookie) error {
-	return tools.EventuallyWithTimeout(contentRetryTimeout, contentRetryInterval, func() error {
+	return u.EventuallyWithTimeout(contentRetryTimeout, contentRetryInterval, func() error {
 		status, body, err := requestSampleApp(sampleEndpoint, cookie)
 		if err != nil {
 			return err

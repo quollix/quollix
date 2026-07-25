@@ -188,7 +188,7 @@ func TestCookieExpirationDateRenewalWhenCheckingAuth(t *testing.T) {
 	assert.True(t, cookieExpiration1.After(time.Now().AddDate(0, 0, tools.CookieExpirationTimeInDays-1)))
 	assert.True(t, cookieExpiration1.Before(time.Now().AddDate(0, 0, tools.CookieExpirationTimeInDays+1)))
 
-	tools.WaitOneSecond()
+	u.WaitMillis(1000)
 	currentUser, err = client.Auth.GetCurrentUser()
 	assert.Nil(t, err)
 	cookieExpiration2 := currentUser.CookieExpirationDate

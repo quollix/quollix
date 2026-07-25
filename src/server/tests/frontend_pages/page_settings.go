@@ -2,7 +2,6 @@ package frontend_pages
 
 import (
 	"fmt"
-	"server/tools"
 	"strconv"
 	"strings"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
 
@@ -19,7 +19,7 @@ type SettingsPage struct {
 }
 
 func (s *SettingsPage) AssertBaseDomainValue(expected string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputValue("#base-domain"); actual != expected {
 			return fmt.Errorf("unexpected base domain value: %q", actual)
 		}
@@ -57,7 +57,7 @@ func (s *SettingsPage) ResetCertificateAndAssertSuccessSnackbar() *SettingsPage 
 }
 
 func (s *SettingsPage) AssertCertificateOperationText(expected string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		indicator := s.Frame.Controls.GetRequiredElement("#certificate-operation-indicator")
 		if !isElementVisible(s.Frame.T, indicator) {
 			return fmt.Errorf("certificate operation indicator is not visible yet")
@@ -76,7 +76,7 @@ func (s *SettingsPage) AssertCertificateOperationText(expected string) *Settings
 }
 
 func (s *SettingsPage) AssertDnsChallengeResult(recordName, wildcardKeyAuth string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		result := s.Frame.Controls.GetRequiredElement("#dns01ChallengeResult")
 		if !isElementVisible(s.Frame.T, result) {
 			return fmt.Errorf("dns challenge result is not visible yet")
@@ -100,7 +100,7 @@ func (s *SettingsPage) EnterBackupServerHostAndPort(host, port string) *Settings
 }
 
 func (s *SettingsPage) AssertBackupServerKnownHostsValue(expected string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputValue("#backup-server-known-hosts"); actual != expected {
 			return fmt.Errorf("unexpected backup server known hosts value: %q", actual)
 		}
@@ -117,7 +117,7 @@ func (s *SettingsPage) GetBackupServerKnownHosts() string {
 func (s *SettingsPage) GetKnownHostsAndAssertValid() *SettingsPage {
 	s.Frame.Controls.GetRequiredElement("#backup-server-get-known-hosts-button").MustClick()
 
-	err := tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		actual := s.Frame.Controls.GetInputValue("#backup-server-known-hosts")
 		if actual == "" {
 			return fmt.Errorf("backup server known hosts value is still empty")
@@ -166,7 +166,7 @@ func (s *SettingsPage) AssertBackupServerSshPasswordVisibility(visible bool) *Se
 		expectedType = "text"
 	}
 
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputType("#backupServerSshPassword"); actual != expectedType {
 			return fmt.Errorf("unexpected backup server ssh password input type: %q", actual)
 		}
@@ -182,7 +182,7 @@ func (s *SettingsPage) AssertBackupServerEncryptionPasswordVisibility(visible bo
 		expectedType = "text"
 	}
 
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputType("#backupServerEncryptionPassword"); actual != expectedType {
 			return fmt.Errorf("unexpected backup server encryption password input type: %q", actual)
 		}
@@ -193,7 +193,7 @@ func (s *SettingsPage) AssertBackupServerEncryptionPasswordVisibility(visible bo
 }
 
 func (s *SettingsPage) AssertBackupServerSshPasswordValue(expected string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputValue("#backupServerSshPassword"); actual != expected {
 			return fmt.Errorf("unexpected backup server ssh password value: %q", actual)
 		}
@@ -204,7 +204,7 @@ func (s *SettingsPage) AssertBackupServerSshPasswordValue(expected string) *Sett
 }
 
 func (s *SettingsPage) AssertBackupServerEncryptionPasswordValue(expected string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputValue("#backupServerEncryptionPassword"); actual != expected {
 			return fmt.Errorf("unexpected backup server encryption password value: %q", actual)
 		}
@@ -242,7 +242,7 @@ func (s *SettingsPage) ResetBackupServerAndAssertSuccessSnackbar() *SettingsPage
 }
 
 func (s *SettingsPage) WaitUntilBackupServerConfigMatches(expected *api.BackupServerConfigs) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		configs, readErr := s.Frame.Client.Settings.ReadSshConfigs()
 		assert.Nil(s.Frame.T, readErr)
 		if *configs != *expected {
@@ -275,7 +275,7 @@ func (s *SettingsPage) ReadBackupServerFormValues() *api.BackupServerConfigs {
 }
 
 func (s *SettingsPage) AssertBackupServerFormValues(expected *api.BackupServerConfigs) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		actual := s.ReadBackupServerFormValues()
 		if *actual != *expected {
 			return fmt.Errorf("unexpected backup server form values")
@@ -292,7 +292,7 @@ func (s *SettingsPage) EnterMaintenanceTimezone(value string) *SettingsPage {
 }
 
 func (s *SettingsPage) AssertMaintenanceTimezoneValue(expected string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputValue("#iana-timezone"); actual != expected {
 			return fmt.Errorf("unexpected maintenance timezone: %q", actual)
 		}
@@ -329,7 +329,7 @@ func (s *SettingsPage) SelectMaintenanceWindow(label string) *SettingsPage {
 }
 
 func (s *SettingsPage) AssertSelectedMaintenanceWindow(label string) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		selectedOption, selectErr := s.Frame.Controls.GetRequiredElement("#maintenance-window-start-hour").Element("option:checked")
 		if selectErr != nil {
 			return selectErr
@@ -356,7 +356,7 @@ func (s *SettingsPage) SaveMaintenanceConfigAndAssertSuccessSnackbar() *Settings
 }
 
 func (s *SettingsPage) AssertNextMaintenanceExecutionHour(expectedHour int) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		text, textErr := s.Frame.Controls.GetRequiredElement("#next-maintenance-execution-value").Text()
 		if textErr != nil {
 			return textErr
@@ -394,7 +394,7 @@ func (s *SettingsPage) ReadRetentionPolicyValues() *api.RetentionPolicy {
 }
 
 func (s *SettingsPage) AssertRetentionPolicyValues(expected *api.RetentionPolicy) *SettingsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		actual := s.ReadRetentionPolicyValues()
 		if *actual != *expected {
 			return fmt.Errorf("unexpected retention policy values: %+v", *actual)

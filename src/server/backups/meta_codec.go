@@ -12,7 +12,7 @@ import (
 )
 
 func NewMetaData(
-	clientId, clientSecret, accessPolicy, port string,
+	clientId, clientSecret, appSecret, accessPolicy, port string,
 	versionCreationTimestamp time.Time,
 	automaticUpdatesEnabled, automaticBackupsEnabled bool,
 ) *MetaData {
@@ -21,6 +21,7 @@ func NewMetaData(
 		VersionCreationTimestamp: versionCreationTimestamp,
 		ClientId:                 clientId,
 		ClientSecret:             clientSecret,
+		AppSecret:                appSecret,
 		Port:                     port,
 		AutomaticUpdatesEnabled:  automaticUpdatesEnabled,
 		AutomaticBackupsEnabled:  automaticBackupsEnabled,
@@ -29,11 +30,12 @@ func NewMetaData(
 
 type MetaCodecImpl struct {
 	ClientCredentialsCreator apps_basic.ClientCredentialsGenerator
+	AuthHelper               u.AuthHelper
 }
 
 func (c *MetaCodecImpl) Load(path string) (*MetaData, error) {
-	meta := NewMetaData("", "", api.Policies.AdminOnlyAccessPolicy, "80", tools.DefaultTime, true, true) // default values for unexpected fallback
-	data, err := os.ReadFile(path)                                                                       // #nosec G304 G703: path is the trusted backup metadata file selected by application workflow
+	meta := NewMetaData("", "", "", api.Policies.AdminOnlyAccessPolicy, "80", tools.DefaultTime, true, true) // default values for unexpected fallback
+	data, err := os.ReadFile(path)                                                                           // #nosec G304 G703: path is the trusted backup metadata file selected by application workflow
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
@@ -42,6 +44,12 @@ func (c *MetaCodecImpl) Load(path string) (*MetaData, error) {
 	}
 	if meta.ClientId == "" || meta.ClientSecret == "" {
 		meta.ClientId, meta.ClientSecret, err = c.ClientCredentialsCreator.Generate()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if meta.AppSecret == "" {
+		meta.AppSecret, err = c.AuthHelper.GenerateSecret()
 		if err != nil {
 			return nil, err
 		}

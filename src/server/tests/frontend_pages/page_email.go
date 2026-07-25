@@ -2,7 +2,6 @@ package frontend_pages
 
 import (
 	"fmt"
-	"server/tools"
 	"server/users"
 
 	"github.com/quollix/common/assert"
@@ -114,7 +113,7 @@ func (e *EmailPage) TogglePasswordVisibility() *EmailPage {
 }
 
 func (e *EmailPage) AssertExposeRealEmailInOidcToken(expected bool) *EmailPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		actual := e.Frame.Controls.GetCheckboxValue("#expose-real-email-in-oidc-token-checkbox")
 		if actual != expected {
 			return fmt.Errorf("unexpected OIDC email exposure checkbox state: %t", actual)
@@ -126,7 +125,7 @@ func (e *EmailPage) AssertExposeRealEmailInOidcToken(expected bool) *EmailPage {
 }
 
 func (e *EmailPage) AssertFormValues(cfg *u.EmailConfig) *EmailPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := e.Frame.Controls.GetInputValue("#email-smtp-host-input"); actual != cfg.SMTPHost {
 			return fmt.Errorf("unexpected smtp host: %q", actual)
 		}
@@ -152,7 +151,7 @@ func (e *EmailPage) AssertFormValues(cfg *u.EmailConfig) *EmailPage {
 }
 
 func (e *EmailPage) AssertTestRecipientValue(expected string) *EmailPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := e.Frame.Controls.GetInputValue("#email-test-recipient-input"); actual != expected {
 			return fmt.Errorf("unexpected test recipient: %q", actual)
 		}
@@ -168,7 +167,7 @@ func (e *EmailPage) AssertPasswordVisibility(visible bool) *EmailPage {
 		expectedType = "text"
 	}
 
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		actual := e.Frame.Controls.GetInputType("#email-account-password-input")
 		if actual != expectedType {
 			return fmt.Errorf("unexpected password input type: %q", actual)
@@ -180,7 +179,7 @@ func (e *EmailPage) AssertPasswordVisibility(visible bool) *EmailPage {
 }
 
 func (e *EmailPage) AssertPasswordValue(expected string) *EmailPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := e.Frame.Controls.GetInputValue("#email-account-password-input"); actual != expected {
 			return fmt.Errorf("unexpected password value: %q", actual)
 		}
@@ -191,7 +190,7 @@ func (e *EmailPage) AssertPasswordValue(expected string) *EmailPage {
 }
 
 func (e *EmailPage) AssertInvitationTemplateValue(expected string) *EmailPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if actual := e.Frame.Controls.GetInputValue("#invitation-email-template-input"); actual != expected {
 			return fmt.Errorf("unexpected invitation email template: %q", actual)
 		}

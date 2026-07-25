@@ -5,11 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"server/tools"
-
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 )
 
 type ClientsPage struct {
@@ -54,7 +53,7 @@ func (c *ClientsPage) DeleteClient(clientId int) *ClientsPage {
 }
 
 func (c *ClientsPage) AssertClientSecretMasked(name string) *ClientsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		row := c.findRowByClientName(name)
 		actualText := strings.TrimSpace(GetRequiredElementInRow(c.Frame.T, row, ".oidc-client-client-secret-value").MustText())
 		if actualText != "****************" {
@@ -68,7 +67,7 @@ func (c *ClientsPage) AssertClientSecretMasked(name string) *ClientsPage {
 
 func (c *ClientsPage) GetRequiredClient(name string) api.OidcRelyingPartyDto {
 	var client api.OidcRelyingPartyDto
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		rows := c.Frame.Page.MustElements("tr.oidc-relying-party-row")
 		for _, row := range rows {
 			entry := c.readClientEntry(row)
@@ -101,7 +100,7 @@ func (c *ClientsPage) readClientEntry(row *browsertest.Element) api.OidcRelyingP
 
 func (c *ClientsPage) findRowByClientName(name string) *browsertest.Element {
 	var foundRow *browsertest.Element
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		rows := c.Frame.Page.MustElements("tr.oidc-relying-party-row")
 		for _, row := range rows {
 			if getInputValueInRow(c.Frame.T, row, ".oidc-client-name-edit") == name {
@@ -118,7 +117,7 @@ func (c *ClientsPage) findRowByClientName(name string) *browsertest.Element {
 func (c *ClientsPage) findRowByClientId(clientId int) *browsertest.Element {
 	var foundRow *browsertest.Element
 	expectedClientId := strconv.Itoa(clientId)
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		rows := c.Frame.Page.MustElements("tr.oidc-relying-party-row")
 		for _, row := range rows {
 			clientRecordId, err := row.Attribute("data-client-record-id")

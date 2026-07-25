@@ -45,6 +45,7 @@ type AppStoreClientMock struct {
 	VersionValidator           validation.VersionValidator
 	AppRepository              apps_basic.AppRepository
 	ClientCredentialsGenerator apps_basic.ClientCredentialsGenerator
+	AuthHelper                 u.AuthHelper
 	AppServiceHelper           apps_basic.AppServiceHelper
 	VersionSigningService      store.VersionSigningService
 }
@@ -187,6 +188,10 @@ func (h *AppStoreClientMock) createNewTestApp(
 	if err != nil {
 		return err
 	}
+	appSecret, err := h.AuthHelper.GenerateSecret()
+	if err != nil {
+		return err
+	}
 
 	port, err := h.AppServiceHelper.GetPortFromComposeYaml(appContent, appName)
 	if err != nil {
@@ -201,6 +206,7 @@ func (h *AppStoreClientMock) createNewTestApp(
 		port,
 		clientId,
 		clientSecret,
+		appSecret,
 		time.Now(),
 		appContent,
 		false,

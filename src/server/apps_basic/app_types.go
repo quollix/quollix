@@ -3,7 +3,7 @@ package apps_basic
 import "time"
 
 func NewRepoApp(
-	maintainer, appName, versionName, accessPolicy, port, clientId, clientSecret string,
+	maintainer, appName, versionName, accessPolicy, port, clientId, clientSecret, appSecret string,
 	versionCreationTimestamp time.Time,
 	versionContent []byte,
 	isRunning bool,
@@ -22,6 +22,7 @@ func NewRepoApp(
 		AccessPolicy:             accessPolicy,
 		ClientId:                 clientId,
 		ClientSecret:             clientSecret,
+		AppSecret:                appSecret,
 		AutomaticUpdatesEnabled:  automaticUpdatesEnabled,
 		AutomaticBackupsEnabled:  automaticBackupsEnabled,
 	}
@@ -29,12 +30,12 @@ func NewRepoApp(
 }
 
 type RepoApp struct {
-	AppId                                                                        int
-	Maintainer, AppName, VersionName, AccessPolicy, ClientId, ClientSecret, Port string
-	VersionCreationTimestamp                                                     time.Time
-	VersionContent                                                               []byte
-	ShouldBeRunning, AutomaticBackupsEnabled, AutomaticUpdatesEnabled            bool
-	Metadata                                                                     map[string]string
+	AppId                                                                                   int
+	Maintainer, AppName, VersionName, AccessPolicy, ClientId, ClientSecret, AppSecret, Port string
+	VersionCreationTimestamp                                                                time.Time
+	VersionContent                                                                          []byte
+	ShouldBeRunning, AutomaticBackupsEnabled, AutomaticUpdatesEnabled                       bool
+	Metadata                                                                                map[string]string
 }
 
 type AppRequestData struct {

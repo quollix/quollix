@@ -24,6 +24,7 @@ type AppStoreServiceImpl struct {
 	AppStoreClientLean         AppStoreClientLean
 	AppRepo                    apps_basic.AppRepository
 	ClientCredentialsGenerator apps_basic.ClientCredentialsGenerator
+	AuthHelper                 u.AuthHelper
 	VersionFileNameEncoder     apps_basic.VersionFileNameEncoder
 	AppServiceHelper           apps_basic.AppServiceHelper
 	VersionValidator           validation.VersionValidator
@@ -45,6 +46,10 @@ func (a *AppStoreServiceImpl) DownloadVersion(maintainerName, appName, versionNa
 	if err != nil {
 		return nil, err
 	}
+	appSecret, err := a.AuthHelper.GenerateSecret()
+	if err != nil {
+		return nil, err
+	}
 
 	port, err := a.AppServiceHelper.GetPortFromComposeYaml(fullTagInfo.Content, appName)
 	if err != nil {
@@ -59,6 +64,7 @@ func (a *AppStoreServiceImpl) DownloadVersion(maintainerName, appName, versionNa
 		port,
 		clientId,
 		clientSecret,
+		appSecret,
 		fullTagInfo.VersionCreationTimestamp,
 		fullTagInfo.Content,
 		false,

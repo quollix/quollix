@@ -146,6 +146,11 @@ func TestRestoreAppMetaData(t *testing.T) {
 		app.AutomaticUpdatesEnabled = false
 		app.AutomaticBackupsEnabled = false
 		assert.Nil(t, client.Apps.UpdateMaintenanceSettings(app.AppId, false, false))
+
+		appClient := GetAppClient(t, client)
+		originalAppSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
+		assert.Nil(t, err)
+		assert.Equal(t, app.AppSecret, originalAppSecret)
 	})
 	defer fixture.client.Test.ResetTestState()
 
@@ -153,6 +158,11 @@ func TestRestoreAppMetaData(t *testing.T) {
 
 	restoredApp := GetInstalledSample(t, fixture.client)
 	assertAppState(t, fixture.originalApp, restoredApp)
+
+	appClient := GetAppClient(t, fixture.client)
+	restoredAppSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
+	assert.Nil(t, err)
+	assert.Equal(t, restoredApp.AppSecret, restoredAppSecret)
 }
 
 func configureBackupRepo(t *testing.T, client *api_client.QuollixClient) {
@@ -204,6 +214,7 @@ func assertAppState(t *testing.T, expected *api.AppDto, actual *api.AppDto) {
 	assert.Equal(t, expected.IsRunning, actual.IsRunning)
 	assert.Equal(t, expected.ClientId, actual.ClientId)
 	assert.Equal(t, expected.ClientSecret, actual.ClientSecret)
+	assert.Equal(t, expected.AppSecret, actual.AppSecret)
 	assert.Equal(t, expected.AutomaticUpdatesEnabled, actual.AutomaticUpdatesEnabled)
 	assert.Equal(t, expected.AutomaticBackupsEnabled, actual.AutomaticBackupsEnabled)
 }

@@ -54,6 +54,7 @@ func (r *DatabaseIndependentRuntimeImpl) StartApp(spec *AppRuntimeSpec) error {
 		tools.ComposeEnvVars.LegacyServerHost: spec.BaseDomain,
 		tools.ComposeEnvVars.ClientId:         spec.App.ClientId,
 		tools.ComposeEnvVars.ClientSecret:     spec.App.ClientSecret,
+		tools.ComposeEnvVars.AppSecret:        spec.App.AppSecret,
 		tools.ComposeEnvVars.IanaTimeZone:     spec.IanaTimeZone,
 	}
 

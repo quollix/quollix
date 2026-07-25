@@ -2,12 +2,12 @@ package frontend_pages
 
 import (
 	"fmt"
-	"server/tools"
 	"strings"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 )
 
 const (
@@ -152,7 +152,7 @@ func (p *TerminalViewPage) AssertSelection(maintainer, appName, serviceName stri
 }
 
 func (p *TerminalViewPage) AssertReady() *TerminalViewPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		output := p.readTerminalBuffer()
 		if strings.Contains(output, expectedShellBanner+"\n") || strings.Contains(output, expectedTerminalPrompt) {
 			return nil
@@ -172,7 +172,7 @@ func (p *TerminalViewPage) RunCommand(command string) *TerminalViewPage {
 
 func (p *TerminalViewPage) AssertOutputContains(expected string) *TerminalViewPage {
 	expected = normalizeTerminalAssertionText(expected)
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		output := normalizeTerminalAssertionText(p.readTerminalBuffer())
 		if !strings.Contains(output, expected) {
 			return fmt.Errorf("missing terminal output block:\n%s\n\nin output:\n%s", expected, output)

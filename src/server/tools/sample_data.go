@@ -37,6 +37,7 @@ const (
       - SERVER_URL=https://sampleapp.${BASE_DOMAIN}
       - OIDC_CLIENT_ID=${CLIENT_ID}
       - OIDC_CLIENT_SECRET=${CLIENT_SECRET}
+      - APP_SECRET=${APP_SECRET}
       - IANA_TIMEZONE=${IANA_TIMEZONE}
       - PORT=3000
     labels:
@@ -52,6 +53,7 @@ const (
       - SERVER_URL=https://sampleapp.${BASE_DOMAIN}
       - OIDC_CLIENT_ID=${CLIENT_ID}
       - OIDC_CLIENT_SECRET=${CLIENT_SECRET}
+      - APP_SECRET=${APP_SECRET}
       - IANA_TIMEZONE=${IANA_TIMEZONE}
       - PORT=3000
     volumes:
@@ -72,6 +74,7 @@ volumes:
       - SERVER_URL=https://sampleapp.${BASE_DOMAIN}
       - OIDC_CLIENT_ID=${CLIENT_ID}
       - OIDC_CLIENT_SECRET=${CLIENT_SECRET}
+      - APP_SECRET=${APP_SECRET}
       - IANA_TIMEZONE=${IANA_TIMEZONE}
       - PORT=3001
     volumes:

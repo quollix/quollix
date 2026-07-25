@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/quollix/common/assert"
+	u "github.com/quollix/common/utils"
 )
 
 func TestStorePage(t *testing.T) {
@@ -31,7 +32,7 @@ func TestStorePage(t *testing.T) {
 	frame.Assert.SnackbarVisibleWithTextEventually("Installation successful")
 	frame.Pages.StorePage.AssertInstallButtonDisabledAsInstalled("samplemaintainer", "sampleapp")
 
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		installedApps := component.ListInstalledApps(t, frame.Client)
 		for _, app := range installedApps {
 			if app.Maintainer == "samplemaintainer" && app.AppName == "sampleapp" && app.VersionName == "2.0" {

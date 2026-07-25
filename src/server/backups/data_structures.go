@@ -17,6 +17,7 @@ type MetaData struct {
 	VersionCreationTimestamp time.Time `yaml:"version_creation_timestamp"`
 	ClientId                 string    `yaml:"client_id"`
 	ClientSecret             string    `yaml:"client_secret"`
+	AppSecret                string    `yaml:"app_secret"`
 	AutomaticUpdatesEnabled  bool      `yaml:"automatic_updates_enabled"`
 	AutomaticBackupsEnabled  bool      `yaml:"automatic_backups_enabled"`
 }

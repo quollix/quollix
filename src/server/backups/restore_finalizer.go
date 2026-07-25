@@ -36,6 +36,7 @@ func (f *RestoreFinalizerImpl) FinalizeRestore(info *api.BackupInfo, snapshot *A
 		snapshot.Meta.Port,
 		snapshot.Meta.ClientId,
 		snapshot.Meta.ClientSecret,
+		snapshot.Meta.AppSecret,
 		snapshot.Meta.VersionCreationTimestamp,
 		snapshot.DockerComposeYamlContent,
 		true,

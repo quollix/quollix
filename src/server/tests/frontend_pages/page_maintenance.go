@@ -2,7 +2,6 @@ package frontend_pages
 
 import (
 	"server/tests/component"
-	"server/tools"
 	"strings"
 
 	"github.com/quollix/common/assert"
@@ -132,7 +131,7 @@ func (m *MaintenancePage) findRowByAppName(appName string) (*browsertest.Element
 }
 
 func (m *MaintenancePage) WaitForSampleMaintenanceState(expectedUpdatesEnabled, expectedBackupsEnabled bool) {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		updatedSample := component.GetInstalledSample(m.Frame.T, m.Frame.Client)
 		if updatedSample.AutomaticUpdatesEnabled != expectedUpdatesEnabled {
 			return u.Logger.NewError(

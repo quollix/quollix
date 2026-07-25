@@ -8,7 +8,6 @@ import (
 	"server/tests/component"
 	"server/tests/frontend_pages"
 	test_tools "server/tests/test_tools"
-	"server/tools"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -44,7 +43,7 @@ func TestOidcClientsPage(t *testing.T) {
 
 	page.RegenerateCredentials("sampleapp")
 
-	err = tools.Eventually(func() error {
+	err = u.Eventually(func() error {
 		newSampleAppFromBackend := component.GetInstalledSample(t, frame.Client)
 		if oldClientID == newSampleAppFromBackend.ClientId {
 			return u.Logger.NewError("client id was not regenerated")

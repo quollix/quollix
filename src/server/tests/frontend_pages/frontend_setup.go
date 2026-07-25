@@ -17,7 +17,7 @@ var (
 
 func Setup(t *testing.T) *FrameType {
 	if browser == nil {
-		browser = LaunchBrowser()
+		browser = newBrowser(t)
 		page = browser.InitialPage()
 	}
 

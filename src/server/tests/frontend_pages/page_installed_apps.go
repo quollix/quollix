@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"server/tools"
-
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
@@ -311,7 +309,7 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 
 	// After app start, Docker/network handover can briefly surface Chrome's transient ERR_NETWORK_CHANGED page
 	// even though the backend operation already finished. Retry until the tab shows the actual app content.
-	err = tools.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+	err = u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		timedTab := newTab.Timeout(browserTimeout)
 		defer timedTab.CancelTimeout()
 
@@ -333,15 +331,10 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 			return fmt.Errorf("unexpected sample app path: %q", parsedURL.Path)
 		}
 
-		bodyText, err := timedTab.Element("body")
+		text, err := timedTab.BodyText()
 		if err != nil {
 			return err
 		}
-		text, err := bodyText.Text()
-		if err != nil {
-			return err
-		}
-		text = strings.TrimSpace(text)
 		if strings.Contains(text, "ERR_NETWORK_CHANGED") {
 			if err := timedTab.Reload(); err != nil {
 				return err
@@ -358,7 +351,7 @@ func (i *InstalledAppsPage) OpenSampleAppInNewTabAndAssertSampleAppContent() *In
 }
 
 func (i *InstalledAppsPage) AssertAppStatusAndOpenButtonEventually(appName string, expectedIsRunning bool, expectedOpenButtonEnabled bool) *InstalledAppsPage {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		if err := i.Frame.Page.Reload(); err != nil {
 			return err
 		}

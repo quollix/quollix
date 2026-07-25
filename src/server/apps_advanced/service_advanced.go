@@ -27,6 +27,7 @@ type AppsServiceAdvancedImpl struct {
 	AppServiceHelper           apps_basic.AppServiceHelper
 	AppRepo                    apps_basic.AppRepository
 	ClientCredentialsGenerator apps_basic.ClientCredentialsGenerator
+	AuthHelper                 u.AuthHelper
 	BackupsService             backups.BackupService
 	SshRepo                    backup_server.SshRepository
 	VersionFileNameEncoder     apps_basic.VersionFileNameEncoder
@@ -63,6 +64,10 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.Binary
 	if err != nil {
 		return err
 	}
+	appSecret, err := a.AuthHelper.GenerateSecret()
+	if err != nil {
+		return err
+	}
 
 	app := apps_basic.NewRepoApp(
 		composeArchive.Maintainer,
@@ -70,7 +75,9 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.Binary
 		composeArchive.Version,
 		api.Policies.AdminOnlyAccessPolicy,
 		port,
-		clientId, clientSecret,
+		clientId,
+		clientSecret,
+		appSecret,
 		composeArchive.VersionCreationTimestamp,
 		versionFile.Content,
 		false,
@@ -190,6 +197,7 @@ func (b *AppsServiceAdvancedImpl) installNewVersion(app *apps_basic.RepoApp) err
 	downloadedRepoApp.ShouldBeRunning = app.ShouldBeRunning
 	downloadedRepoApp.ClientId = app.ClientId
 	downloadedRepoApp.ClientSecret = app.ClientSecret
+	downloadedRepoApp.AppSecret = app.AppSecret
 	err = b.AppService.UpsertAppInDatabase(downloadedRepoApp)
 	if err != nil {
 		return err

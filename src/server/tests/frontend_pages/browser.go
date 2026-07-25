@@ -11,12 +11,14 @@ import (
 
 const browserTimeout = 10 * time.Second
 
-func LaunchBrowser() *browsertest.Browser {
-	return browsertest.MustLaunchBrowser()
+func newBrowser(t *testing.T) *browsertest.Browser {
+	browser, err := browsertest.NewBrowser(false)
+	assert.Nil(t, err)
+	return browser
 }
 
 func NewBrowserFrame(t *testing.T, baseUrl string, client *api_client.QuollixClient) *FrameType {
-	browser := LaunchBrowser()
+	browser := newBrowser(t)
 	t.Cleanup(func() {
 		assert.Nil(t, browser.Close())
 	})

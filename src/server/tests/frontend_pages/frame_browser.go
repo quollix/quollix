@@ -1,10 +1,8 @@
 package frontend_pages
 
 import (
-	"server/tools"
-	"time"
-
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
 )
 
 type FrameBrowser struct {
@@ -12,14 +10,14 @@ type FrameBrowser struct {
 }
 
 func (b *FrameBrowser) DoAndWaitDOMContentLoaded(action func()) {
-	assert.Nil(b.Frame.T, b.Frame.Page.DoAndWaitLoad(action))
+	assert.Nil(b.Frame.T, b.Frame.Page.DoAndWaitLoad(func() error {
+		action()
+		return nil
+	}))
 }
 
 func (b *FrameBrowser) WaitForElement(selector string) *FrameType {
-	err := tools.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
-		_, findErr := b.Frame.Page.Element(selector)
-		return findErr
-	})
+	_, err := b.Frame.Page.WaitElementWithin(selector, browserTimeout)
 	assert.Nil(b.Frame.T, err)
 	return b.Frame
 }
@@ -32,32 +30,20 @@ func (b *FrameBrowser) ReloadPage() *FrameType {
 }
 
 func (b *FrameBrowser) ClickSidebarLink(groupId, itemId string) {
-	b.Frame.Page.MustElement("#" + groupId + " > summary").MustClick()
-	b.DoAndWaitDOMContentLoaded(func() {
-		b.Frame.Page.MustElement("#" + itemId).MustClick()
-	})
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#"+groupId+" > summary", browserTimeout))
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#"+itemId, browserTimeout))
 }
 
 func (b *FrameBrowser) ClickSidebarUserLink() {
-	b.DoAndWaitDOMContentLoaded(func() {
-		b.Frame.Page.MustElement("#sidebar-user-link").MustClick()
-	})
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#sidebar-user-link", browserTimeout))
+	b.Frame.Assert.PathEventually(api.Paths.FrontendAccount)
 }
 
 func (b *FrameBrowser) ClickSidebarTopLevelLink(itemID string) {
-	b.DoAndWaitDOMContentLoaded(func() {
-		b.Frame.Page.MustElement("#" + itemID).MustClick()
-	})
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#"+itemID, browserTimeout))
 }
 
 func (b *FrameBrowser) ConfirmDialog() *FrameType {
-	err := tools.Eventually(func() error {
-		confirmButton, findErr := b.Frame.Page.Element("#confirm-button")
-		if findErr != nil {
-			return findErr
-		}
-		return confirmButton.Click()
-	})
-	assert.Nil(b.Frame.T, err)
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElement("#confirm-button"))
 	return b.Frame
 }

@@ -1,7 +1,6 @@
 package frontend_pages
 
 import (
-	"server/tools"
 	"strings"
 
 	"github.com/quollix/common/assert"
@@ -43,7 +42,7 @@ func (b *BackedUpAppsPage) AssertLoadingBackedUpAppsVisible() *BackedUpAppsPage 
 }
 
 func (b *BackedUpAppsPage) assertParagraphTextVisible(expectedText string) error {
-	return tools.Eventually(func() error {
+	return u.Eventually(func() error {
 		paragraphs, err := b.Frame.Page.Elements("p")
 		if err != nil {
 			return err
@@ -93,7 +92,7 @@ func (b *BackedUpAppsPage) ListBackedUpApps() []BackedUpAppEntry {
 
 func (b *BackedUpAppsPage) GetRequiredBackedUpApp(maintainer, appName string) *BackedUpAppEntry {
 	var found *BackedUpAppEntry
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		apps := b.ListBackedUpApps()
 		for _, app := range apps {
 			if app.Maintainer == maintainer && app.AppName == appName {
@@ -109,7 +108,7 @@ func (b *BackedUpAppsPage) GetRequiredBackedUpApp(maintainer, appName string) *B
 }
 
 func (b *BackedUpAppsPage) waitUntilBackedUpAppsLoaded() {
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		isLoading, _, err := b.Frame.Page.Has("#backed-up-apps-loading-message")
 		if err != nil {
 			return err
@@ -136,7 +135,7 @@ func (b *BackedUpAppsPage) OpenListBackupsPage(maintainer, appName string) *Back
 
 func (b *BackedUpAppsPage) getRequiredBackedUpAppRow(maintainer, appName string) *browsertest.Element {
 	var found *browsertest.Element
-	err := tools.Eventually(func() error {
+	err := u.Eventually(func() error {
 		row, err := b.Frame.Page.Element("tr.backed-up-app-row")
 		if err != nil {
 			return err

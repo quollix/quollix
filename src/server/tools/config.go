@@ -38,6 +38,7 @@ var ComposeEnvVars = struct {
 	LegacyServerHost string
 	ClientId         string
 	ClientSecret     string
+	AppSecret        string
 
 	IanaTimeZone string
 }{
@@ -45,6 +46,7 @@ var ComposeEnvVars = struct {
 	LegacyServerHost: "SERVER_HOST",
 	ClientId:         "CLIENT_ID",
 	ClientSecret:     "CLIENT_SECRET",
+	AppSecret:        "APP_SECRET",
 	IanaTimeZone:     "IANA_TIMEZONE",
 }
 

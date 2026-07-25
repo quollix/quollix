@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"server/apps_basic"
+	"server/tools"
 	"testing"
 	"time"
 
@@ -21,6 +22,7 @@ func TestMetaCodecImpl_SaveLoadDeleteFile(t *testing.T) {
 	metaToSave := NewMetaData(
 		"clientIdValue",
 		"clientSecretValue",
+		"appSecretValue",
 		"accessPolicyValue",
 		"8080",
 		versionCreationTimestamp,
@@ -31,6 +33,7 @@ func TestMetaCodecImpl_SaveLoadDeleteFile(t *testing.T) {
 	clientCredentialsGeneratorMock := apps_basic.NewClientCredentialsGeneratorMock(t)
 	metaCodec := &MetaCodecImpl{
 		ClientCredentialsCreator: clientCredentialsGeneratorMock,
+		AuthHelper:               tools.NewAuthHelperMock(t),
 	}
 
 	assert.Nil(t, metaCodec.Save(metaPath, metaToSave))
@@ -43,6 +46,7 @@ func TestMetaCodecImpl_SaveLoadDeleteFile(t *testing.T) {
 	assert.True(t, metaToSave.VersionCreationTimestamp.Equal(loadedMeta.VersionCreationTimestamp))
 	assert.Equal(t, metaToSave.ClientId, loadedMeta.ClientId)
 	assert.Equal(t, metaToSave.ClientSecret, loadedMeta.ClientSecret)
+	assert.Equal(t, metaToSave.AppSecret, loadedMeta.AppSecret)
 
 	assert.Nil(t, os.Remove(metaPath))
 
@@ -59,6 +63,7 @@ func TestMetaCodecImpl_LoadGeneratesCredentialsIfMissing(t *testing.T) {
 	metaWithoutCredentials := NewMetaData(
 		"",
 		"",
+		"",
 		"accessPolicyValue",
 		"8080",
 		versionCreationTimestamp,
@@ -68,9 +73,12 @@ func TestMetaCodecImpl_LoadGeneratesCredentialsIfMissing(t *testing.T) {
 
 	clientCredentialsGeneratorMock := apps_basic.NewClientCredentialsGeneratorMock(t)
 	clientCredentialsGeneratorMock.EXPECT().Generate().Return("generatedClientId", "generatedClientSecret", nil)
+	authHelperMock := tools.NewAuthHelperMock(t)
+	authHelperMock.EXPECT().GenerateSecret().Return("generatedAppSecret", nil)
 
 	metaCodec := &MetaCodecImpl{
 		ClientCredentialsCreator: clientCredentialsGeneratorMock,
+		AuthHelper:               authHelperMock,
 	}
 
 	assert.Nil(t, metaCodec.Save(metaPath, metaWithoutCredentials))
@@ -80,6 +88,7 @@ func TestMetaCodecImpl_LoadGeneratesCredentialsIfMissing(t *testing.T) {
 
 	assert.Equal(t, "generatedClientId", loadedMeta.ClientId)
 	assert.Equal(t, "generatedClientSecret", loadedMeta.ClientSecret)
+	assert.Equal(t, "generatedAppSecret", loadedMeta.AppSecret)
 
 	clientCredentialsGeneratorMock.AssertExpectations(t)
 }

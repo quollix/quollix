@@ -34,6 +34,7 @@ func TestAppCreateAndRead(t *testing.T) {
 	AssertAppEquality(t, expectedApp, actualByName)
 	assert.Equal(t, 16, len(appById.ClientId))
 	assert.Equal(t, 64, len(actualByName.ClientSecret))
+	assert.Equal(t, 64, len(actualByName.AppSecret))
 
 	appsList, err := AppRepo.ListApps()
 	assert.Nil(t, err)
@@ -97,10 +98,13 @@ func TestUpdateApp(t *testing.T) {
 	app.AppId, err = AppRepo.CreateApp(app)
 	assert.Nil(t, err)
 
+	authHelper := &u.AuthHelperImpl{}
 	clientCredentialsGenerator := &apps_basic.ClientCredentialsGeneratorImpl{
-		AuthHelper: &u.AuthHelperImpl{},
+		AuthHelper: authHelper,
 	}
 	clientId, clientSecret, err := clientCredentialsGenerator.Generate()
+	assert.Nil(t, err)
+	appSecret, err := authHelper.GenerateSecret()
 	assert.Nil(t, err)
 	updatedApp := apps_basic.NewRepoApp(
 		"updated-maintainer",
@@ -110,6 +114,7 @@ func TestUpdateApp(t *testing.T) {
 		"8080",
 		clientId,
 		clientSecret,
+		appSecret,
 		time.Date(2025, time.January, 1, 12, 0, 0, 987654000, time.UTC),
 		[]byte("updated-content"),
 		false,

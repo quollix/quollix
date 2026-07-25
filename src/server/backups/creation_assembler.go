@@ -32,6 +32,6 @@ func (a *BackupCreationAssemblerImpl) BuildBackupCreation(app *apps_basic.RepoAp
 		backup_server.ApplicationVersionResticTag + "=" + tools.ApplicationVersion,
 	}
 
-	meta := NewMetaData(app.ClientId, app.ClientSecret, app.AccessPolicy, app.Port, app.VersionCreationTimestamp, app.AutomaticUpdatesEnabled, app.AutomaticBackupsEnabled)
+	meta := NewMetaData(app.ClientId, app.ClientSecret, app.AppSecret, app.AccessPolicy, app.Port, app.VersionCreationTimestamp, app.AutomaticUpdatesEnabled, app.AutomaticBackupsEnabled)
 	return backupCreation, resticTags, meta
 }

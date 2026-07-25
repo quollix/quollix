@@ -3,6 +3,7 @@ package app_store
 import (
 	"errors"
 	"server/apps_basic"
+	"server/tools"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ type appStoreServiceTestDependencies struct {
 	versionValidator           *VersionValidatorMock
 	versionVerifier            *VersionVerifierMock
 	clientCredentialsGenerator *apps_basic.ClientCredentialsGeneratorMock
+	authHelper                 *tools.AuthHelperMock
 	appServiceHelper           *apps_basic.AppServiceHelperMock
 }
 
@@ -34,11 +36,13 @@ func setupAppStoreServiceTestDependencies(t *testing.T) appStoreServiceTestDepen
 	versionValidator := NewVersionValidatorMock(t)
 	versionVerifier := NewVersionVerifierMock(t)
 	clientCredentialsGenerator := apps_basic.NewClientCredentialsGeneratorMock(t)
+	authHelper := tools.NewAuthHelperMock(t)
 	appServiceHelper := apps_basic.NewAppServiceHelperMock(t)
 
 	service := &AppStoreServiceImpl{
 		AppStoreClientLean:         appStoreClient,
 		ClientCredentialsGenerator: clientCredentialsGenerator,
+		AuthHelper:                 authHelper,
 		AppServiceHelper:           appServiceHelper,
 		VersionValidator:           versionValidator,
 		VersionVerifier:            versionVerifier,
@@ -50,6 +54,7 @@ func setupAppStoreServiceTestDependencies(t *testing.T) appStoreServiceTestDepen
 		versionValidator:           versionValidator,
 		versionVerifier:            versionVerifier,
 		clientCredentialsGenerator: clientCredentialsGenerator,
+		authHelper:                 authHelper,
 		appServiceHelper:           appServiceHelper,
 	}
 }
@@ -83,6 +88,7 @@ func TestDownloadVersion_CreatesRepoAppAfterValidation(t *testing.T) {
 		Validate(testDownloadedVersion.Content, testDownloadedVersion.Maintainer, testDownloadedVersion.AppName).
 		Return(nil)
 	testDependencies.clientCredentialsGenerator.EXPECT().Generate().Return("client-id", "client-secret", nil)
+	testDependencies.authHelper.EXPECT().GenerateSecret().Return("app-secret", nil)
 	testDependencies.appServiceHelper.EXPECT().GetPortFromComposeYaml(testDownloadedVersion.Content, testDownloadedVersion.AppName).Return("8080", nil)
 	testDependencies.versionVerifier.EXPECT().Verify(testDownloadedVersion).Return(nil)
 
@@ -96,5 +102,6 @@ func TestDownloadVersion_CreatesRepoAppAfterValidation(t *testing.T) {
 	assert.Equal(t, "8080", repoApp.Port)
 	assert.Equal(t, "client-id", repoApp.ClientId)
 	assert.Equal(t, "client-secret", repoApp.ClientSecret)
+	assert.Equal(t, "app-secret", repoApp.AppSecret)
 	assert.Equal(t, testDownloadedVersion.Content, repoApp.VersionContent)
 }
