@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"server/configs"
 	"server/users"
+	"time"
 
 	u "github.com/quollix/common/utils"
 )
@@ -60,8 +61,25 @@ func (a *AppRequestProxy) ProxyRequestToTheAppsDockerContainer(w http.ResponseWr
 		return
 	}
 
+	allowLongLivedConnection(w, app)
+
 	proxy := a.AppReverseProxyFactory.CreateProxyRequest(r, *app)
 	proxy.ServeHTTP(w, r)
+}
+
+// Jitsi keeps XMPP WebSocket connections open for the whole call. The server deadlines are useful for normal requests, but would close those calls.
+func allowLongLivedConnection(w http.ResponseWriter, app *AppRequestData) {
+	if app.AppName != "jitsi" {
+		return
+	}
+
+	responseController := http.NewResponseController(w)
+	if err := responseController.SetReadDeadline(time.Time{}); err != nil {
+		u.Logger.Error(err, "app", app.AppName)
+	}
+	if err := responseController.SetWriteDeadline(time.Time{}); err != nil {
+		u.Logger.Error(err, "app", app.AppName)
+	}
 }
 
 func (a *AppRequestProxy) exchangeSecretAgainstAuthenticationCookieAndInstructBrowserToRepeatThatRequest(w http.ResponseWriter, r *http.Request, urlSecret string, app *AppRequestData) error {
