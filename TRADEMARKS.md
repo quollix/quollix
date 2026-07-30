@@ -1,6 +1,6 @@
 # Quollix Trademarks and Branding
 
-This policy covers Quollix branding, including the project name, logo, visual identity, and other brand assets.
+This policy covers Quollix branding, including the project name, logo, visual identity, personal photo, and other brand assets.
 
 ## Permitted Use
 
