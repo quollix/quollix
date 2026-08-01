@@ -35,12 +35,11 @@ window.updateOperationIndicator = async function() {
       currentOperationElement.textContent = ''
     }
 
-    const finishedAppOperations = data.app_operations_finished || []
-    const shouldReloadForFinishedOperation =
+    const shouldReloadForAppOperation =
       window.location.pathname === '{{ $.Static.Paths.FrontendInstalledApps }}' ||
       window.location.pathname === '{{ $.Static.Paths.FrontendListBackups }}'
 
-    if (finishedAppOperations.length > 0 && shouldReloadForFinishedOperation) {
+    if (data.app_operations_revision !== window.renderedAppOperationsRevision && shouldReloadForAppOperation) {
       window.location.reload()
       return
     }

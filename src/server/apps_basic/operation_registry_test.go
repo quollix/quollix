@@ -63,7 +63,7 @@ func TestTryBlockAppOperationTreatsPostgresAsGlobalBlocking(t *testing.T) {
 	handle.Done()
 }
 
-func TestTryBlockAppOperationReportsFinishedPostgresOperation(t *testing.T) {
+func TestTryBlockAppOperationIncrementsRevisionForPostgresOperation(t *testing.T) {
 	registry := OperationRegistryImpl{}
 
 	handle, err := registry.TryBlockAppOperation(u.OfficialDatabaseAppName, postgresOperationDescription)
@@ -71,7 +71,7 @@ func TestTryBlockAppOperationReportsFinishedPostgresOperation(t *testing.T) {
 
 	handle.Done()
 
-	assert.Equal(t, []string{postgresOperationDescription}, registry.ListFinishedAppOperations())
+	assert.Equal(t, 1, registry.AppOperationsRevision())
 }
 
 func TestTryBlockGlobalOperationBlocksWhileAppBlockingOperationRuns(t *testing.T) {
@@ -141,7 +141,7 @@ func TestTryBlockAppOperationEmptyAppNameReturnsError(t *testing.T) {
 	assert.Equal(t, "app name must not be empty", u.ExtractError(err))
 }
 
-func TestFinishedAppOperationsIncludeFinishedAppOperations(t *testing.T) {
+func TestAppOperationsRevisionIncrementsForFinishedAppOperations(t *testing.T) {
 	registry := OperationRegistryImpl{}
 
 	waitingHandle := registry.RegisterOperation(waitingOperationDescription)
@@ -156,20 +156,14 @@ func TestFinishedAppOperationsIncludeFinishedAppOperations(t *testing.T) {
 
 	waitingHandle.Done()
 
-	assert.Equal(t, []string{xwikiOperationDescription, vaultwardenOperationDescription}, registry.ListFinishedAppOperations())
+	assert.Equal(t, 2, registry.AppOperationsRevision())
 }
 
-func TestClearFinishedAppOperationsRemovesFinishedOperations(t *testing.T) {
+func TestAppOperationsRevisionIgnoresFinishedNonAppOperations(t *testing.T) {
 	registry := OperationRegistryImpl{}
 
-	handle, err := registry.TryBlockAppOperation("xwiki", xwikiOperationDescription)
-	assert.Nil(t, err)
-
+	handle := registry.RegisterOperation(waitingOperationDescription)
 	handle.Done()
 
-	assert.Equal(t, []string{xwikiOperationDescription}, registry.ListFinishedAppOperations())
-
-	registry.ClearFinishedAppOperations()
-
-	assert.Equal(t, []string{}, registry.ListFinishedAppOperations())
+	assert.Equal(t, 0, registry.AppOperationsRevision())
 }

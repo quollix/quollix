@@ -15,8 +15,7 @@ type OperationRegistry interface {
 	TryBlockGlobalOperation(description string) (OperationHandle, error)
 	RegisterOperation(description string) OperationHandle
 	ListOperations() []string
-	ListFinishedAppOperations() []string
-	ClearFinishedAppOperations()
+	AppOperationsRevision() int
 }
 
 type OperationHandle interface {
@@ -43,7 +42,7 @@ type OperationRegistryImpl struct {
 	mutex                 sync.Mutex
 	nextId                int
 	operations            map[int]operationEntry
-	finishedAppOperations []string
+	appOperationsRevision int
 }
 
 type operationHandle struct {
@@ -109,22 +108,11 @@ func (o *OperationRegistryImpl) ListOperations() []string {
 	return result
 }
 
-func (o *OperationRegistryImpl) ListFinishedAppOperations() []string {
+func (o *OperationRegistryImpl) AppOperationsRevision() int {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	if len(o.finishedAppOperations) == 0 {
-		return []string{}
-	}
-
-	return append([]string(nil), o.finishedAppOperations...)
-}
-
-func (o *OperationRegistryImpl) ClearFinishedAppOperations() {
-	o.mutex.Lock()
-	defer o.mutex.Unlock()
-
-	o.finishedAppOperations = nil
+	return o.appOperationsRevision
 }
 
 func (o *OperationRegistryImpl) tryRegisterBlockingOperationLocked(appName, description string, scope operationScope) (OperationHandle, error) {
@@ -165,7 +153,7 @@ func (o *OperationRegistryImpl) unregister(id int) {
 	entry, ok := o.operations[id]
 	delete(o.operations, id)
 	if ok && entry.IsReportedAppOperation {
-		o.finishedAppOperations = append(o.finishedAppOperations, entry.Description)
+		o.appOperationsRevision++
 	}
 }
 

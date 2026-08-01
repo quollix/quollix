@@ -198,10 +198,14 @@ func (a *AppsHandler) AppPruneHandler(w http.ResponseWriter, r *http.Request) {
 
 func (a *AppsHandler) AppOperationInfoHandler(w http.ResponseWriter, r *http.Request) {
 	operations := a.OperationRegistry.ListOperations()
-	response := api.AppOperationInfoResponse{
+	response := struct {
+		Operations            []string `json:"operations"`
+		IsOngoing             bool     `json:"is_ongoing"`
+		AppOperationsRevision int      `json:"app_operations_revision"`
+	}{
 		Operations:            operations,
 		IsOngoing:             len(operations) > 0,
-		AppOperationsFinished: a.OperationRegistry.ListFinishedAppOperations(),
+		AppOperationsRevision: a.OperationRegistry.AppOperationsRevision(),
 	}
 	u.SendJsonResponse(w, response)
 }

@@ -39,10 +39,11 @@ type Auth struct {
 }
 
 type PageGlobals struct {
-	Auth                Auth
-	Config              *tools.GlobalConfig
-	Host                string
-	InfoIconRedirectUrl string
+	Auth                  Auth
+	Config                *tools.GlobalConfig
+	Host                  string
+	InfoIconRedirectUrl   string
+	AppOperationsRevision int
 }
 
 type StaticTemplateGlobals struct {
@@ -67,8 +68,6 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 		auth.IsAdmin = user.IsAdmin
 	}
 
-	p.OperationRegistry.ClearFinishedAppOperations()
-
 	host, err := p.ConfigsService.GetBaseDomain()
 	if err != nil {
 		p.PageCreationFailed(request.ResponseWriter, err)
@@ -79,10 +78,11 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 		PageName:  request.PageName,
 		PageTitle: request.PageTitle,
 		Globals: PageGlobals{
-			Auth:                auth,
-			Config:              p.Config,
-			Host:                host,
-			InfoIconRedirectUrl: infoIconRedirectUrl(request.InfoIconRedirectPath, auth.IsAdmin),
+			Auth:                  auth,
+			Config:                p.Config,
+			Host:                  host,
+			InfoIconRedirectUrl:   infoIconRedirectUrl(request.InfoIconRedirectPath, auth.IsAdmin),
+			AppOperationsRevision: p.OperationRegistry.AppOperationsRevision(),
 		},
 		Page: request.Content,
 	})

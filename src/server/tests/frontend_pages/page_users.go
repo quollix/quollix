@@ -3,7 +3,6 @@ package frontend_pages
 import (
 	"fmt"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/quollix/common/assert"
@@ -40,22 +39,20 @@ const (
 
 func (u *UsersPage) CreateUser(username, email string) *UsersPage {
 	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
-	u.Frame.Page.MustElement(createUsernameInputSelector).MustInput(username)
-	u.Frame.Page.MustElement(createUserEmailInputSelector).MustInput(email)
-	u.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		u.Frame.Page.MustElement(createUserButtonSelector).MustClick()
-	})
+	u.Frame.Controls.GetRequiredElement(createUsernameInputSelector).MustInput(username)
+	u.Frame.Controls.GetRequiredElement(createUserEmailInputSelector).MustInput(email)
+	u.Frame.Controls.GetRequiredElement(createUserButtonSelector).MustClick()
+	u.Frame.Assert.SnackbarVisibleWithTextEventually("User invited successfully.")
 	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
 	return u
 }
 
 func (u *UsersPage) CreateUserViaEmail(username, email string) *UsersPage {
 	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
-	u.Frame.Page.MustElement(createUsernameInputSelector).MustInput(username)
-	u.Frame.Page.MustElement(createUserEmailInputSelector).MustInput(email)
-	u.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		u.Frame.Page.MustElement(createUserViaEmailButtonSelector).MustClick()
-	})
+	u.Frame.Controls.GetRequiredElement(createUsernameInputSelector).MustInput(username)
+	u.Frame.Controls.GetRequiredElement(createUserEmailInputSelector).MustInput(email)
+	u.Frame.Controls.GetRequiredElement(createUserViaEmailButtonSelector).MustClick()
+	u.Frame.Assert.SnackbarVisibleWithTextEventually("Invitation email sent successfully.")
 	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
 	return u
 }
@@ -81,64 +78,110 @@ func (u *UsersPage) AssertInviteViaEmailButtonDisabled(expected bool) *UsersPage
 }
 
 func (u *UsersPage) ListUsers() []UserListEntry {
-	return listUsers(u.Frame.Page, u.Frame.T)
+	users, err := tryListUsers(u.Frame.Page)
+	assert.Nil(u.Frame.T, err)
+	return users
 }
 
-func listUsers(page *browsertest.Page, t *testing.T) []UserListEntry {
+func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 	rows, err := page.Elements(`tr.user-row`)
-	assert.Nil(t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	out := make([]UserListEntry, 0, len(rows))
 	for _, row := range rows {
 		nameCell, err := row.Element(".user-name-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		name, err := nameCell.Text()
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		emailCell, err := row.Element(".user-email-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		email, err := emailCell.Text()
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		roleCell, err := row.Element(".user-role-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		role, err := roleCell.Text()
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		enabledCell, err := row.Element(".user-enabled-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		enabledCheckbox, err := enabledCell.Element(".user-enabled-checkbox")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		isEnabled, err := enabledCheckbox.Property("checked")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		createdCell, err := row.Element(".user-created-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		created, err := createdCell.Text()
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		invitationCell, err := row.Element(".user-invitation-expiration-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		invitationExpiration, err := invitationCell.Text()
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		passwordLinkCell, err := row.Element(".user-password-link-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		passwordLinkCellText, err := passwordLinkCell.Text()
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		passwordLinkPresent, _, err := passwordLinkCell.Has(".copy-to-clipboard-button")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		actionsCell, err := row.Element(".user-actions-cell")
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		editButtonPresent, _, err := actionsCell.Has(`button.user-edit-button`)
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		resetButtonPresent, _, err := actionsCell.Has(`button.user-reset-password-button`)
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		sendPasswordResetEmailButtonPresent, _, err := actionsCell.Has(`button.user-send-password-reset-email-button`)
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		deleteButtonPresent, _, err := actionsCell.Has(`button.user-delete-button`)
-		assert.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 
 		out = append(out, UserListEntry{
 			Name:                                strings.TrimSpace(name),
@@ -155,12 +198,15 @@ func listUsers(page *browsertest.Page, t *testing.T) []UserListEntry {
 			DeleteButtonPresent:                 deleteButtonPresent,
 		})
 	}
-	return out
+	return out, nil
 }
 
 func (u *UsersPage) AssertUserInList(username, email string) *UsersPage {
 	err := utils.EventuallyWithTimeout(defaultTimeout, 50*time.Millisecond, func() error {
-		users := listUsers(u.Frame.Page, u.Frame.T)
+		users, err := tryListUsers(u.Frame.Page)
+		if err != nil {
+			return err
+		}
 		for _, entry := range users {
 			if entry.Name == username && entry.Email == email {
 				return nil

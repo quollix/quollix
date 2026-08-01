@@ -204,6 +204,7 @@
 
     {{ if .Globals.Auth.IsAdmin }}
     <script>
+        window.renderedAppOperationsRevision = {{ .Globals.AppOperationsRevision }}
         window.addEventListener('load', () => {
             window.startOperationIndicatorPolling()
         })
