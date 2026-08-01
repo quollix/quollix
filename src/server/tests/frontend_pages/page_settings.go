@@ -93,12 +93,6 @@ func (s *SettingsPage) AssertDnsChallengeResult(recordName, wildcardKeyAuth stri
 	return s
 }
 
-func (s *SettingsPage) EnterBackupServerHostAndPort(host, port string) *SettingsPage {
-	s.Frame.Controls.SetInputValue(`input[name="backupServerHost"]`, host)
-	s.Frame.Controls.SetInputValue(`input[name="backupServerSshPort"]`, port)
-	return s
-}
-
 func (s *SettingsPage) AssertBackupServerKnownHostsValue(expected string) *SettingsPage {
 	err := u.Eventually(func() error {
 		if actual := s.Frame.Controls.GetInputValue("#backup-server-known-hosts"); actual != expected {
@@ -114,18 +108,36 @@ func (s *SettingsPage) GetBackupServerKnownHosts() string {
 	return s.Frame.Controls.GetInputValue("#backup-server-known-hosts")
 }
 
-func (s *SettingsPage) GetKnownHostsAndAssertValid() *SettingsPage {
-	s.Frame.Controls.GetRequiredElement("#backup-server-get-known-hosts-button").MustClick()
+func (s *SettingsPage) EnterBackupServerHostAndPortAndGetKnownHostsAndAssertValid(host, port string) *SettingsPage {
+	// Getting known hosts starts the SSH helper container, which can trigger NETWORK_CHANGED in the browser.
+	// A simple reload usually recovers from that, but this form loses unsaved SSH data on reload, so retry the whole input flow.
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 1*time.Second, func() error {
+		s.Frame.Controls.SetInputValue(`input[name="backupServerHost"]`, host)
+		s.Frame.Controls.SetInputValue(`input[name="backupServerSshPort"]`, port)
+		s.Frame.Controls.SetInputValue("#backup-server-known-hosts", "")
+		s.Frame.Controls.GetRequiredElement("#backup-server-get-known-hosts-button").MustClick()
 
-	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
+		readErr := s.waitUntilKnownHostsValueIsValid()
+		if readErr == nil {
+			return nil
+		}
+
+		s.Frame.Browser.ReloadPage()
+		s.Frame.Assert.PagePath(api.Paths.FrontendSettings)
+		return readErr
+	})
+	assert.Nil(s.Frame.T, err)
+	return s
+}
+
+func (s *SettingsPage) waitUntilKnownHostsValueIsValid() error {
+	return u.EventuallyWithTimeout(browserTimeout, 100*time.Millisecond, func() error {
 		actual := s.Frame.Controls.GetInputValue("#backup-server-known-hosts")
 		if actual == "" {
 			return fmt.Errorf("backup server known hosts value is still empty")
 		}
 		return validation.Validate("SshKnownHosts", validation.FieldKnownHosts, actual)
 	})
-	assert.Nil(s.Frame.T, err)
-	return s
 }
 
 func (s *SettingsPage) EnterBackupServerSshUserAndPassword(user, password string) *SettingsPage {

@@ -2,9 +2,11 @@ package component
 
 import (
 	"crypto/tls"
+	"net/http"
+	"net/url"
+	"strings"
 	"testing"
 
-	"server/apps_basic"
 	"server/certificates"
 	"server/tools"
 
@@ -17,10 +19,11 @@ import (
 )
 
 const (
-	SampleUsername      = "user"
-	SampleUserPassword  = "userpassword"
-	SampleUserEmail     = "user@example.invalid"
-	SampleRealUserEmail = "user@example.com"
+	SampleUsername             = "user"
+	SampleUserPassword         = "userpassword"
+	SampleUserEmail            = "user@example.invalid"
+	SampleRealUserEmail        = "user@example.com"
+	installedAppsURLForTesting = "https://quollix.localhost/installed-apps"
 )
 
 type AccessPolicyTestCase struct {
@@ -104,21 +107,63 @@ func RunAccessPoliciesTest(t *testing.T, adminClient *api_client.QuollixClient, 
 			}
 
 			for _, currentActor := range actors {
-				assert.Equal(t, expectedAccessByActorName[currentActor.name], hasVisibleSampleApp(ListInstalledApps(t, currentActor.client)))
+				expectedAccess := expectedAccessByActorName[currentActor.name]
+				assert.Equal(t, expectedAccess, hasVisibleSampleApp(ListInstalledApps(t, currentActor.client)))
 
-				contentClient := currentActor.client
+				var appCookie *http.Cookie
 				if !currentActor.isAnonymous {
-					contentClient = GetAppClient(t, currentActor.client)
+					appCookie = GetAppClient(t, currentActor.client).Parent.Cookie
 				}
-				err := AssertSampleAppDefaultContent(contentClient, currentActor.isAnonymous)
-				if expectedAccessByActorName[currentActor.name] {
-					assert.Nil(t, err)
-				} else {
-					u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
-				}
+				assertAppAccessPolicyResponse(t, appCookie, currentActor.isAnonymous, expectedAccess)
 			}
 		})
 	}
+}
+
+func assertAppAccessPolicyResponse(t *testing.T, appCookie *http.Cookie, isAnonymous bool, expectedAccess bool) {
+	statusCode, headers, body, err := requestSampleAppWithUrlNoRedirect(sampleAppHttpsUrl+sampleEndpoint, appCookie)
+	assert.Nil(t, err)
+	if expectedAccess {
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.Equal(t, sampleBodyV20, body)
+		return
+	}
+	if isAnonymous {
+		assert.Equal(t, http.StatusFound, statusCode)
+		assertAppOpenRedirect(t, headers.Get("Location"))
+		return
+	}
+	assertAppUnavailablePage(t, statusCode, body)
+}
+
+func AssertSampleAppUnavailablePage(t *testing.T, appCookie *http.Cookie) {
+	statusCode, _, body, err := requestSampleAppWithUrlNoRedirect(sampleAppHttpsUrl+sampleEndpoint, appCookie)
+	assert.Nil(t, err)
+	assertAppUnavailablePage(t, statusCode, body)
+}
+
+func AssertSampleAppOpenRedirect(t *testing.T, appCookie *http.Cookie) {
+	statusCode, headers, _, err := requestSampleAppWithUrlNoRedirect(sampleAppHttpsUrl+sampleEndpoint, appCookie)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusFound, statusCode)
+	assertAppOpenRedirect(t, headers.Get("Location"))
+}
+
+func assertAppUnavailablePage(t *testing.T, statusCode int, body string) {
+	assert.Equal(t, http.StatusForbidden, statusCode)
+	assert.True(t, strings.Contains(body, tools.AppUnavailableTitle))
+	assert.True(t, strings.Contains(body, tools.AppUnavailableMessage))
+	assert.True(t, strings.Contains(body, installedAppsURLForTesting))
+}
+
+func assertAppOpenRedirect(t *testing.T, location string) {
+	redirectURL, err := url.Parse(location)
+	assert.Nil(t, err)
+	assert.Equal(t, "https", redirectURL.Scheme)
+	assert.Equal(t, "quollix.localhost", redirectURL.Host)
+	assert.Equal(t, api.Paths.FrontendAppOpen, redirectURL.Path)
+	assert.Equal(t, tools.SampleApp, redirectURL.Query().Get("app"))
+	assert.Equal(t, sampleEndpoint, redirectURL.Query().Get("path"))
 }
 
 func ListUsers(t *testing.T, client *api_client.QuollixClient) []api.User {

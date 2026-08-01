@@ -155,6 +155,9 @@ func (s *UserServiceImpl) setUserPassword(user *api.User, newPassword string) er
 }
 
 func (s *UserServiceImpl) InviteUser(username, email string) (*InvitationDetails, error) {
+	if email == "" {
+		email = ReservedEmailForUsername(username)
+	}
 	if err := ValidateReservedEmail(username, email); err != nil {
 		return nil, err
 	}

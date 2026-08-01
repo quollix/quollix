@@ -60,6 +60,26 @@ func (u *UsersPage) CreateUserViaEmail(username, email string) *UsersPage {
 	return u
 }
 
+func (u *UsersPage) SetInviteEmail(email string) *UsersPage {
+	u.Frame.Assert.PagePath(api.Paths.FrontendUsers)
+	u.Frame.Page.MustElement(createUserEmailInputSelector).MustSelectAllText().MustInput(email)
+	return u
+}
+
+func (u *UsersPage) AssertInviteEmailRequired(expected bool) *UsersPage {
+	required, err := u.Frame.Page.MustElement(createUserEmailInputSelector).Property("required")
+	assert.Nil(u.Frame.T, err)
+	assert.Equal(u.Frame.T, expected, required.Bool())
+	return u
+}
+
+func (u *UsersPage) AssertInviteViaEmailButtonDisabled(expected bool) *UsersPage {
+	disabled, err := u.Frame.Page.MustElement(createUserViaEmailButtonSelector).Property("disabled")
+	assert.Nil(u.Frame.T, err)
+	assert.Equal(u.Frame.T, expected, disabled.Bool())
+	return u
+}
+
 func (u *UsersPage) ListUsers() []UserListEntry {
 	return listUsers(u.Frame.Page, u.Frame.T)
 }

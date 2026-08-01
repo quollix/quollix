@@ -282,6 +282,7 @@ func (h *HandlerRegisterer) frontendRoutes() []users.Route {
 		{Path: api.Paths.FrontendInstalledApps, HandlerFunc: h.TemplateHandler.InstalledAppsHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.FrontendIndex, HandlerFunc: h.TemplateHandler.InstalledAppsHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.FrontendSignIn, HandlerFunc: h.TemplateHandler.SignInHandler, AccessLevel: tools.AnonymousLevel},
+		{Path: api.Paths.FrontendAppOpen, HandlerFunc: h.TemplateHandler.OpenInstalledAppHandler, AccessLevel: tools.UserLevel},
 		{Path: api.Paths.FrontendAccount, HandlerFunc: h.TemplateHandler.AccountPageHandler, AccessLevel: tools.UserLevel},
 		{Path: api.Paths.FrontendSettings, HandlerFunc: h.TemplateHandler.SettingsHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendUsers, HandlerFunc: h.TemplateHandler.UsersHandler, AccessLevel: tools.AdminLevel},

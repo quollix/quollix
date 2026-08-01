@@ -2,6 +2,7 @@ package apps_basic
 
 import (
 	"net/http"
+	"server/tools"
 	"server/users"
 	"time"
 
@@ -10,9 +11,18 @@ import (
 )
 
 type AppSessionService interface {
-	AuthorizeAppRequest(r *http.Request, app *AppRequestData) error
+	AuthorizeAppRequest(r *http.Request, app *AppRequestData) (AppRequestAuthorizationStatus, error)
 	CreateAppSessionCookieFromSecret(urlSecret string, app *AppRequestData) (*http.Cookie, error)
 }
+
+type AppRequestAuthorizationStatus int
+
+const (
+	AppRequestAuthorizationUnknown AppRequestAuthorizationStatus = iota
+	AppRequestAuthorized
+	AppRequestMissingSession
+	AppRequestAccessDenied
+)
 
 type AppSessionServiceImpl struct {
 	UserService            users.UserService
@@ -21,9 +31,9 @@ type AppSessionServiceImpl struct {
 	Authorizer             Authorizer
 }
 
-func (a *AppSessionServiceImpl) AuthorizeAppRequest(r *http.Request, app *AppRequestData) error {
+func (a *AppSessionServiceImpl) AuthorizeAppRequest(r *http.Request, app *AppRequestData) (AppRequestAuthorizationStatus, error) {
 	if app.AccessPolicy == api.Policies.PublicAccessPolicy {
-		return nil
+		return AppRequestAuthorized, nil
 	}
 
 	userId, role, err := a.UserService.GetUserIdAndRoleFromRequestForAudience(
@@ -31,10 +41,20 @@ func (a *AppSessionServiceImpl) AuthorizeAppRequest(r *http.Request, app *AppReq
 		users.SessionAudience(app.Maintainer, app.AppName),
 	)
 	if err != nil {
-		return err
+		return AppRequestAuthorizationUnknown, err
+	}
+	if role == tools.AnonymousLevel {
+		return AppRequestMissingSession, nil
 	}
 
-	return a.Authorizer.Authorize(app.AccessPolicy, role, userId, app.AppName)
+	err = a.Authorizer.Authorize(app.AccessPolicy, role, userId, app.AppName)
+	if err == nil {
+		return AppRequestAuthorized, nil
+	}
+	if u.ExtractError(err) == AccessDeniedError {
+		return AppRequestAccessDenied, nil
+	}
+	return AppRequestAuthorizationUnknown, err
 }
 
 func (a *AppSessionServiceImpl) CreateAppSessionCookieFromSecret(urlSecret string, app *AppRequestData) (*http.Cookie, error) {

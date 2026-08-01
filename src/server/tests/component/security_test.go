@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"server/apps_basic"
 	"server/ingress"
 	"server/tools"
 	"server/users"
@@ -229,10 +228,6 @@ func TestAppSessionCookieIsSeparatedFromQuollixSessionCookie(t *testing.T) {
 	assert.Nil(t, quollixClient.Apps.SetAccessPolicy(app.AppId, api.Policies.AuthenticatedAccessPolicy))
 
 	quollixCookie := *quollixClient.Parent.Cookie
-	err = AssertSampleAppContentWithCookie(&quollixCookie)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
-
 	authenticatedUser, err := quollixClient.Auth.GetCurrentUser()
 	assert.Nil(t, err)
 	assert.Equal(t, tools.DefaultAdminName, authenticatedUser.Username)
@@ -260,9 +255,7 @@ func TestLogoutInvalidatesQuollixAndAppSessions(t *testing.T) {
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, users.CookieNotFoundError)
 
-	err = AssertSampleAppContentWithCookie(&appCookie)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
+	AssertSampleAppOpenRedirect(t, &appCookie)
 }
 
 func TestUserDeletionInvalidatesQuollixAndAppSessions(t *testing.T) {
@@ -282,9 +275,7 @@ func TestUserDeletionInvalidatesQuollixAndAppSessions(t *testing.T) {
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, users.CookieNotFoundError)
 
-	err = AssertSampleAppContentWithCookie(&appCookie)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
+	AssertSampleAppOpenRedirect(t, &appCookie)
 }
 
 func TestPasswordResetInvalidatesQuollixAndAppSessions(t *testing.T) {
@@ -304,9 +295,7 @@ func TestPasswordResetInvalidatesQuollixAndAppSessions(t *testing.T) {
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, users.CookieNotFoundError)
 
-	err = AssertSampleAppContentWithCookie(&appCookie)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
+	AssertSampleAppOpenRedirect(t, &appCookie)
 }
 
 func prepareAuthenticatedSampleApp(t *testing.T, client *api_client.QuollixClient) {

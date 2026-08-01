@@ -2,46 +2,38 @@ package apps_basic
 
 import (
 	"net/http"
-	"server/configs"
+	"net/url"
+	"server/tools"
 	"server/users"
 	"time"
 
+	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
 type AppRequestProxy struct {
-	ConfigsService         configs.ConfigsService
-	AppRepo                AppRepository
+	AppRequestResolver     AppRequestResolver
 	AppSessionService      AppSessionService
 	AppRequestParser       AppRequestParser
 	AppReverseProxyFactory AppReverseProxyFactory
 }
 
 var (
-	expectedAccessDeniedErrors       = u.MapOf(AccessDeniedError)
 	expectedSecretDoesNotExistErrors = u.MapOf(users.SecretDoesNotExistError)
 )
 
 func (a *AppRequestProxy) ProxyRequestToTheAppsDockerContainer(w http.ResponseWriter, r *http.Request) {
 	u.Logger.Debug("Proxying request")
-	requestHost := a.AppRequestParser.GetHostFromRequestHost(r.Host)
-	baseDomain, err := a.ConfigsService.GetBaseDomain()
+	resolvedAppRequest, err := a.AppRequestResolver.ResolveAppRequest(r)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
 	}
-
-	appName, err := a.AppRequestParser.GetAppNameFromRequestHost(requestHost, baseDomain)
-	if err != nil {
-		u.WriteResponseError(w, nil, err)
+	if !resolvedAppRequest.AppExists {
+		a.writeAppUnavailablePage(w, resolvedAppRequest.BaseDomain)
 		return
 	}
-
-	app, err := a.AppRepo.GetAppRequestData(appName)
-	if err != nil {
-		u.WriteResponseError(w, nil, err)
-		return
-	}
+	app := resolvedAppRequest.App
 
 	secret, isPresent, isValidValue := a.AppRequestParser.GetQuerySecret(r)
 	if !isValidValue {
@@ -56,19 +48,52 @@ func (a *AppRequestProxy) ProxyRequestToTheAppsDockerContainer(w http.ResponseWr
 		return
 	}
 
-	if err = a.AppSessionService.AuthorizeAppRequest(r, app); err != nil {
-		u.WriteResponseError(w, expectedAccessDeniedErrors, err, "path", r.URL.String())
+	authorizationStatus, err := a.AppSessionService.AuthorizeAppRequest(r, app)
+	if err != nil {
+		u.WriteResponseError(w, nil, err, "path", r.URL.String())
+		return
+	}
+	switch authorizationStatus {
+	case AppRequestAuthorized:
+	case AppRequestMissingSession:
+		a.redirectToBrandAppOpen(w, r, resolvedAppRequest.BaseDomain, app.AppName)
+		return
+	case AppRequestAccessDenied:
+		a.writeAppUnavailablePage(w, resolvedAppRequest.BaseDomain)
+		return
+	default:
+		u.WriteResponseErrorAlways(w, u.Logger.NewError("unknown app request authorization status"))
 		return
 	}
 
-	allowLongLivedConnection(w, app)
+	considerAllowingLongLivedConnection(w, app)
 
 	proxy := a.AppReverseProxyFactory.CreateProxyRequest(r, *app)
 	proxy.ServeHTTP(w, r)
 }
 
+func (a *AppRequestProxy) writeAppUnavailablePage(w http.ResponseWriter, baseDomain string) {
+	if err := tools.WriteAppUnavailablePage(w, baseDomain); err != nil {
+		u.Logger.Error(err)
+	}
+}
+
+func (a *AppRequestProxy) redirectToBrandAppOpen(w http.ResponseWriter, r *http.Request, baseDomain, appName string) {
+	openURL := url.URL{
+		Scheme: "https",
+		Host:   tools.BrandAppDomainPrefix + baseDomain,
+		Path:   api.Paths.FrontendAppOpen,
+	}
+	query := openURL.Query()
+	query.Set("app", appName)
+	query.Set("path", r.URL.RequestURI())
+	openURL.RawQuery = query.Encode()
+
+	http.Redirect(w, r, openURL.String(), http.StatusFound)
+}
+
 // Jitsi keeps XMPP WebSocket connections open for the whole call. The server deadlines are useful for normal requests, but would close those calls.
-func allowLongLivedConnection(w http.ResponseWriter, app *AppRequestData) {
+func considerAllowingLongLivedConnection(w http.ResponseWriter, app *AppRequestData) {
 	if app.AppName != "jitsi" {
 		return
 	}

@@ -66,6 +66,16 @@ func TestInviteViaEmailFailsWhenEmailIsDisabled(t *testing.T) {
 	u.AssertDeepStackErrorFromRequest(t, err, u.EmailServiceNotEnabledErrorMessage)
 }
 
+func TestInviteViaEmailRejectsEmptyEmail(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	assert.Nil(t, client.Email.SaveConfig(configs.GetSampleEmailConfig()))
+	err := client.Email.InviteViaEmail(SampleUsername, "")
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, "Invalid input. The content of the field Email must be a valid email address.")
+}
+
 func TestSendTestEmail(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()

@@ -2,11 +2,12 @@
 <form id="create-user-form" class="inline-form-row">
   <input id="create-user-name-input" class="input-medium" name="username" type="text" placeholder="Enter user name"
     required>
-  <input id="create-user-email-input" class="input-medium" name="email" type="email" placeholder="Enter email" required>
+  <input id="create-user-email-input" class="input-medium" name="email" type="email" placeholder="Email (optional)"
+    oninput="updateInviteViaEmailButtonState()">
   <button id="create-user-button" type="button" onclick="createUser(username.value, email.value)">Invite</button>
   {{if $.Page.IsEmailEnabled}}
   <button id="create-user-via-email-button" type="button"
-    onclick="createUserViaEmail(username.value, email.value)">Invite via Email</button>
+    onclick="createUserViaEmail(username.value, email.value)" disabled>Invite via Email</button>
   {{end}}
 </form>
 

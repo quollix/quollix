@@ -4,7 +4,6 @@ package component
 
 import (
 	"fmt"
-	"server/apps_basic"
 	"server/tools"
 	"server/users"
 	"testing"
@@ -68,9 +67,7 @@ func TestDisablingUserBlocksLoginAndInvalidatesSessions(t *testing.T) {
 	_, err := userClient.Auth.GetCurrentUser()
 	// Disabling a user deletes existing sessions, so active sessions fail as missing cookies rather than disabled users.
 	u.AssertDeepStackErrorFromRequest(t, err, users.CookieNotFoundError)
-	err = AssertSampleAppContentWithCookie(&appCookie)
-	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
+	AssertSampleAppOpenRedirect(t, &appCookie)
 
 	assert.Nil(t, adminClient.Users.SetEnabled(user.Id, true))
 	enabledUser := GetRequiredUserByUsername(t, adminClient, SampleUsername)
@@ -255,6 +252,15 @@ func TestInviteUserAcceptsMatchingReservedEmail(t *testing.T) {
 	defer client.Test.ResetTestState()
 
 	assert.Nil(t, client.Users.Invite("tom", "tom@example.invalid"))
+	user := GetRequiredUserByUsername(t, client, "tom")
+	assert.Equal(t, "tom@example.invalid", user.Email)
+}
+
+func TestInviteUserWithEmptyEmailUsesReservedEmail(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	assert.Nil(t, client.Users.Invite("tom", ""))
 	user := GetRequiredUserByUsername(t, client, "tom")
 	assert.Equal(t, "tom@example.invalid", user.Email)
 }

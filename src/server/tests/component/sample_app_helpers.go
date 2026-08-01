@@ -28,6 +28,15 @@ var sampleAppHttpClient = &http.Client{
 	},
 }
 
+var sampleAppNoRedirectHttpClient = &http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true, // #nosec G402: tests intentionally connect to the local test certificate
+		},
+	},
+	CheckRedirect: func(request *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+}
+
 func AssertSampleAppDefaultContent(client *api_client.QuollixClient, anonymousCall bool) error {
 	if anonymousCall {
 		return assertSampleAppEndpoint(sampleBodyV20, nil)
@@ -141,23 +150,37 @@ func requestSampleApp(endpoint string, cookie *http.Cookie) (int, string, error)
 }
 
 func requestSampleAppWithUrl(appUrl string, cookie *http.Cookie) (int, string, error) {
+	return requestSampleAppWithHttpClient(sampleAppHttpClient, appUrl, cookie)
+}
+
+func requestSampleAppWithUrlNoRedirect(appUrl string, cookie *http.Cookie) (int, http.Header, string, error) {
+	statusCode, headers, body, err := requestSampleAppWithHttpClientAndHeaders(sampleAppNoRedirectHttpClient, appUrl, cookie)
+	return statusCode, headers, body, err
+}
+
+func requestSampleAppWithHttpClient(client *http.Client, appUrl string, cookie *http.Cookie) (int, string, error) {
+	statusCode, _, body, err := requestSampleAppWithHttpClientAndHeaders(client, appUrl, cookie)
+	return statusCode, body, err
+}
+
+func requestSampleAppWithHttpClientAndHeaders(client *http.Client, appUrl string, cookie *http.Cookie) (int, http.Header, string, error) {
 	req, err := http.NewRequest("POST", appUrl, nil)
 	if err != nil {
-		return 0, "", err
+		return 0, nil, "", err
 	}
 	if cookie != nil {
 		req.AddCookie(cookie)
 	}
-	resp, err := sampleAppHttpClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
-		return 0, "", err
+		return 0, nil, "", err
 	}
 	defer u.Close(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, "", err
+		return 0, nil, "", err
 	}
-	return resp.StatusCode, strings.TrimSuffix(string(body), "\n"), nil
+	return resp.StatusCode, resp.Header, strings.TrimSuffix(string(body), "\n"), nil
 }
 
 func assertResponse(actualStatusCode int, actualResponseBody string, expectedResponseBody string) error {

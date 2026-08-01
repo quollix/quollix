@@ -22,6 +22,7 @@ type AuthorizerImpl struct {
 	GroupRepository groups.GroupRepository
 }
 
+// Returning a bool like IsAuthorized next to the error would make the design cleaner, but authorization failures can be hard to debug and Logger.NewError gives us the full caller stack and exact denial location.
 func (a *AuthorizerImpl) Authorize(appPolicy string, userAccessLevel tools.UserAccessLevel, userId int, appName string) error {
 	err := a.authorize(appPolicy, userAccessLevel, userId, appName)
 	if err != nil {

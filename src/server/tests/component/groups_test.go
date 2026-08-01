@@ -8,7 +8,6 @@ import (
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
 
-	"server/apps_basic"
 	"server/groups"
 	"server/tools"
 
@@ -143,8 +142,7 @@ func TestQuollixClient_FullAccessViaGroupFlow(t *testing.T) {
 	assert.Nil(t, userClient.Auth.SignIn(SampleUsername, SampleUserPassword))
 
 	userAppClient := GetAppClient(t, userClient)
-	err = AssertSampleAppContent(userAppClient, "this is version 2.0")
-	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
+	AssertSampleAppUnavailablePage(t, userAppClient.Parent.Cookie)
 
 	assert.Nil(t, client.Groups.GrantAppAccess(group.Id, tools.SampleApp))
 

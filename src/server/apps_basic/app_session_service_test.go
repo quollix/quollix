@@ -22,8 +22,9 @@ func TestAppSessionService_AuthorizeAppRequestSkipsAuthForPublicApp(t *testing.T
 	}
 	request := httptest.NewRequest(http.MethodGet, "https://sample-app.example.com", nil)
 
-	err := service.AuthorizeAppRequest(request, app)
+	status, err := service.AuthorizeAppRequest(request, app)
 	assert.Nil(t, err)
+	assert.Equal(t, AppRequestAuthorized, status)
 }
 
 func TestAppSessionService_AuthorizeAppRequestUsesAppAudience(t *testing.T) {
@@ -66,8 +67,27 @@ func TestAppSessionService_AuthorizeAppRequestUsesAppAudience(t *testing.T) {
 		Authorize(app.AccessPolicy, tools.UserLevel, 42, app.AppName).
 		Return(nil)
 
-	err := service.AuthorizeAppRequest(request, app)
+	status, err := service.AuthorizeAppRequest(request, app)
 	assert.Nil(t, err)
+	assert.Equal(t, AppRequestAuthorized, status)
+}
+
+// TODO I think this is rather sth to be tests from the outside? I dont want unit test handler stuff
+func TestAppSessionService_AuthorizeAppRequestReturnsCookieNotFoundForProtectedAppWithoutAppSession(t *testing.T) {
+	service := &AppSessionServiceImpl{
+		UserService: &users.UserServiceImpl{},
+	}
+	app := &AppRequestData{
+		Maintainer:   "maintainer",
+		AppName:      "sample-app",
+		AccessPolicy: api.Policies.AuthenticatedAccessPolicy,
+	}
+	request := httptest.NewRequest(http.MethodGet, "https://sample-app.example.com", nil)
+
+	status, err := service.AuthorizeAppRequest(request, app)
+
+	assert.Nil(t, err)
+	assert.Equal(t, AppRequestMissingSession, status)
 }
 
 func TestAppSessionService_CreateAppSessionCookieFromSecretCreatesAppAudienceSessionCookie(t *testing.T) {

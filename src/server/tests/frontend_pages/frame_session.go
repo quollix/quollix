@@ -2,10 +2,13 @@ package frontend_pages
 
 import (
 	"net/http"
+	"time"
 
 	"server/tools"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/browsertest"
+	u "github.com/quollix/common/utils"
 )
 
 type FrameSession struct {
@@ -42,7 +45,15 @@ func (s *FrameSession) SignInAsAdminViaClient() *FrameType {
 }
 
 func (s *FrameSession) SignInViaClient(username, password string) *FrameType {
-	assert.Nil(s.Frame.T, s.Frame.Quollix.SyncedLoginWithClient(username, password))
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 1*time.Second, func() error {
+		err := s.Frame.Quollix.SyncedLoginWithClient(username, password)
+		if browsertest.IsNetworkChangedError(err) {
+			return err
+		}
+		assert.Nil(s.Frame.T, err)
+		return nil
+	})
+	assert.Nil(s.Frame.T, err)
 	return s.Frame
 }
 

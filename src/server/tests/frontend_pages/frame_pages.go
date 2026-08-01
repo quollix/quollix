@@ -62,7 +62,10 @@ func newFramePages(frame *FrameType) *FramePages {
 }
 
 func (p *FramePages) Visit(path string) *FrameType {
-	url := p.Frame.BaseUrl + path
+	return p.VisitURL(p.Frame.BaseUrl + path)
+}
+
+func (p *FramePages) VisitURL(url string) *FrameType {
 	var fatalNavigationErr error
 	err := u.EventuallyWithTimeout(browserTimeout, 100*time.Millisecond, func() error {
 		if navigationErr := p.Frame.Page.Navigate(url); navigationErr != nil {

@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"mime"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
+	"strings"
 	"time"
+	"unicode"
 
 	"server/apps_basic"
+	"server/configs"
 	frontendpages "server/frontend/pages"
 	"server/tools"
 	"server/users"
@@ -24,10 +28,19 @@ type TemplateHandlerImpl struct {
 	PageRenderer              frontendpages.PageRenderer
 	PageDataBuilder           FrontendPageDataBuilder
 	AppsHandler               *apps_basic.AppsHandler
+	ConfigsService            configs.ConfigsService
+	SecretStorage             users.SecretAndCookieStorage
 	BackedUpAppsLoaderHandler *BackedUpAppsLoaderHandler
 }
 
 func (t *TemplateHandlerImpl) SignInHandler(w http.ResponseWriter, r *http.Request) {
+	nextURL := r.URL.Query().Get("next")
+	if !hasValidNextURL(nextURL) {
+		u.Logger.Error(u.Logger.NewError("invalid next URL", "next", nextURL))
+		http.Redirect(w, r, api.Paths.FrontendSignIn, http.StatusFound)
+		return
+	}
+
 	content, err := t.PageDataBuilder.BuildSignInPage()
 	if err != nil {
 		t.pageCreationFailed(w, err)
@@ -38,6 +51,32 @@ func (t *TemplateHandlerImpl) SignInHandler(w http.ResponseWriter, r *http.Reque
 		Content:  content,
 	}
 	t.renderPage(w, r, pageRenderRequest)
+}
+
+func hasValidNextURL(nextURL string) bool {
+	if nextURL == "" {
+		return true
+	}
+	if containsSpaceOrControlCharacter(nextURL) {
+		return false
+	}
+	if !strings.HasPrefix(nextURL, "/") || strings.HasPrefix(nextURL, "//") {
+		return false
+	}
+	parsedURL, err := url.ParseRequestURI(nextURL)
+	if err != nil {
+		return false
+	}
+	return !parsedURL.IsAbs() && parsedURL.Host == ""
+}
+
+func containsSpaceOrControlCharacter(value string) bool {
+	for _, currentRune := range value {
+		if unicode.IsSpace(currentRune) || unicode.IsControl(currentRune) {
+			return true
+		}
+	}
+	return false
 }
 
 func (t *TemplateHandlerImpl) SettingsHandler(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +112,80 @@ func (t *TemplateHandlerImpl) InstalledAppsHandler(w http.ResponseWriter, r *htt
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)
+}
+
+func (t *TemplateHandlerImpl) OpenInstalledAppHandler(w http.ResponseWriter, r *http.Request) {
+	app := r.URL.Query().Get("app")
+	if err := validation.Validate("app", validation.FieldDefault, app); err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	baseDomain, err := t.ConfigsService.GetBaseDomain()
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	appExists, err := t.AppsHandler.AppRepo.DoesAppExist(app)
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+	if !appExists {
+		if writeErr := tools.WriteAppUnavailablePage(w, baseDomain); writeErr != nil {
+			u.Logger.Error(writeErr)
+		}
+		return
+	}
+
+	appPath, err := parseAppOpenPath(r.URL.Query().Get("path"))
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	cookie, err := r.Cookie(api.BrandAppAuthCookieName)
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	secret, err := t.SecretStorage.GenerateSecretForCookie(cookie.Value)
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	appURL := url.URL{
+		Scheme:   "https",
+		Host:     app + "." + baseDomain,
+		Path:     appPath.Path,
+		RawQuery: appPath.RawQuery,
+	}
+	query := appURL.Query()
+	query.Set("quollix-secret", secret)
+	appURL.RawQuery = query.Encode()
+
+	http.Redirect(w, r, appURL.String(), http.StatusFound)
+}
+
+func parseAppOpenPath(rawPath string) (*url.URL, error) {
+	if rawPath == "" {
+		rawPath = "/"
+	}
+	if !strings.HasPrefix(rawPath, "/") {
+		return nil, u.Logger.NewError("app path must start with /", "path", rawPath)
+	}
+
+	appPath, err := url.ParseRequestURI(rawPath)
+	if err != nil {
+		return nil, err
+	}
+	if appPath.IsAbs() || appPath.Host != "" || !strings.HasPrefix(appPath.Path, "/") {
+		return nil, u.Logger.NewError("app path must be relative", "path", rawPath)
+	}
+	return appPath, nil
 }
 
 func (t *TemplateHandlerImpl) UsersHandler(w http.ResponseWriter, r *http.Request) {

@@ -91,6 +91,10 @@ packages:
         config:
           filename: app_request_parser_mock.go
           structname: AppRequestParserMock
+      AppRequestResolver:
+        config:
+          filename: app_request_resolver_mock.go
+          structname: AppRequestResolverMock
       AppReverseProxyFactory:
         config:
           filename: app_reverse_proxy_factory_mock.go

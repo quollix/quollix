@@ -8,6 +8,13 @@ window.createUserViaEmail = async (username, email) => {
   if (ok) reloadPageAndShowSnackbar('Invitation email sent successfully.')
 }
 
+window.updateInviteViaEmailButtonState = () => {
+  const emailInput = document.getElementById('create-user-email-input')
+  const inviteViaEmailButton = document.getElementById('create-user-via-email-button')
+  if (!emailInput || !inviteViaEmailButton) return
+  inviteViaEmailButton.disabled = emailInput.value === '' || !emailInput.checkValidity()
+}
+
 window.deleteUser = async (userId, username) => {
   const confirmed = await confirmDialog(`Delete user '${username}'? The account will lose access to Quollix.`)
   if (!confirmed) return

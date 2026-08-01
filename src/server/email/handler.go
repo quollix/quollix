@@ -121,7 +121,7 @@ func (e *EmailHandler) ResetInvitationTemplate(w http.ResponseWriter, r *http.Re
 }
 
 func (e *EmailHandler) InviteUserViaEmailHandler(w http.ResponseWriter, r *http.Request) {
-	userInvitationRequest, ok := validation.ReadBody[api.InviteUserRequest](w, r)
+	userInvitationRequest, ok := validation.ReadBody[api.InviteUserViaEmailRequest](w, r)
 	if !ok {
 		return
 	}

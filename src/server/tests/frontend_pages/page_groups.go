@@ -50,6 +50,7 @@ func (g *GroupsPage) OpenGroupMembersPage(groupName string) *GroupMembersPage {
 		manageMembersButton.MustClick()
 	})
 	g.Frame.Assert.PagePath(api.Paths.FrontendGroupMembers)
+	g.Frame.Browser.WaitForElement("#group-members-back-button")
 	return g.Frame.Pages.GroupMembersPage
 }
 
@@ -61,6 +62,7 @@ func (g *GroupsPage) OpenGroupAppsPage(groupName string) *GroupAppsPage {
 		manageAppsButton.MustClick()
 	})
 	g.Frame.Assert.PagePath(api.Paths.FrontendGroupApps)
+	g.Frame.Browser.WaitForElement("#group-apps-back-button")
 	return g.Frame.Pages.GroupAppsPage
 }
 

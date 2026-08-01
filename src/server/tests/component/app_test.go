@@ -178,6 +178,13 @@ func TestAccessPolicy_NonGroupRestricted(t *testing.T) {
 	})
 }
 
+func TestUnknownAppDomainReturnsAppUnavailablePage(t *testing.T) {
+	statusCode, _, body, err := requestSampleAppWithUrlNoRedirect("https://unknownapp.localhost/", nil)
+	assert.Nil(t, err)
+
+	assertAppUnavailablePage(t, statusCode, body)
+}
+
 func TestInstalledAppListing_ByAccessPolicy(t *testing.T) {
 	adminClient := GetClientAndLogin(t)
 	defer adminClient.Test.ResetTestState()

@@ -12,8 +12,7 @@ type GroupMembersPage struct {
 }
 
 func (g *GroupMembersPage) ClickBack() *GroupsPage {
-	backButton, err := g.Frame.Page.Element("#group-members-back-button")
-	assert.Nil(g.Frame.T, err)
+	backButton := g.Frame.Controls.GetRequiredElementEventually("#group-members-back-button")
 	g.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		backButton.MustClick()
 	})

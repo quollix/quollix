@@ -4,6 +4,7 @@ package component
 
 import (
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"server/tools"
@@ -70,12 +71,12 @@ func TestFrontendAdminPageAndMissingPage(t *testing.T) {
 	userResponse, err := userClient.Frontend.GetPage(adminPage)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusFound, userResponse.StatusCode)
-	assert.Equal(t, api.Paths.FrontendSignIn, userResponse.Header.Get("Location"))
+	assert.Equal(t, api.Paths.FrontendSignIn+"?next="+url.QueryEscape(adminPage), userResponse.Header.Get("Location"))
 
 	anonymousResponse, err := anonymousClient.Frontend.GetPage(adminPage)
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusFound, anonymousResponse.StatusCode)
-	assert.Equal(t, api.Paths.FrontendSignIn, anonymousResponse.Header.Get("Location"))
+	assert.Equal(t, api.Paths.FrontendSignIn+"?next="+url.QueryEscape(adminPage), anonymousResponse.Header.Get("Location"))
 
 	for _, client := range []*api_client.QuollixClient{adminClient, userClient, anonymousClient} {
 		response, responseErr := client.Frontend.GetPage(missingPage)
@@ -83,4 +84,14 @@ func TestFrontendAdminPageAndMissingPage(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 		assert.True(t, strings.Contains(response.Body, tools.PageCouldNotBeLoadedTitle))
 	}
+}
+
+func TestFrontendAppOpenWithUnknownAppReturnsAppUnavailablePage(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	response, err := client.Frontend.GetPage(api.Paths.FrontendAppOpen + "?app=unknownapp&path=/")
+	assert.Nil(t, err)
+
+	assertAppUnavailablePage(t, response.StatusCode, response.Body)
 }

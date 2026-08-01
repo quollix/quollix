@@ -68,6 +68,17 @@ func TestUsersPageInvitationStateChangesAfterSetPasswordViaClient(t *testing.T) 
 	assert.True(t, user.DeleteButtonPresent)
 }
 
+func TestUsersPageDirectInviteAllowsEmptyEmail(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+
+	page := frame.Pages.GoToUsersPage()
+	page.
+		AssertInviteEmailRequired(false).
+		CreateUser(username, "").
+		AssertUserInList(username, username+"@example.invalid")
+}
+
 func TestUsersPageCanDisableAndEnableUser(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
@@ -142,4 +153,15 @@ func TestUsersPageSendPasswordResetEmail(t *testing.T) {
 	assert.True(t, user.SendPasswordResetEmailButtonPresent)
 
 	frame.Pages.UsersPage.SendPasswordResetEmail(username)
+}
+
+func TestUsersPageInviteViaEmailButtonRequiresEmail(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+
+	assert.Nil(t, frame.Client.Email.SaveConfig(configs.GetSampleEmailConfig()))
+
+	page := frame.Pages.GoToUsersPage()
+	page.AssertInviteViaEmailButtonDisabled(true)
+	page.SetInviteEmail(sampleUserEmail).AssertInviteViaEmailButtonDisabled(false)
 }

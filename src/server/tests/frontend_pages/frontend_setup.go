@@ -23,6 +23,7 @@ func Setup(t *testing.T) *FrameType {
 
 	frame := NewFrameType(t, "https://quollix.localhost", page, api_client.NewQuollixClient())
 	frame.Session.SignInAsAdminViaClient()
+	frame.Assert.AppOperationFinished()
 
 	if !wasFrontendReloadedDuringThisRun {
 		// this means, we can make changes to frontend and simply re-run the frontend tests with latest changes, without having to re-redeploy the quollix container

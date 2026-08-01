@@ -67,9 +67,7 @@ func TestSettingsBackupServerFlow(t *testing.T) {
 
 	page := frame.Pages.GoToSettingsPage().
 		AssertBackupServerFormValues(&api.BackupServerConfigs{}).
-		EnterBackupServerHostAndPort(expected.Host, expected.SshPort).
-		AssertBackupServerKnownHostsValue("").
-		GetKnownHostsAndAssertValid()
+		EnterBackupServerHostAndPortAndGetKnownHostsAndAssertValid(expected.Host, expected.SshPort)
 
 	expected.SshKnownHosts = page.GetBackupServerKnownHosts()
 	err := validation.Validate("SshKnownHosts", validation.FieldKnownHosts, expected.SshKnownHosts)
@@ -121,9 +119,7 @@ func TestSettingsBackupServerPurgeFlow(t *testing.T) {
 	frame.Pages.SettingsPage.AssertBackupServerFormValues(emptyConfig)
 
 	frame.Pages.SettingsPage.
-		EnterBackupServerHostAndPort(expected.Host, expected.SshPort).
-		AssertBackupServerKnownHostsValue("").
-		GetKnownHostsAndAssertValid()
+		EnterBackupServerHostAndPortAndGetKnownHostsAndAssertValid(expected.Host, expected.SshPort)
 
 	expected.SshKnownHosts = frame.Pages.SettingsPage.GetBackupServerKnownHosts()
 	err = validation.Validate("SshKnownHosts", validation.FieldKnownHosts, expected.SshKnownHosts)
