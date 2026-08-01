@@ -23,7 +23,7 @@ window.updateOperationIndicator = async function() {
   if (!requestIndicatorElement || !currentOperationElement) return
 
   try {
-    const response = await window.doRequest('{{$.Static.Paths.BackendAppOperationInfo}}')
+    const response = await window.doRequest('{{$.Static.Paths.BackendAppOperationInfo}}', null, { timeoutMs: 1000 })
     if (!response.ok) return
     const data = await response.json()
 
@@ -52,8 +52,11 @@ window.updateOperationIndicator = async function() {
 
 window.startOperationIndicatorPolling = function() {
   const pollOnce = async () => {
-    await window.updateOperationIndicator()
-    window.setTimeout(pollOnce, 1000)
+    try {
+      await window.updateOperationIndicator()
+    } finally {
+      window.setTimeout(pollOnce, 1000)
+    }
   }
   pollOnce()
 }
