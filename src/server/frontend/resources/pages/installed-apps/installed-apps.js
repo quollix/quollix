@@ -51,6 +51,31 @@ window.openFromRow = async (appName, appAccessPolicy, publicAccessPolicy, host) 
     }
 }
 
+function getAppRowRunningState(selectionMenu) {
+    const openButton = selectionMenu.closest("tr")?.querySelector(".open-btn")
+    return openButton ? !openButton.disabled : false
+}
+
+function setAppRowRunningState(selectionMenu, isRunning) {
+    const row = selectionMenu.closest("tr")
+    if (!row) return
+
+    const statusCell = row.querySelector(".app-status")
+    if (statusCell) {
+        statusCell.textContent = isRunning ? "Running" : "Not running"
+    }
+
+    const openButton = row.querySelector(".open-btn")
+    if (!openButton) return
+
+    openButton.disabled = !isRunning
+    if (isRunning) {
+        openButton.removeAttribute("aria-disabled")
+    } else {
+        openButton.setAttribute("aria-disabled", "true")
+    }
+}
+
 window.handleOperationsSelectChange = async (selectionMenu, appId, appName) => {
     const op = selectionMenu.value
     selectionMenu.value = ''
@@ -58,13 +83,19 @@ window.handleOperationsSelectChange = async (selectionMenu, appId, appName) => {
     const confirm = (msg) => window.confirmDialog(msg)
 
     if (op === 'start') {
-        await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStart }}', { value: appId })
+        const wasRunning = getAppRowRunningState(selectionMenu)
+        setAppRowRunningState(selectionMenu, true)
+        const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStart }}', { value: appId })
+        if (!ok) setAppRowRunningState(selectionMenu, wasRunning)
         return
     }
     if (op === 'stop') {
         const isConfirmed = await confirm(`Stop '${appName}'? Users will lose access until it is started again.`)
         if (!isConfirmed) return
-        await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStop }}', { value: appId })
+        const wasRunning = getAppRowRunningState(selectionMenu)
+        setAppRowRunningState(selectionMenu, false)
+        const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStop }}', { value: appId })
+        if (!ok) setAppRowRunningState(selectionMenu, wasRunning)
         return
     }
     if (op === 'download') {

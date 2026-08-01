@@ -39,21 +39,12 @@ window.confirmDialog = async function (message) {
     })
 }
 
-window.doRequest = async function(path, data, options = {}) {
-    const timeoutMs = options.timeoutMs
-    const controller = timeoutMs ? new AbortController() : null
-    const timeout = timeoutMs ? setTimeout(() => controller.abort(), timeoutMs) : null
-
-    try {
-        return await fetch(path, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data),
-            signal: controller?.signal,
-        });
-    } finally {
-        if (timeout) clearTimeout(timeout)
-    }
+window.doRequest = async function(path, data) {
+    return fetch(path, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+    });
 }
 
 async function executePostRequest(path, data, options = {}) {
