@@ -20,13 +20,32 @@ window.restoreBackup = async (backupId, maintainer, app, version, backupCreation
   })
 }
 
-window.deleteBackup = async (backupId, maintainer, app, version) => {
+function removeBackupRow(row) {
+  if (!row) return () => {}
+
+  const parent = row.parentNode
+  const nextSibling = row.nextSibling
+  row.remove()
+
+  return () => {
+    if (!parent) return
+    if (nextSibling?.parentNode === parent) {
+      parent.insertBefore(row, nextSibling)
+    } else {
+      parent.appendChild(row)
+    }
+  }
+}
+
+window.deleteBackup = async (backupId, maintainer, app, version, row) => {
   const confirmed = await confirmDialog(`Delete backup for ${maintainer}/${app} version ${version}? This cannot be undone.`)
   if (!confirmed) return
 
-  await doNetworkChangedRequest('{{ $.Static.Paths.BackendBackupsDelete }}', {
+  const restoreRow = removeBackupRow(row)
+  const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendBackupsDelete }}', {
     backup_ids: [backupId],
   })
+  if (!ok) restoreRow()
 }
 
 const backupsPageMaintainer = document.getElementById('backups-page-maintainer')?.textContent?.trim() || '';
@@ -121,6 +140,7 @@ function renderBackups(backups) {
       backupsPageMaintainer,
       backupsPageApp,
       backup.version_name,
+      row,
     ));
     actionsRow.appendChild(deleteButton);
 

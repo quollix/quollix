@@ -15,7 +15,6 @@ type OperationRegistry interface {
 	TryBlockGlobalOperation(description string) (OperationHandle, error)
 	RegisterOperation(description string) OperationHandle
 	ListOperations() []string
-	AppOperationsRevision() int
 }
 
 type OperationHandle interface {
@@ -31,18 +30,16 @@ const (
 )
 
 type operationEntry struct {
-	Id                     int
-	AppName                string
-	Description            string
-	Scope                  operationScope
-	IsReportedAppOperation bool
+	Id          int
+	AppName     string
+	Description string
+	Scope       operationScope
 }
 
 type OperationRegistryImpl struct {
-	mutex                 sync.Mutex
-	nextId                int
-	operations            map[int]operationEntry
-	appOperationsRevision int
+	mutex      sync.Mutex
+	nextId     int
+	operations map[int]operationEntry
 }
 
 type operationHandle struct {
@@ -108,13 +105,6 @@ func (o *OperationRegistryImpl) ListOperations() []string {
 	return result
 }
 
-func (o *OperationRegistryImpl) AppOperationsRevision() int {
-	o.mutex.Lock()
-	defer o.mutex.Unlock()
-
-	return o.appOperationsRevision
-}
-
 func (o *OperationRegistryImpl) tryRegisterBlockingOperationLocked(appName, description string, scope operationScope) (OperationHandle, error) {
 	for _, operation := range o.operations {
 		if operation.Scope != operationScopeNonBlocking {
@@ -132,11 +122,10 @@ func (o *OperationRegistryImpl) registerOperationLocked(appName, description str
 
 	o.nextId++
 	entry := operationEntry{
-		Id:                     o.nextId,
-		AppName:                appName,
-		Description:            description,
-		Scope:                  scope,
-		IsReportedAppOperation: appName != "",
+		Id:          o.nextId,
+		AppName:     appName,
+		Description: description,
+		Scope:       scope,
 	}
 	o.operations[entry.Id] = entry
 
@@ -150,11 +139,7 @@ func (o *OperationRegistryImpl) unregister(id int) {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 
-	entry, ok := o.operations[id]
 	delete(o.operations, id)
-	if ok && entry.IsReportedAppOperation {
-		o.appOperationsRevision++
-	}
 }
 
 func (o *operationHandle) Done() {

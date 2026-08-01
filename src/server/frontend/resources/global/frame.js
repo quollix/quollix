@@ -35,14 +35,6 @@ window.updateOperationIndicator = async function() {
       currentOperationElement.textContent = ''
     }
 
-    const shouldReloadForAppOperation =
-      window.location.pathname === '{{ $.Static.Paths.FrontendInstalledApps }}' ||
-      window.location.pathname === '{{ $.Static.Paths.FrontendListBackups }}'
-
-    if (data.app_operations_revision !== window.renderedAppOperationsRevision && shouldReloadForAppOperation) {
-      window.location.reload()
-      return
-    }
   } catch (error) {
     console.log(error)
     requestIndicatorElement.style.display = 'none'

@@ -199,13 +199,11 @@ func (a *AppsHandler) AppPruneHandler(w http.ResponseWriter, r *http.Request) {
 func (a *AppsHandler) AppOperationInfoHandler(w http.ResponseWriter, r *http.Request) {
 	operations := a.OperationRegistry.ListOperations()
 	response := struct {
-		Operations            []string `json:"operations"`
-		IsOngoing             bool     `json:"is_ongoing"`
-		AppOperationsRevision int      `json:"app_operations_revision"`
+		Operations []string `json:"operations"`
+		IsOngoing  bool     `json:"is_ongoing"`
 	}{
-		Operations:            operations,
-		IsOngoing:             len(operations) > 0,
-		AppOperationsRevision: a.OperationRegistry.AppOperationsRevision(),
+		Operations: operations,
+		IsOngoing:  len(operations) > 0,
 	}
 	u.SendJsonResponse(w, response)
 }

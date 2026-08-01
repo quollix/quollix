@@ -51,13 +51,12 @@ window.openFromRow = async (appName, appAccessPolicy, publicAccessPolicy, host) 
     }
 }
 
-function getAppRowRunningState(selectionMenu) {
-    const openButton = selectionMenu.closest("tr")?.querySelector(".open-btn")
+function isAppRowRunning(row) {
+    const openButton = row?.querySelector(".open-btn")
     return openButton ? !openButton.disabled : false
 }
 
-function setAppRowRunningState(selectionMenu, isRunning) {
-    const row = selectionMenu.closest("tr")
+function setAppRowRunningState(row, isRunning) {
     if (!row) return
 
     const statusCell = row.querySelector(".app-status")
@@ -69,33 +68,53 @@ function setAppRowRunningState(selectionMenu, isRunning) {
     if (!openButton) return
 
     openButton.disabled = !isRunning
-    if (isRunning) {
-        openButton.removeAttribute("aria-disabled")
-    } else {
-        openButton.setAttribute("aria-disabled", "true")
+    openButton.toggleAttribute("aria-disabled", !isRunning)
+}
+
+function removeAppRow(row) {
+    if (!row) return () => {}
+
+    const parent = row.parentNode
+    const nextSibling = row.nextSibling
+    row.remove()
+
+    return () => {
+        if (!parent) return
+        if (nextSibling?.parentNode === parent) {
+            parent.insertBefore(row, nextSibling)
+        } else {
+            parent.appendChild(row)
+        }
     }
+}
+
+async function doOptimisticAppRequest(path, appId, applyChange) {
+    const restore = applyChange()
+    const ok = await doNetworkChangedRequest(path, { value: appId })
+    if (!ok) restore()
 }
 
 window.handleOperationsSelectChange = async (selectionMenu, appId, appName) => {
     const op = selectionMenu.value
+    const row = selectionMenu.closest("tr")
     selectionMenu.value = ''
 
-    const confirm = (msg) => window.confirmDialog(msg)
-
     if (op === 'start') {
-        const wasRunning = getAppRowRunningState(selectionMenu)
-        setAppRowRunningState(selectionMenu, true)
-        const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStart }}', { value: appId })
-        if (!ok) setAppRowRunningState(selectionMenu, wasRunning)
+        await doOptimisticAppRequest('{{ $.Static.Paths.BackendAppsStart }}', appId, () => {
+            const wasRunning = isAppRowRunning(row)
+            setAppRowRunningState(row, true)
+            return () => setAppRowRunningState(row, wasRunning)
+        })
         return
     }
     if (op === 'stop') {
-        const isConfirmed = await confirm(`Stop '${appName}'? Users will lose access until it is started again.`)
+        const isConfirmed = await window.confirmDialog(`Stop '${appName}'? Users will lose access until it is started again.`)
         if (!isConfirmed) return
-        const wasRunning = getAppRowRunningState(selectionMenu)
-        setAppRowRunningState(selectionMenu, false)
-        const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsStop }}', { value: appId })
-        if (!ok) setAppRowRunningState(selectionMenu, wasRunning)
+        await doOptimisticAppRequest('{{ $.Static.Paths.BackendAppsStop }}', appId, () => {
+            const wasRunning = isAppRowRunning(row)
+            setAppRowRunningState(row, false)
+            return () => setAppRowRunningState(row, wasRunning)
+        })
         return
     }
     if (op === 'download') {
@@ -111,9 +130,9 @@ window.handleOperationsSelectChange = async (selectionMenu, appId, appName) => {
         return
     }
     if (op === 'delete') {
-        const isConfirmed = await confirm(`Delete '${appName}'? App data will be removed; backups are kept.`)
+        const isConfirmed = await window.confirmDialog(`Delete '${appName}'? App data will be removed; backups are kept.`)
         if (!isConfirmed) return
-        await doNetworkChangedRequest('{{ $.Static.Paths.BackendAppsDelete }}', { value: appId })
+        await doOptimisticAppRequest('{{ $.Static.Paths.BackendAppsDelete }}', appId, () => removeAppRow(row))
         return
     }
 }

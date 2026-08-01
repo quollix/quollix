@@ -39,11 +39,10 @@ type Auth struct {
 }
 
 type PageGlobals struct {
-	Auth                  Auth
-	Config                *tools.GlobalConfig
-	Host                  string
-	InfoIconRedirectUrl   string
-	AppOperationsRevision int
+	Auth                Auth
+	Config              *tools.GlobalConfig
+	Host                string
+	InfoIconRedirectUrl string
 }
 
 type StaticTemplateGlobals struct {
@@ -78,11 +77,10 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 		PageName:  request.PageName,
 		PageTitle: request.PageTitle,
 		Globals: PageGlobals{
-			Auth:                  auth,
-			Config:                p.Config,
-			Host:                  host,
-			InfoIconRedirectUrl:   infoIconRedirectUrl(request.InfoIconRedirectPath, auth.IsAdmin),
-			AppOperationsRevision: p.OperationRegistry.AppOperationsRevision(),
+			Auth:                auth,
+			Config:              p.Config,
+			Host:                host,
+			InfoIconRedirectUrl: infoIconRedirectUrl(request.InfoIconRedirectPath, auth.IsAdmin),
 		},
 		Page: request.Content,
 	})

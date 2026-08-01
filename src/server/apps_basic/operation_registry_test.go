@@ -63,17 +63,6 @@ func TestTryBlockAppOperationTreatsPostgresAsGlobalBlocking(t *testing.T) {
 	handle.Done()
 }
 
-func TestTryBlockAppOperationIncrementsRevisionForPostgresOperation(t *testing.T) {
-	registry := OperationRegistryImpl{}
-
-	handle, err := registry.TryBlockAppOperation(u.OfficialDatabaseAppName, postgresOperationDescription)
-	assert.Nil(t, err)
-
-	handle.Done()
-
-	assert.Equal(t, 1, registry.AppOperationsRevision())
-}
-
 func TestTryBlockGlobalOperationBlocksWhileAppBlockingOperationRuns(t *testing.T) {
 	registry := OperationRegistryImpl{}
 
@@ -139,31 +128,4 @@ func TestTryBlockAppOperationEmptyAppNameReturnsError(t *testing.T) {
 
 	_, err := registry.TryBlockAppOperation("", xwikiOperationDescription)
 	assert.Equal(t, "app name must not be empty", u.ExtractError(err))
-}
-
-func TestAppOperationsRevisionIncrementsForFinishedAppOperations(t *testing.T) {
-	registry := OperationRegistryImpl{}
-
-	waitingHandle := registry.RegisterOperation(waitingOperationDescription)
-
-	xwikiHandle, err := registry.TryBlockAppOperation("xwiki", xwikiOperationDescription)
-	assert.Nil(t, err)
-	xwikiHandle.Done()
-
-	vaultwardenHandle, err := registry.TryBlockAppOperation("vaultwarden", vaultwardenOperationDescription)
-	assert.Nil(t, err)
-	vaultwardenHandle.Done()
-
-	waitingHandle.Done()
-
-	assert.Equal(t, 2, registry.AppOperationsRevision())
-}
-
-func TestAppOperationsRevisionIgnoresFinishedNonAppOperations(t *testing.T) {
-	registry := OperationRegistryImpl{}
-
-	handle := registry.RegisterOperation(waitingOperationDescription)
-	handle.Done()
-
-	assert.Equal(t, 0, registry.AppOperationsRevision())
 }
