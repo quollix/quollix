@@ -20,6 +20,13 @@
             onclick="resetCertificate()">Reset</button>
     </div>
 
+    <h5>Let's Encrypt account key</h5>
+
+    <div class="inline-form-row">
+        <button type="button" onclick="uploadAcmeAccountPrivateKey()">Upload</button>
+        <button type="button" onclick="downloadAcmeAccountPrivateKey()">Download</button>
+    </div>
+
     <h5>Generate certificate via DNS-01 challenge</h5>
 
     <button type="button" id="settings-dns01-start-button" onclick="startDnsChallenge()">Start challenge</button>

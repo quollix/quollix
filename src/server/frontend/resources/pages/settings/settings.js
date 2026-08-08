@@ -22,6 +22,22 @@ window.downloadCertificate = async function() {
     showSnackbar('Certificate downloaded.')
 }
 
+window.uploadAcmeAccountPrivateKey = async function() {
+    const confirmed = await confirmDialog(`Replace Let's Encrypt account private key? Pending certificate orders for the current account may stop working.`)
+    if (!confirmed) return
+
+    const ok = await selectAndUploadFile('{{ $.Static.Paths.BackendSettingsAcmeAccountPrivateKeyUpload }}')
+    if (ok) showSnackbar(`Let's Encrypt account private key uploaded successfully.`)
+}
+
+window.downloadAcmeAccountPrivateKey = async function() {
+    const confirmed = await confirmDialog(`Download Let's Encrypt account private key? Anyone with this file can control the certificate account.`)
+    if (!confirmed) return
+
+    await window.downloadFile('{{ $.Static.Paths.BackendSettingsAcmeAccountPrivateKeyDownload }}', null)
+    showSnackbar(`Let's Encrypt account private key downloaded.`)
+}
+
 window.resetCertificate = async function() {
     const confirmed = await confirmDialog(`Replace TLS certificate with a self-signed certificate? Browsers and clients may stop trusting this instance.`)
     if (!confirmed) return

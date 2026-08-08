@@ -181,6 +181,8 @@ func (h *HandlerRegisterer) adminSettingsRoutes() []users.Route {
 		{Path: api.Paths.BackendSettingsCertificateDownload, HandlerFunc: h.CertificateHandler.CertificateDownloadHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendSettingsCertificateReset, HandlerFunc: h.CertificateHandler.ResetCertificateHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendSettingsCertificateOperationStatus, HandlerFunc: h.CertificateHandler.GetOperationMonitorStatus, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendSettingsAcmeAccountPrivateKeyUpload, HandlerFunc: h.CertificateHandler.AcmeAccountPrivateKeyUploadHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendSettingsAcmeAccountPrivateKeyDownload, HandlerFunc: h.CertificateHandler.AcmeAccountPrivateKeyDownloadHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendSettingsSshSave, HandlerFunc: h.SshHandler.SaveSshSettingsHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendSettingsSshRead, HandlerFunc: h.SshHandler.ReadSshSettingsHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendSettingsSshConfigsReset, HandlerFunc: h.SshHandler.ResetSshSettingsHandler, AccessLevel: tools.AdminLevel},

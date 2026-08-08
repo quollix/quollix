@@ -3,10 +3,8 @@ package system_config_migrations
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"net/url"
 	"os"
-	"path/filepath"
 
 	"server/apps_basic"
 	"server/backup_server"
@@ -69,44 +67,12 @@ func (s *SystemConfigMigrationsProviderImpl) createLetsEncryptAccountKeyIfNotExi
 		return nil
 	}
 
-	privateKeyPath := filepath.Join(s.DirectoryProvider.GetCacheDir(), "acme_account_private_key.pem")
-	_, err = os.Stat(privateKeyPath)
-	doesAcmePrivateKeyFileExist := err == nil
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return u.Logger.NewError(err.Error())
-	}
-
-	privateKeyBytes, err := s.getPrivateKeyBytes(doesAcmePrivateKeyFileExist, privateKeyPath)
+	privateKeyPemBytes, err := certificates.GenerateAcmeAccountPrivateKeyPemBytes()
 	if err != nil {
 		return err
 	}
 
-	pemBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "PRIVATE KEY",
-		Bytes: privateKeyBytes,
-	})
-
-	return s.ConfigsRepo.SetConfig(configs.ConfigKeys.AcmeAccountPrivateKey, string(pemBytes))
-}
-
-func (s *SystemConfigMigrationsProviderImpl) getPrivateKeyBytes(doesAcmePrivateKeyFileExist bool, privateKeyPath string) ([]byte, error) {
-	if doesAcmePrivateKeyFileExist {
-		privateKeyBytes, err := os.ReadFile(privateKeyPath) // #nosec G304: privateKeyPath is derived from trusted setup configuration for local bootstrap
-		if err != nil {
-			return nil, u.Logger.NewError(err.Error())
-		}
-		return privateKeyBytes, nil
-	} else {
-		privateKey, err := certificates.GenerateRsaKey()
-		if err != nil {
-			return nil, err
-		}
-		privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
-		if err != nil {
-			return nil, u.Logger.NewError(err.Error())
-		}
-		return privateKeyBytes, nil
-	}
+	return s.ConfigsRepo.SetConfig(configs.ConfigKeys.AcmeAccountPrivateKey, string(privateKeyPemBytes))
 }
 
 func (s *SystemConfigMigrationsProviderImpl) loadEmailSettingsIfNotExist() error {

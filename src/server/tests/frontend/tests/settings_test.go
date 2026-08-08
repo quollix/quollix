@@ -3,11 +3,12 @@
 package frontend
 
 import (
+	"testing"
+
 	"server/backup_server"
 	"server/certificates"
 	"server/tests/component"
 	"server/tests/frontend_pages"
-	"testing"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
@@ -43,7 +44,7 @@ func TestSettingsCertificateReset(t *testing.T) {
 	assert.Nil(t, frame.Client.Certificates.Reset())
 	defer frame.Client.Test.ResetTestState()
 
-	beforeResetBundleBytes, err := frame.Client.Certificates.DownloadBundleBytes()
+	beforeResetBundleBytes, err := frame.Client.Certificates.DownloadCertificateBundleBytes()
 	assert.Nil(t, err)
 	beforeResetDownloadedLeafDerBytes := component.ExtractLeafCertificateDerBytesFromBundle(t, beforeResetBundleBytes)
 	component.AssertServerUsesCertificateBundle(t, beforeResetBundleBytes)
@@ -51,7 +52,7 @@ func TestSettingsCertificateReset(t *testing.T) {
 	frame.Pages.GoToSettingsPage().
 		ResetCertificateAndAssertSuccessSnackbar()
 
-	afterResetBundleBytes, err := frame.Client.Certificates.DownloadBundleBytes()
+	afterResetBundleBytes, err := frame.Client.Certificates.DownloadCertificateBundleBytes()
 	assert.Nil(t, err)
 	afterResetDownloadedLeafDerBytes := component.ExtractLeafCertificateDerBytesFromBundle(t, afterResetBundleBytes)
 	component.AssertServerUsesCertificateBundle(t, afterResetBundleBytes)

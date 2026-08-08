@@ -46,6 +46,11 @@ input[list]:focus::-webkit-calendar-picker-indicator {
     color: white;
 }
 
+.backup-server-warning:hover {
+    background: var(--alert-color);
+    border-color: var(--alert-color);
+}
+
 #enable-backup-server-label {
     align-self: start;
 }

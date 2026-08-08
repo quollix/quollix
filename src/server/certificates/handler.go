@@ -2,6 +2,7 @@ package certificates
 
 import (
 	"net/http"
+
 	"server/configs"
 	"server/tools"
 
@@ -60,6 +61,31 @@ func (s *CertificateHandler) CertificateDownloadHandler(w http.ResponseWriter, r
 	u.SendJsonResponse(w, api.BinaryFile{
 		FileName: "certificate.pem",
 		Content:  bundle.GetBytes(),
+	})
+}
+
+func (s *CertificateHandler) AcmeAccountPrivateKeyUploadHandler(w http.ResponseWriter, r *http.Request) {
+	privateKeyFile, ok := validation.ReadBody[api.BinaryFile](w, r)
+	if !ok {
+		return
+	}
+
+	if err := s.CertificateService.ReplaceAcmeAccountPrivateKeyPemBytes(privateKeyFile.Content); err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+}
+
+func (s *CertificateHandler) AcmeAccountPrivateKeyDownloadHandler(w http.ResponseWriter, r *http.Request) {
+	privateKeyPemBytes, err := s.CertificateService.GetAcmeAccountPrivateKeyPemBytes()
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	u.SendJsonResponse(w, api.BinaryFile{
+		FileName: AcmeAccountPrivateKeyFileName,
+		Content:  privateKeyPemBytes,
 	})
 }
 

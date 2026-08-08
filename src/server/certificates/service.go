@@ -8,13 +8,16 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
-	"server/configs"
 	"time"
+
+	"server/configs"
 
 	u "github.com/quollix/common/utils"
 )
 
 const (
+	AcmeAccountPrivateKeyFileName = "acme_account_private_key.pem"
+
 	/*
 		- By default, we use the production ACME directory to issue publicly trusted certificates. However, if you test this feature frequently, you may hit the Let's Encrypt rate limit, which could block your work. To avoid this, you can temporarily point the variable below to the staging directory, which issues untrusted test certificates with much more lenient limits.
 		- Staging/Test Certificate URL: https://acme-staging-v02.api.letsencrypt.org/directory.
@@ -29,6 +32,8 @@ type CertificateService interface {
 	GetCurrentCertificate() (*CertificateBundle, error)
 	GenerateUniversalSelfSignedCert() (*CertificateBundle, error)
 	GetAcmeAccountPrivateKey() (*rsa.PrivateKey, error)
+	GetAcmeAccountPrivateKeyPemBytes() ([]byte, error)
+	ReplaceAcmeAccountPrivateKeyPemBytes(privateKeyPemBytes []byte) error
 }
 
 type CertificateServiceImpl struct {
@@ -100,22 +105,64 @@ func (c *CertificateServiceImpl) GetAcmeAccountPrivateKey() (*rsa.PrivateKey, er
 		return nil, err
 	}
 
-	block, _ := pem.Decode([]byte(pemString))
+	return parseAcmeAccountPrivateKeyPemBytes([]byte(pemString))
+}
+
+func (c *CertificateServiceImpl) GetAcmeAccountPrivateKeyPemBytes() ([]byte, error) {
+	pemString, err := c.ConfigsRepository.GetConfig(configs.ConfigKeys.AcmeAccountPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(pemString), nil
+}
+
+func (c *CertificateServiceImpl) ReplaceAcmeAccountPrivateKeyPemBytes(privateKeyPemBytes []byte) error {
+	privateKey, err := parseAcmeAccountPrivateKeyPemBytes(privateKeyPemBytes)
+	if err != nil {
+		return err
+	}
+	normalizedPrivateKeyPemBytes, err := marshalAcmeAccountPrivateKeyPemBytes(privateKey)
+	if err != nil {
+		return err
+	}
+	return c.ConfigsRepository.SetConfig(configs.ConfigKeys.AcmeAccountPrivateKey, string(normalizedPrivateKeyPemBytes))
+}
+
+func GenerateAcmeAccountPrivateKeyPemBytes() ([]byte, error) {
+	privateKey, err := GenerateRsaKey()
+	if err != nil {
+		return nil, err
+	}
+	return marshalAcmeAccountPrivateKeyPemBytes(privateKey)
+}
+
+func parseAcmeAccountPrivateKeyPemBytes(privateKeyPemBytes []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(privateKeyPemBytes)
 	if block == nil {
 		return nil, u.Logger.NewError("invalid ACME account key PEM")
+	}
+
+	if block.Type != "PRIVATE KEY" {
+		return nil, u.Logger.NewError("unsupported ACME account key PEM type", "type", block.Type)
 	}
 
 	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
-
-	signer, ok := key.(*rsa.PrivateKey)
+	privateKey, ok := key.(*rsa.PrivateKey)
 	if !ok {
 		return nil, u.Logger.NewError("ACME key is not a *rsa.PrivateKey")
 	}
+	return privateKey, nil
+}
 
-	return signer, nil
+func marshalAcmeAccountPrivateKeyPemBytes(privateKey *rsa.PrivateKey) ([]byte, error) {
+	privateKeyDerBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, u.Logger.NewError(err.Error())
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privateKeyDerBytes}), nil
 }
 
 func GenerateRsaKey() (*rsa.PrivateKey, error) {
