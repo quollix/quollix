@@ -43,6 +43,7 @@ func (f *RestoreFinalizerImpl) FinalizeRestore(info *api.BackupInfo, snapshot *A
 		snapshot.Meta.AutomaticUpdatesEnabled,
 		snapshot.Meta.AutomaticBackupsEnabled,
 	)
+	app.Secrets = snapshot.Meta.Secrets
 
 	if f.AppDetector.IsOfficialDatabaseApp(app.AppName) {
 		if err := f.DatabaseConnector.StartDatabaseAndConnect(); err != nil {

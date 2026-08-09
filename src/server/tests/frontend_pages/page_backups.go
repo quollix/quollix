@@ -112,7 +112,7 @@ func (b *BackupsPage) ClickRestoreFirstBackup() *BackupsPage {
 
 func (b *BackupsPage) WaitUntilAppAbsent(appName string) *BackupsPage {
 	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
-		apps, err := b.Frame.Client.Apps.ListInstalled()
+		apps, err := b.Frame.Client.Apps.ListInstalledForAdmin()
 		assert.Nil(b.Frame.T, err)
 		for _, app := range apps {
 			if app.AppName == appName {

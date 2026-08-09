@@ -106,7 +106,7 @@ func (v *VersionsPage) InstallFilteredVersion() *VersionsPage {
 
 func (v *VersionsPage) WaitUntilAppVersionInstalled(appName, expectedVersion string) *VersionsPage {
 	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
-		apps, err := v.Frame.Client.Apps.ListInstalled()
+		apps, err := v.Frame.Client.Apps.ListInstalledForAdmin()
 		assert.Nil(v.Frame.T, err)
 		for _, app := range apps {
 			if app.AppName == appName && app.VersionName == expectedVersion {

@@ -33,13 +33,32 @@ type AccessPolicyTestCase struct {
 	ShouldAnonymousHaveAccess bool
 }
 
-func hasVisibleSampleApp(apps []api.AppDto) bool {
+func hasVisibleSampleApp(apps []api.AdminAppDto) bool {
+	_, exists := findAppByName(apps, tools.SampleApp)
+	return exists
+}
+
+func hasVisibleSampleAppForNonAdmin(apps []api.NonAdminAppDto) bool {
+	_, exists := findNonAdminAppByName(apps, tools.SampleApp)
+	return exists
+}
+
+func findAppByName(apps []api.AdminAppDto, appName string) (api.AdminAppDto, bool) {
 	for _, app := range apps {
-		if app.AppName == tools.SampleApp {
-			return true
+		if app.AppName == appName {
+			return app, true
 		}
 	}
-	return false
+	return api.AdminAppDto{}, false
+}
+
+func findNonAdminAppByName(apps []api.NonAdminAppDto, appName string) (api.NonAdminAppDto, bool) {
+	for _, app := range apps {
+		if app.AppName == appName {
+			return app, true
+		}
+	}
+	return api.NonAdminAppDto{}, false
 }
 
 func GetClientAndLogin(t *testing.T) *api_client.QuollixClient {
@@ -108,7 +127,11 @@ func RunAccessPoliciesTest(t *testing.T, adminClient *api_client.QuollixClient, 
 
 			for _, currentActor := range actors {
 				expectedAccess := expectedAccessByActorName[currentActor.name]
-				assert.Equal(t, expectedAccess, hasVisibleSampleApp(ListInstalledApps(t, currentActor.client)))
+				if currentActor.name == "admin" {
+					assert.Equal(t, expectedAccess, hasVisibleSampleApp(ListInstalledApps(t, currentActor.client)))
+				} else {
+					assert.Equal(t, expectedAccess, hasVisibleSampleAppForNonAdmin(ListInstalledAppsForNonAdmin(t, currentActor.client)))
+				}
 
 				var appCookie *http.Cookie
 				if !currentActor.isAnonymous {
@@ -179,20 +202,26 @@ func GetRequiredUserByUsername(t *testing.T, client *api_client.QuollixClient, u
 	return user
 }
 
-func ListInstalledApps(t *testing.T, client *api_client.QuollixClient) []api.AppDto {
-	apps, err := client.Apps.ListInstalled()
+func ListInstalledApps(t *testing.T, client *api_client.QuollixClient) []api.AdminAppDto {
+	apps, err := client.Apps.ListInstalledForAdmin()
 	assert.Nil(t, err)
 	return apps
 }
 
-func InstallSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AppDto, error) {
+func ListInstalledAppsForNonAdmin(t *testing.T, client *api_client.QuollixClient) []api.NonAdminAppDto {
+	apps, err := client.Apps.ListInstalledForNonAdmin()
+	assert.Nil(t, err)
+	return apps
+}
+
+func InstallSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AdminAppDto, error) {
 	if err := client.Apps.InstallFromStore(tools.SampleMaintainer, tools.SampleApp, version); err != nil {
 		return nil, err
 	}
 	return GetInstalledSample(t, client), nil
 }
 
-func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AppDto, error) {
+func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AdminAppDto, error) {
 	app, err := InstallSample(t, client, version)
 	if err != nil {
 		return nil, err
@@ -203,7 +232,7 @@ func InstallAndStartSample(t *testing.T, client *api_client.QuollixClient, versi
 	return GetInstalledSample(t, client), nil
 }
 
-func GetInstalledSample(t *testing.T, client *api_client.QuollixClient) *api.AppDto {
+func GetInstalledSample(t *testing.T, client *api_client.QuollixClient) *api.AdminAppDto {
 	for _, app := range ListInstalledApps(t, client) {
 		if app.AppName == tools.SampleApp {
 			return &app

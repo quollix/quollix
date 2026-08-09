@@ -108,4 +108,5 @@ func AssertAppEquality(t *testing.T, expected, actual *apps_basic.RepoApp) {
 	assert.Equal(t, expected.AppSecret, actual.AppSecret)
 	assert.Equal(t, len(expected.Metadata), len(actual.Metadata))
 	assert.Equal(t, expected.Metadata, actual.Metadata)
+	assert.Equal(t, expected.Secrets, actual.Secrets)
 }

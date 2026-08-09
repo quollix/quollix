@@ -27,6 +27,11 @@ window.showSnackbar = function (msg) {
     container.prepend(snackbar)
 }
 
+window.copyToClipboard = async (value, label) => {
+    await navigator.clipboard.writeText(value)
+    showSnackbar(`${label} copied to clipboard.`)
+}
+
 window.confirmDialog = async function (message) {
     const dlg = document.getElementById('confirm-dialog')
     const msg = document.getElementById('confirm-message')

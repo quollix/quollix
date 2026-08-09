@@ -27,6 +27,7 @@ type AppStoreServiceImpl struct {
 	AuthHelper                 u.AuthHelper
 	VersionFileNameEncoder     apps_basic.VersionFileNameEncoder
 	AppServiceHelper           apps_basic.AppServiceHelper
+	AppService                 apps_basic.AppService
 	VersionValidator           validation.VersionValidator
 	VersionVerifier            VersionVerifier
 }
@@ -89,7 +90,7 @@ func (a *AppStoreServiceImpl) DownloadAndInstallVersion(versionTree *store.Versi
 	}
 
 	app.AccessPolicy = api.Policies.AdminOnlyAccessPolicy
-	_, err = a.AppRepo.CreateApp(app)
+	err = a.AppService.UpsertAppInDatabase(app)
 	if err != nil {
 		return u.Logger.NewError(err.Error())
 	}

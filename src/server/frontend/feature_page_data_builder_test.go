@@ -7,6 +7,7 @@ import (
 	"server/configs"
 	"server/groups"
 	"server/tools"
+	"server/users"
 
 	"github.com/quollix/common/assert"
 	api "github.com/quollix/common/quollix/api"
@@ -66,8 +67,8 @@ func TestBuildTerminalAppsPage_FiltersAndSortsAndAppendsOfficial(t *testing.T) {
 	testObjects := getFeatureTestObjects(t)
 
 	testObjects.AppService.EXPECT().
-		ListAppsForAdmin().
-		Return([]api.AppDto{
+		ListAppsForRole(users.AnonymousUserId, tools.AdminLevel).
+		Return([]api.AdminAppDto{
 			{Maintainer: "b-maintainer", AppName: "b-app", IsRunning: true},
 			{Maintainer: "a-maintainer", AppName: "z-app", IsRunning: true},
 			{Maintainer: "a-maintainer", AppName: "a-app", IsRunning: false},

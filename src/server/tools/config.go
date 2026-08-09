@@ -38,7 +38,8 @@ var ComposeEnvVars = struct {
 	LegacyServerHost string
 	ClientId         string
 	ClientSecret     string
-	AppSecret        string
+	// Deprecated: APP_SECRET is legacy app-secret compatibility. New app definitions should use purpose-specific SECRET_* placeholders.
+	AppSecret string
 
 	IanaTimeZone string
 }{

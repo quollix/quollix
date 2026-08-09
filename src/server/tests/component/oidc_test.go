@@ -242,7 +242,7 @@ func TestOIDC_HappyPath_AuthorizationCodeFlow_ClientSecretPost(t *testing.T) {
 	runAuthorizationCodeFlowWithAuthMethod(t, ClientAuthMethodPost)
 }
 
-func assertOidcEmailClaim(t *testing.T, app *api.AppDto, expectedEmail string) {
+func assertOidcEmailClaim(t *testing.T, app *api.AdminAppDto, expectedEmail string) {
 	ctx := NewOidcTestClient(t)
 	ctx.SignIn(SampleUsername, SampleUserPassword)
 	authRes, verifier := ctx.AuthorizeWithPKCE(app.ClientId)

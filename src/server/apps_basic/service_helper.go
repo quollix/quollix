@@ -2,6 +2,7 @@ package apps_basic
 
 import (
 	"fmt"
+	"maps"
 	"server/tools"
 	"strconv"
 	"time"
@@ -12,7 +13,8 @@ import (
 )
 
 type AppServiceHelper interface {
-	ConvertToAppDtos(apps []RepoApp) []api.AppDto
+	ConvertToAdminAppDtos(apps []RepoApp) []api.AdminAppDto
+	ConvertToNonAdminAppDtos(apps []RepoApp) []api.NonAdminAppDto
 	IsAppVisibleToUser(userId int, role tools.UserAccessLevel, app RepoApp) bool
 	GetPortFromComposeYaml(composeContent []byte, appName string) (string, error)
 }
@@ -41,10 +43,10 @@ func (a *AppServiceHelperImpl) IsAppVisibleToUser(userId int, role tools.UserAcc
 	}
 }
 
-func (a *AppServiceHelperImpl) ConvertToAppDtos(apps []RepoApp) []api.AppDto {
-	var appDtos []api.AppDto
+func (a *AppServiceHelperImpl) ConvertToAdminAppDtos(apps []RepoApp) []api.AdminAppDto {
+	var appDtos []api.AdminAppDto
 	for _, app := range apps {
-		appDto := api.AppDto{
+		appDto := api.AdminAppDto{
 			AppId:                    strconv.Itoa(app.AppId),
 			Maintainer:               app.Maintainer,
 			AppName:                  app.AppName,
@@ -58,6 +60,7 @@ func (a *AppServiceHelperImpl) ConvertToAppDtos(apps []RepoApp) []api.AppDto {
 			ClientId:                 app.ClientId,
 			ClientSecret:             app.ClientSecret,
 			AppSecret:                app.AppSecret,
+			Secrets:                  maps.Clone(app.Secrets),
 			AutomaticBackupsEnabled:  app.AutomaticBackupsEnabled,
 			AutomaticUpdatesEnabled:  app.AutomaticUpdatesEnabled,
 			IsOfficial:               a.AppDetector.IsOfficialApp(app.Maintainer),
@@ -68,6 +71,17 @@ func (a *AppServiceHelperImpl) ConvertToAppDtos(apps []RepoApp) []api.AppDto {
 			appDto.DocsUrl = ""
 		}
 		appDtos = append(appDtos, appDto)
+	}
+	return appDtos
+}
+
+func (a *AppServiceHelperImpl) ConvertToNonAdminAppDtos(apps []RepoApp) []api.NonAdminAppDto {
+	appDtos := make([]api.NonAdminAppDto, 0, len(apps))
+	for _, app := range apps {
+		appDtos = append(appDtos, api.NonAdminAppDto{
+			Maintainer: app.Maintainer,
+			AppName:    app.AppName,
+		})
 	}
 	return appDtos
 }

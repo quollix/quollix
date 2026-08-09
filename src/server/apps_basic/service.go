@@ -1,6 +1,7 @@
 package apps_basic
 
 import (
+	"maps"
 	"server/tools"
 
 	api "github.com/quollix/common/quollix/api"
@@ -21,10 +22,11 @@ type AppService interface {
 	SetAppShouldBeRunning(appId int, shouldBeRunning bool) error
 	SetAccessPolicy(appId int, policy string) error
 	UpsertAppInDatabase(app *RepoApp) error
-	ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AppDto, error)
-	ListAppsForAdmin() ([]api.AppDto, error)
+	ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AdminAppDto, error)
+	ListAppsForNonAdmin(userId int, role tools.UserAccessLevel) ([]api.NonAdminAppDto, error)
 	UpdateAppAutoMaintenanceSettings(appId int, autoUpdateEnabled, autoBackupEnabled bool) error
 	RegenerateOidcClientCredentials(appId int) error
+	RegenerateAppSecret(appId int, secretName string) error
 }
 
 type AppServiceImpl struct {
@@ -33,9 +35,11 @@ type AppServiceImpl struct {
 	AppServiceHelper           AppServiceHelper
 	AppDetector                AppDetector
 	ComposeExtractor           ComposeExtractorImpl
+	ComposeSecretExtractor     ComposeSecretExtractor
 	ClientCredentialsGenerator ClientCredentialsGenerator
 	DatabaseIndependentRuntime DatabaseIndependentRuntime
 	VersionFileNameEncoder     VersionFileNameEncoder
+	AuthHelper                 u.AuthHelper
 }
 
 func (a *AppServiceImpl) RegenerateOidcClientCredentials(appId int) error {
@@ -52,6 +56,22 @@ func (a *AppServiceImpl) RegenerateOidcClientCredentials(appId int) error {
 	app.ClientId = newClientId
 	app.ClientSecret = newClientSecret
 
+	return a.AppRepo.UpdateApp(app)
+}
+
+func (a *AppServiceImpl) RegenerateAppSecret(appId int, secretName string) error {
+	app, err := a.AppRepo.GetAppById(appId)
+	if err != nil {
+		return err
+	}
+	if _, exists := app.Secrets[secretName]; !exists {
+		return u.Logger.NewError("app secret not found", tools.AppIdField, appId, "secret_name", secretName)
+	}
+
+	app.Secrets[secretName], err = a.AuthHelper.GenerateSecret()
+	if err != nil {
+		return err
+	}
 	return a.AppRepo.UpdateApp(app)
 }
 
@@ -169,11 +189,17 @@ func (a *AppServiceImpl) UpsertAppInDatabase(app *RepoApp) error {
 			return err
 		}
 		app.AppId = repoApp.AppId
+		if err = a.ensureAppSecrets(app, repoApp); err != nil {
+			return err
+		}
 		err = a.AppRepo.UpdateApp(app)
 		if err != nil {
 			return err
 		}
 	} else {
+		if err = a.ensureAppSecrets(app, nil); err != nil {
+			return err
+		}
 		_, err = a.AppRepo.CreateApp(app)
 		if err != nil {
 			return err
@@ -182,7 +208,65 @@ func (a *AppServiceImpl) UpsertAppInDatabase(app *RepoApp) error {
 	return nil
 }
 
-func (a *AppServiceImpl) ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AppDto, error) {
+func (a *AppServiceImpl) ensureAppSecrets(app *RepoApp, existingApp *RepoApp) error {
+	var existingSecrets map[string]string
+	if existingApp != nil {
+		existingSecrets = existingApp.Secrets
+	}
+
+	secrets := copyAppSecrets(existingSecrets)
+	maps.Copy(secrets, app.Secrets)
+
+	requiredSecrets, err := a.ComposeSecretExtractor.Extract(app.VersionContent)
+	if err != nil {
+		return err
+	}
+	for _, secretName := range requiredSecrets {
+		if _, exists := secrets[secretName]; exists {
+			continue
+		}
+		if legacyValue, exists := legacySecretValue(existingApp, secretName); exists {
+			secrets[secretName] = legacyValue
+			continue
+		}
+
+		secrets[secretName], err = a.AuthHelper.GenerateSecret()
+		if err != nil {
+			return err
+		}
+	}
+
+	app.Secrets = secrets
+	return nil
+}
+
+func copyAppSecrets(secrets map[string]string) map[string]string {
+	copiedSecrets := map[string]string{}
+	maps.Copy(copiedSecrets, secrets)
+	return copiedSecrets
+}
+
+func (a *AppServiceImpl) ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AdminAppDto, error) {
+	filteredApps, err := a.listVisibleRepoApps(userId, role)
+	if err != nil {
+		return nil, err
+	}
+	appDtos := a.AppServiceHelper.ConvertToAdminAppDtos(filteredApps)
+	if role != tools.AdminLevel {
+		clearSensitiveAppDtoFields(appDtos)
+	}
+	return appDtos, nil
+}
+
+func (a *AppServiceImpl) ListAppsForNonAdmin(userId int, role tools.UserAccessLevel) ([]api.NonAdminAppDto, error) {
+	filteredApps, err := a.listVisibleRepoApps(userId, role)
+	if err != nil {
+		return nil, err
+	}
+	return a.AppServiceHelper.ConvertToNonAdminAppDtos(filteredApps), nil
+}
+
+func (a *AppServiceImpl) listVisibleRepoApps(userId int, role tools.UserAccessLevel) ([]RepoApp, error) {
 	repoApps, err := a.AppRepo.ListApps()
 	if err != nil {
 		return nil, err
@@ -193,17 +277,21 @@ func (a *AppServiceImpl) ListAppsForRole(userId int, role tools.UserAccessLevel)
 			filteredApps = append(filteredApps, app)
 		}
 	}
-	appDtos := a.AppServiceHelper.ConvertToAppDtos(filteredApps)
-	return appDtos, nil
+	return filteredApps, nil
 }
 
-func (a *AppServiceImpl) ListAppsForAdmin() ([]api.AppDto, error) {
-	repoApps, err := a.AppRepo.ListApps()
-	if err != nil {
-		return nil, err
+func clearSensitiveAppDtoFields(apps []api.AdminAppDto) {
+	for i := range apps {
+		apps[i].AppId = ""
+		apps[i].Port = ""
+		apps[i].ClientId = ""
+		apps[i].ClientSecret = ""
+		apps[i].AppSecret = ""
+		apps[i].VersionContent = nil
+		apps[i].Secrets = nil
+		apps[i].AutomaticBackupsEnabled = false
+		apps[i].AutomaticUpdatesEnabled = false
 	}
-	appDtos := a.AppServiceHelper.ConvertToAppDtos(repoApps)
-	return appDtos, nil
 }
 
 func (a *AppServiceImpl) UpdateAppAutoMaintenanceSettings(appId int, autoUpdateEnabled, autoBackupEnabled bool) error {

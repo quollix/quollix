@@ -31,14 +31,24 @@ type AppsHandler struct {
 	VersionValidator       validation.VersionValidator
 }
 
-func (a *AppsHandler) AppListHandler(w http.ResponseWriter, r *http.Request) {
+func (a *AppsHandler) AppListForAdminHandler(w http.ResponseWriter, r *http.Request) {
+	appDtos, err := a.AppService.ListAppsForRole(users.AnonymousUserId, tools.AdminLevel)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	u.SendJsonResponse(w, appDtos)
+}
+
+func (a *AppsHandler) AppListForNonAdminHandler(w http.ResponseWriter, r *http.Request) {
 	userId, role, err := a.UserService.GetUserIdAndRoleFromQuollixRequest(r)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
 	}
 
-	appDtos, err := a.AppService.ListAppsForRole(userId, role)
+	appDtos, err := a.AppService.ListAppsForNonAdmin(userId, role)
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
@@ -247,6 +257,25 @@ func (a *AppsHandler) RegenerateOidcClientCredentials(w http.ResponseWriter, r *
 	err = a.AppService.RegenerateOidcClientCredentials(appId)
 	if err != nil {
 		u.WriteResponseError(w, OfficialDatabaseAppErrorMap, err)
+		return
+	}
+}
+
+func (a *AppsHandler) RegenerateAppSecretHandler(w http.ResponseWriter, r *http.Request) {
+	request, ok := validation.ReadBody[api.AppSecretRegenerationRequest](w, r)
+	if !ok {
+		return
+	}
+
+	appId, err := strconv.Atoi(request.AppId)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	err = a.AppService.RegenerateAppSecret(appId, request.Name)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
 		return
 	}
 }

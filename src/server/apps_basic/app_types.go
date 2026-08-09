@@ -25,17 +25,23 @@ func NewRepoApp(
 		AppSecret:                appSecret,
 		AutomaticUpdatesEnabled:  automaticUpdatesEnabled,
 		AutomaticBackupsEnabled:  automaticBackupsEnabled,
+		Secrets:                  map[string]string{},
 	}
 	return app
 }
 
 type RepoApp struct {
-	AppId                                                                                   int
-	Maintainer, AppName, VersionName, AccessPolicy, ClientId, ClientSecret, AppSecret, Port string
-	VersionCreationTimestamp                                                                time.Time
-	VersionContent                                                                          []byte
-	ShouldBeRunning, AutomaticBackupsEnabled, AutomaticUpdatesEnabled                       bool
-	Metadata                                                                                map[string]string
+	AppId                                      int
+	Maintainer, AppName, VersionName           string
+	AccessPolicy, ClientId, ClientSecret, Port string
+	// AppSecret is deprecated legacy APP_SECRET compatibility. New app definitions should use purpose-specific SECRET_* placeholders.
+	AppSecret                                        string
+	VersionCreationTimestamp                         time.Time
+	VersionContent                                   []byte
+	ShouldBeRunning                                  bool
+	AutomaticBackupsEnabled, AutomaticUpdatesEnabled bool
+	Metadata                                         map[string]string
+	Secrets                                          map[string]string
 }
 
 type AppRequestData struct {

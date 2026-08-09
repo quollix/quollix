@@ -26,6 +26,8 @@ type FrontendPageDataBuilder interface {
 	BuildSignInPage() (*SignInPageContent, error)
 	BuildSettingsPage() (*SettingsPageContent, error)
 	BuildInstalledAppsPage(usersId int, role tools.UserAccessLevel) (*AppsPageContent, error)
+	BuildAppsWithSecretsPage() (*AppsWithSecretsPageContent, error)
+	BuildAppSecretPage(appId int) (*AppSecretPageContent, error)
 	BuildUsersPage() (*UsersPageContent, error)
 	BuildEmailPage() (*EmailPageContent, error)
 	BuildTerminalAppsPage() (*TerminalAppsPageContent, error)
@@ -148,16 +150,57 @@ func (b *FrontendPageDataBuilderImpl) BuildInstalledAppsPage(usersId int, role t
 	}
 
 	sort.Slice(appDtos, func(i int, j int) bool {
-		if appDtos[i].Maintainer != appDtos[j].Maintainer {
-			return appDtos[i].Maintainer < appDtos[j].Maintainer
-		}
-		return appDtos[i].AppName < appDtos[j].AppName
+		return isAppBefore(appDtos[i], appDtos[j])
 	})
 
 	return &AppsPageContent{
 		Apps:            appDtos,
 		IsBackupEnabled: isBackupEnabled,
 	}, nil
+}
+
+func (b *FrontendPageDataBuilderImpl) BuildAppsWithSecretsPage() (*AppsWithSecretsPageContent, error) {
+	appsForAdmin, err := b.listAppsForAdmin()
+	if err != nil {
+		return nil, err
+	}
+
+	appsWithSecrets := make([]api.AdminAppDto, 0, len(appsForAdmin))
+	for _, app := range appsForAdmin {
+		if len(app.Secrets) > 0 {
+			appsWithSecrets = append(appsWithSecrets, app)
+		}
+	}
+	sort.Slice(appsWithSecrets, func(i int, j int) bool {
+		return isAppBefore(appsWithSecrets[i], appsWithSecrets[j])
+	})
+
+	return &AppsWithSecretsPageContent{Apps: appsWithSecrets}, nil
+}
+
+func (b *FrontendPageDataBuilderImpl) BuildAppSecretPage(appId int) (*AppSecretPageContent, error) {
+	appsForAdmin, err := b.listAppsForAdmin()
+	if err != nil {
+		return nil, err
+	}
+
+	appIdString := strconv.Itoa(appId)
+	for _, app := range appsForAdmin {
+		if app.AppId != appIdString {
+			continue
+		}
+
+		secretRows := make([]AppSecretRow, 0, len(app.Secrets))
+		for name, value := range app.Secrets {
+			secretRows = append(secretRows, AppSecretRow{Name: name, Value: value})
+		}
+		sort.Slice(secretRows, func(i int, j int) bool {
+			return secretRows[i].Name < secretRows[j].Name
+		})
+		return &AppSecretPageContent{App: app, Secrets: secretRows}, nil
+	}
+
+	return nil, u.Logger.NewError("app not found", tools.AppIdField, appId)
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildUsersPage() (*UsersPageContent, error) {
@@ -262,29 +305,26 @@ func (b *FrontendPageDataBuilderImpl) BuildTerminalViewPage(selectedMaintainer, 
 	}, nil
 }
 
-func (b *FrontendPageDataBuilderImpl) listRunningAppsForAdminSorted() ([]api.AppDto, error) {
-	appsForAdmin, err := b.AppService.ListAppsForAdmin()
+func (b *FrontendPageDataBuilderImpl) listRunningAppsForAdminSorted() ([]api.AdminAppDto, error) {
+	appsForAdmin, err := b.listAppsForAdmin()
 	if err != nil {
 		return nil, err
 	}
 
-	runningApps := make([]api.AppDto, 0, len(appsForAdmin)+1)
+	runningApps := make([]api.AdminAppDto, 0, len(appsForAdmin)+1)
 	for _, app := range appsForAdmin {
 		if app.IsRunning {
 			runningApps = append(runningApps, app)
 		}
 	}
 
-	runningApps = append(runningApps, api.AppDto{
+	runningApps = append(runningApps, api.AdminAppDto{
 		Maintainer: u.OfficialMaintainer,
 		AppName:    u.OfficialBrandAppName,
 	})
 
 	sort.Slice(runningApps, func(i, j int) bool {
-		if runningApps[i].Maintainer == runningApps[j].Maintainer {
-			return runningApps[i].AppName < runningApps[j].AppName
-		}
-		return runningApps[i].Maintainer < runningApps[j].Maintainer
+		return isAppBefore(runningApps[i], runningApps[j])
 	})
 
 	return runningApps, nil
@@ -538,12 +578,12 @@ func (b *FrontendPageDataBuilderImpl) BuildSetPasswordPage(token string) (*SetPa
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildAppSsoPage() (*AppSsoPageContent, error) {
-	appsForAdmin, err := b.AppService.ListAppsForAdmin()
+	appsForAdmin, err := b.listAppsForAdmin()
 	if err != nil {
 		return nil, err
 	}
 
-	var filteredApps []api.AppDto
+	var filteredApps []api.AdminAppDto
 	for _, app := range appsForAdmin {
 		if app.AppName != u.OfficialDatabaseAppName {
 			filteredApps = append(filteredApps, app)
@@ -551,10 +591,7 @@ func (b *FrontendPageDataBuilderImpl) BuildAppSsoPage() (*AppSsoPageContent, err
 	}
 
 	sort.Slice(filteredApps, func(i, j int) bool {
-		if filteredApps[i].Maintainer == filteredApps[j].Maintainer {
-			return filteredApps[i].AppName < filteredApps[j].AppName
-		}
-		return filteredApps[i].Maintainer < filteredApps[j].Maintainer
+		return isAppBefore(filteredApps[i], filteredApps[j])
 	})
 
 	return &AppSsoPageContent{Apps: filteredApps}, nil
@@ -577,21 +614,29 @@ func (b *FrontendPageDataBuilderImpl) BuildOidcClientsPage() (*OidcClientsPageCo
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildMaintenancePage() (*MaintenancePage, error) {
-	appsForAdmin, err := b.AppService.ListAppsForAdmin()
+	appsForAdmin, err := b.listAppsForAdmin()
 	if err != nil {
 		return nil, err
 	}
 
 	sort.Slice(appsForAdmin, func(i, j int) bool {
-		if appsForAdmin[i].Maintainer == appsForAdmin[j].Maintainer {
-			return appsForAdmin[i].AppName < appsForAdmin[j].AppName
-		}
-		return appsForAdmin[i].Maintainer < appsForAdmin[j].Maintainer
+		return isAppBefore(appsForAdmin[i], appsForAdmin[j])
 	})
 
 	return &MaintenancePage{
 		Apps: appsForAdmin,
 	}, nil
+}
+
+func isAppBefore(left, right api.AdminAppDto) bool {
+	if left.Maintainer == right.Maintainer {
+		return left.AppName < right.AppName
+	}
+	return left.Maintainer < right.Maintainer
+}
+
+func (b *FrontendPageDataBuilderImpl) listAppsForAdmin() ([]api.AdminAppDto, error) {
+	return b.AppService.ListAppsForRole(users.AnonymousUserId, tools.AdminLevel)
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildUserEditPageData(userId string) (*UserEditPage, error) {

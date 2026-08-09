@@ -1,10 +1,12 @@
 package backups
 
 import (
+	"maps"
 	"os"
+	"time"
+
 	"server/apps_basic"
 	"server/tools"
-	"time"
 
 	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
@@ -15,6 +17,7 @@ func NewMetaData(
 	clientId, clientSecret, appSecret, accessPolicy, port string,
 	versionCreationTimestamp time.Time,
 	automaticUpdatesEnabled, automaticBackupsEnabled bool,
+	secrets map[string]string,
 ) *MetaData {
 	return &MetaData{
 		AccessPolicy:             accessPolicy,
@@ -25,6 +28,7 @@ func NewMetaData(
 		Port:                     port,
 		AutomaticUpdatesEnabled:  automaticUpdatesEnabled,
 		AutomaticBackupsEnabled:  automaticBackupsEnabled,
+		Secrets:                  maps.Clone(secrets),
 	}
 }
 
@@ -34,8 +38,8 @@ type MetaCodecImpl struct {
 }
 
 func (c *MetaCodecImpl) Load(path string) (*MetaData, error) {
-	meta := NewMetaData("", "", "", api.Policies.AdminOnlyAccessPolicy, "80", tools.DefaultTime, true, true) // default values for unexpected fallback
-	data, err := os.ReadFile(path)                                                                           // #nosec G304 G703: path is the trusted backup metadata file selected by application workflow
+	meta := NewMetaData("", "", "", api.Policies.AdminOnlyAccessPolicy, "80", tools.DefaultTime, true, true, nil) // default values for unexpected fallback
+	data, err := os.ReadFile(path)                                                                                // #nosec G304 G703: path is the trusted backup metadata file selected by application workflow
 	if err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
@@ -49,6 +53,7 @@ func (c *MetaCodecImpl) Load(path string) (*MetaData, error) {
 		}
 	}
 	if meta.AppSecret == "" {
+		// Deprecated: legacy APP_SECRET fallback for old backups. Future secret metadata should restore purpose-specific SECRET_* values.
 		meta.AppSecret, err = c.AuthHelper.GenerateSecret()
 		if err != nil {
 			return nil, err

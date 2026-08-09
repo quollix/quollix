@@ -114,6 +114,44 @@ func (t *TemplateHandlerImpl) InstalledAppsHandler(w http.ResponseWriter, r *htt
 	t.renderPage(w, r, pageRenderRequest)
 }
 
+func (t *TemplateHandlerImpl) AppsWithSecretsHandler(w http.ResponseWriter, r *http.Request) {
+	content, err := t.PageDataBuilder.BuildAppsWithSecretsPage()
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	pageRenderRequest := frontendpages.PageRenderRequest{
+		PageName:             "apps-with-secrets",
+		InfoIconRedirectPath: tools.Links.UsageDocs.AppSecrets,
+		PageTitle:            "Apps with Secrets",
+		Content:              content,
+	}
+	t.renderPage(w, r, pageRenderRequest)
+}
+
+func (t *TemplateHandlerImpl) AppSecretHandler(w http.ResponseWriter, r *http.Request) {
+	appId, err := strconv.Atoi(r.URL.Query().Get("appId"))
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	content, err := t.PageDataBuilder.BuildAppSecretPage(appId)
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	pageRenderRequest := frontendpages.PageRenderRequest{
+		PageName:             "app-secret",
+		InfoIconRedirectPath: tools.Links.UsageDocs.AppSecrets,
+		PageTitle:            "App Secrets",
+		Content:              content,
+	}
+	t.renderPage(w, r, pageRenderRequest)
+}
+
 func (t *TemplateHandlerImpl) OpenInstalledAppHandler(w http.ResponseWriter, r *http.Request) {
 	app := r.URL.Query().Get("app")
 	if err := validation.Validate("app", validation.FieldDefault, app); err != nil {

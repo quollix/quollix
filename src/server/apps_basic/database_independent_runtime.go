@@ -1,6 +1,7 @@
 package apps_basic
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 
@@ -57,6 +58,7 @@ func (r *DatabaseIndependentRuntimeImpl) StartApp(spec *AppRuntimeSpec) error {
 		tools.ComposeEnvVars.AppSecret:        spec.App.AppSecret,
 		tools.ComposeEnvVars.IanaTimeZone:     spec.IanaTimeZone,
 	}
+	maps.Copy(envVars, spec.App.Secrets)
 
 	composeYamlPath := filepath.Join(composeDir, "docker-compose.yml")
 	completedComposeContent, err := validation.CompleteDockerComposeYaml(spec.App.Maintainer, spec.App.AppName, spec.App.VersionContent, envVars)

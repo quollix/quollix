@@ -15,6 +15,8 @@ type FramePages struct {
 	InstalledAppsPage    *InstalledAppsPage
 	SignInPage           *SignInPage
 	OidcClientsPage      *OidcClientsPage
+	AppsWithSecretsPage  *AppsWithSecretsPage
+	AppSecretPage        *AppSecretPage
 	ProvidersPage        *ProvidersPage
 	ClientsPage          *ClientsPage
 	SettingsPage         *SettingsPage
@@ -41,6 +43,8 @@ func newFramePages(frame *FrameType) *FramePages {
 		InstalledAppsPage:    &InstalledAppsPage{Frame: frame},
 		SignInPage:           &SignInPage{Frame: frame},
 		OidcClientsPage:      &OidcClientsPage{Frame: frame},
+		AppsWithSecretsPage:  &AppsWithSecretsPage{Frame: frame},
+		AppSecretPage:        &AppSecretPage{Frame: frame},
 		ProvidersPage:        &ProvidersPage{Frame: frame},
 		ClientsPage:          &ClientsPage{Frame: frame},
 		SettingsPage:         &SettingsPage{Frame: frame},
@@ -125,6 +129,11 @@ func (p *FramePages) GoToMaintenancePage() *FrameType {
 func (p *FramePages) OpenOidcClientsPage() *OidcClientsPage {
 	p.Visit(api.Paths.FrontendAppSso)
 	return p.OidcClientsPage
+}
+
+func (p *FramePages) OpenAppsWithSecretsPage() *AppsWithSecretsPage {
+	p.Visit(api.Paths.FrontendAppsWithSecrets)
+	return p.AppsWithSecretsPage
 }
 
 func (p *FramePages) OpenProvidersPage() *ProvidersPage {

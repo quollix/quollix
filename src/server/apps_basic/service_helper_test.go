@@ -84,29 +84,35 @@ func TestIsAppVisibleToUser_UnauthorizedNotVisible(t *testing.T) {
 	assert.False(t, isVisible)
 }
 
-func TestConvertToAppDtos(t *testing.T) {
+func TestConvertToAdminAppDtos(t *testing.T) {
 	testObjects := setupAppServiceHelperTest(t)
 
 	officialDatabaseApp := GetSampleApp()
 	officialDatabaseApp.AppId = 123
 	officialDatabaseApp.AppName = "postgres"
 	officialDatabaseApp.ShouldBeRunning = true
+	officialDatabaseApp.Secrets = map[string]string{
+		"SECRET_DATABASE_PASSWORD": "database-password",
+	}
 
 	customApp := GetSampleApp()
 	customApp.AppId = 456
 	customApp.Maintainer = "custom-maintainer"
 	customApp.AppName = "my-app"
 	customApp.ShouldBeRunning = false
+	customApp.Secrets = map[string]string{
+		"SECRET_APP_PASSWORD": "app-password",
+	}
 
 	testObjects.AppDetectorMock.EXPECT().IsOfficialDatabaseApp(officialDatabaseApp.AppName).Return(true)
 	testObjects.AppDetectorMock.EXPECT().IsOfficialApp(officialDatabaseApp.Maintainer).Return(true)
 	testObjects.AppDetectorMock.EXPECT().IsOfficialDatabaseApp(customApp.AppName).Return(false)
 	testObjects.AppDetectorMock.EXPECT().IsOfficialApp(customApp.Maintainer).Return(false)
 
-	appDtos := testObjects.AppServiceHelper.ConvertToAppDtos([]RepoApp{*officialDatabaseApp, *customApp})
+	appDtos := testObjects.AppServiceHelper.ConvertToAdminAppDtos([]RepoApp{*officialDatabaseApp, *customApp})
 
 	assert.Equal(t, 2, len(appDtos))
-	expectedOfficialDatabaseApp := api.AppDto{
+	expectedOfficialDatabaseApp := api.AdminAppDto{
 		AppId:                    strconv.Itoa(officialDatabaseApp.AppId),
 		Maintainer:               officialDatabaseApp.Maintainer,
 		AppName:                  officialDatabaseApp.AppName,
@@ -118,6 +124,7 @@ func TestConvertToAppDtos(t *testing.T) {
 		ClientId:                 officialDatabaseApp.ClientId,
 		ClientSecret:             officialDatabaseApp.ClientSecret,
 		AppSecret:                officialDatabaseApp.AppSecret,
+		Secrets:                  officialDatabaseApp.Secrets,
 		AutomaticBackupsEnabled:  officialDatabaseApp.AutomaticBackupsEnabled,
 		AutomaticUpdatesEnabled:  officialDatabaseApp.AutomaticUpdatesEnabled,
 		IsRunning:                true,
@@ -125,7 +132,7 @@ func TestConvertToAppDtos(t *testing.T) {
 		IsOfficial:               true,
 		DocsUrl:                  tools.InstalledAppDocsUrl(officialDatabaseApp.AppName),
 	}
-	expectedCustomApp := api.AppDto{
+	expectedCustomApp := api.AdminAppDto{
 		AppId:                    strconv.Itoa(customApp.AppId),
 		Maintainer:               customApp.Maintainer,
 		AppName:                  customApp.AppName,
@@ -137,6 +144,7 @@ func TestConvertToAppDtos(t *testing.T) {
 		ClientId:                 customApp.ClientId,
 		ClientSecret:             customApp.ClientSecret,
 		AppSecret:                customApp.AppSecret,
+		Secrets:                  customApp.Secrets,
 		AutomaticBackupsEnabled:  customApp.AutomaticBackupsEnabled,
 		AutomaticUpdatesEnabled:  customApp.AutomaticUpdatesEnabled,
 		IsRunning:                false,
@@ -146,6 +154,25 @@ func TestConvertToAppDtos(t *testing.T) {
 	}
 	assert.Equal(t, expectedOfficialDatabaseApp, appDtos[0])
 	assert.Equal(t, expectedCustomApp, appDtos[1])
+}
+
+func TestConvertToNonAdminAppDtos(t *testing.T) {
+	testObjects := setupAppServiceHelperTest(t)
+
+	app := GetSampleApp()
+	app.AppId = 123
+	app.AppName = "my-app"
+	app.Maintainer = "custom-maintainer"
+	app.Secrets = map[string]string{
+		"SECRET_APP_PASSWORD": "app-password",
+	}
+
+	appDtos := testObjects.AppServiceHelper.ConvertToNonAdminAppDtos([]RepoApp{*app})
+
+	assert.Equal(t, []api.NonAdminAppDto{{
+		Maintainer: "custom-maintainer",
+		AppName:    "my-app",
+	}}, appDtos)
 }
 
 func TestGetPortFromComposeYaml_ValidComposeReturnsPort(t *testing.T) {

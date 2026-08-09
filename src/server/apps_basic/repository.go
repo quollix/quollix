@@ -2,6 +2,7 @@ package apps_basic
 
 import (
 	"database/sql"
+	"encoding/json"
 
 	"server/tools"
 
@@ -24,8 +25,14 @@ var (
 			apps.app_secret,
 			apps.port,
 			apps.automatic_backups_enabled,
-			apps.automatic_updates_enabled
+			apps.automatic_updates_enabled,
+			COALESCE(app_secrets.values, '{}'::jsonb)
 		FROM apps
+		LEFT JOIN LATERAL (
+			SELECT jsonb_object_agg(name, value) AS values
+			FROM app_secrets
+			WHERE app_secrets.app_id = apps.app_id
+		) app_secrets ON true
 		WHERE ($1::int IS NULL OR apps.app_id = $1)
 		  AND ($2::text IS NULL OR apps.app_name = $2)
 		  AND ($3::text IS NULL OR apps.client_id = $3)
@@ -98,16 +105,44 @@ type AppRepositoryImpl struct {
 }
 
 func (n *AppRepositoryImpl) UpdateApp(app *RepoApp) error {
-	_, err := n.DbProvider.GetDB().Exec(appUpdate, appUpdateArgs(app)...)
+	tx, err := n.DbProvider.GetDB().Begin()
 	if err != nil {
+		return u.Logger.NewError(err.Error(), tools.MaintainerField, app.Maintainer, tools.AppField, app.AppName)
+	}
+	defer rollbackAppRepositoryTx(tx)
+
+	_, err = tx.Exec(appUpdate, appUpdateArgs(app)...)
+	if err != nil {
+		return u.Logger.NewError(err.Error(), tools.MaintainerField, app.Maintainer, tools.AppField, app.AppName)
+	}
+
+	if err = replaceAppSecretsTx(tx, app.AppId, app.Secrets); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return u.Logger.NewError(err.Error(), tools.MaintainerField, app.Maintainer, tools.AppField, app.AppName)
 	}
 	return nil
 }
 
 func (n *AppRepositoryImpl) CreateApp(app *RepoApp) (int, error) {
+	tx, err := n.DbProvider.GetDB().Begin()
+	if err != nil {
+		return -1, u.Logger.NewError(err.Error())
+	}
+	defer rollbackAppRepositoryTx(tx)
+
 	var appId int
-	if err := n.DbProvider.GetDB().QueryRow(appInsert, appArgsNoId(app)...).Scan(&appId); err != nil {
+	if err = tx.QueryRow(appInsert, appArgsNoId(app)...).Scan(&appId); err != nil {
+		return -1, u.Logger.NewError(err.Error())
+	}
+
+	if err = saveAppSecretsTx(tx, appId, app.Secrets); err != nil {
+		return -1, err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return -1, u.Logger.NewError(err.Error())
 	}
 	return appId, nil
@@ -125,7 +160,11 @@ func (n *AppRepositoryImpl) GetAppById(appId int) (*RepoApp, error) {
 
 func (n *AppRepositoryImpl) GetAppByClientId(clientId string) (*RepoApp, bool, error) {
 	row := n.DbProvider.GetDB().QueryRow(appSelect, nil, nil, clientId)
-	return scanAppIfExists(row)
+	app, exists, err := scanAppIfExists(row)
+	if err != nil || !exists {
+		return app, exists, err
+	}
+	return app, true, nil
 }
 
 func (n *AppRepositoryImpl) GetAppRequestData(appName string) (*AppRequestData, error) {
@@ -224,6 +263,28 @@ func (n *AppRepositoryImpl) ListApps() ([]RepoApp, error) {
 	return apps, nil
 }
 
+func saveAppSecretsTx(tx *sql.Tx, appId int, secrets map[string]string) error {
+	for name, value := range secrets {
+		if _, err := tx.Exec("INSERT INTO app_secrets (app_id, name, value) VALUES ($1, $2, $3)", appId, name, value); err != nil {
+			return u.Logger.NewError(err.Error(), tools.AppIdField, appId, "secret_name", name)
+		}
+	}
+	return nil
+}
+
+func replaceAppSecretsTx(tx *sql.Tx, appId int, secrets map[string]string) error {
+	if _, err := tx.Exec("DELETE FROM app_secrets WHERE app_id = $1", appId); err != nil {
+		return u.Logger.NewError(err.Error(), tools.AppIdField, appId)
+	}
+	return saveAppSecretsTx(tx, appId, secrets)
+}
+
+func rollbackAppRepositoryTx(tx *sql.Tx) {
+	if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+		u.Logger.Error(err)
+	}
+}
+
 func scanApp(scanner appRowScanner) (*RepoApp, error) {
 	app, exists, err := scanAppIfExists(scanner)
 	if err != nil {
@@ -237,6 +298,7 @@ func scanApp(scanner appRowScanner) (*RepoApp, error) {
 
 func scanAppIfExists(scanner appRowScanner) (*RepoApp, bool, error) {
 	var app RepoApp
+	var secrets []byte
 
 	if err := scanner.Scan(
 		&app.AppId,
@@ -253,6 +315,7 @@ func scanAppIfExists(scanner appRowScanner) (*RepoApp, bool, error) {
 		&app.Port,
 		&app.AutomaticBackupsEnabled,
 		&app.AutomaticUpdatesEnabled,
+		&secrets,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, false, nil
@@ -261,6 +324,12 @@ func scanAppIfExists(scanner appRowScanner) (*RepoApp, bool, error) {
 	}
 
 	app.VersionCreationTimestamp = app.VersionCreationTimestamp.UTC()
+	if err := json.Unmarshal(secrets, &app.Secrets); err != nil {
+		return nil, false, u.Logger.NewError(err.Error(), tools.AppIdField, app.AppId)
+	}
+	if app.Secrets == nil {
+		app.Secrets = map[string]string{}
+	}
 	return &app, true, nil
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 type AppSsoPageContent struct {
-	Apps []api.AppDto
+	Apps []api.AdminAppDto
 }
 
 type ProvidersPageContent struct {
@@ -34,7 +34,7 @@ type EmailPageContent struct {
 }
 
 type TerminalAppsPageContent struct {
-	Apps []api.AppDto
+	Apps []api.AdminAppDto
 }
 
 type TerminalServicesPageContent struct {
@@ -151,8 +151,22 @@ type UserFrontendDto struct {
 }
 
 type AppsPageContent struct {
-	Apps            []api.AppDto
+	Apps            []api.AdminAppDto
 	IsBackupEnabled bool
+}
+
+type AppsWithSecretsPageContent struct {
+	Apps []api.AdminAppDto
+}
+
+type AppSecretPageContent struct {
+	App     api.AdminAppDto
+	Secrets []AppSecretRow
+}
+
+type AppSecretRow struct {
+	Name  string
+	Value string
 }
 
 type MaintenanceWindowOption struct {
@@ -175,7 +189,7 @@ type UserEditPage struct {
 }
 
 type MaintenancePage struct {
-	Apps []api.AppDto
+	Apps []api.AdminAppDto
 }
 
 type AccountPageData struct {

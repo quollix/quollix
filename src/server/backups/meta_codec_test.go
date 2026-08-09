@@ -28,6 +28,10 @@ func TestMetaCodecImpl_SaveLoadDeleteFile(t *testing.T) {
 		versionCreationTimestamp,
 		true,
 		true,
+		map[string]string{
+			"SECRET_POSTGRES_PASSWORD": "postgresPassword",
+			"SECRET_SESSION_SECRET":    "sessionSecret",
+		},
 	)
 
 	clientCredentialsGeneratorMock := apps_basic.NewClientCredentialsGeneratorMock(t)
@@ -47,6 +51,7 @@ func TestMetaCodecImpl_SaveLoadDeleteFile(t *testing.T) {
 	assert.Equal(t, metaToSave.ClientId, loadedMeta.ClientId)
 	assert.Equal(t, metaToSave.ClientSecret, loadedMeta.ClientSecret)
 	assert.Equal(t, metaToSave.AppSecret, loadedMeta.AppSecret)
+	assert.Equal(t, metaToSave.Secrets, loadedMeta.Secrets)
 
 	assert.Nil(t, os.Remove(metaPath))
 
@@ -69,6 +74,7 @@ func TestMetaCodecImpl_LoadGeneratesCredentialsIfMissing(t *testing.T) {
 		versionCreationTimestamp,
 		true,
 		true,
+		nil,
 	)
 
 	clientCredentialsGeneratorMock := apps_basic.NewClientCredentialsGeneratorMock(t)
@@ -91,4 +97,31 @@ func TestMetaCodecImpl_LoadGeneratesCredentialsIfMissing(t *testing.T) {
 	assert.Equal(t, "generatedAppSecret", loadedMeta.AppSecret)
 
 	clientCredentialsGeneratorMock.AssertExpectations(t)
+}
+
+// Deprecated: remove this legacy metadata coverage when APP_SECRET backup compatibility is removed.
+func TestMetaCodecImpl_LoadLegacyMetadataWithoutSecrets(t *testing.T) {
+	tempDir := t.TempDir()
+	metaPath := filepath.Join(tempDir, "meta.yaml")
+	legacyMetadata := []byte(`access_policy: accessPolicyValue
+port: "8080"
+version_creation_timestamp: 2025-01-01T00:00:00Z
+client_id: clientIdValue
+client_secret: clientSecretValue
+app_secret: appSecretValue
+automatic_updates_enabled: true
+automatic_backups_enabled: true
+`)
+	assert.Nil(t, os.WriteFile(metaPath, legacyMetadata, 0o600))
+
+	metaCodec := &MetaCodecImpl{
+		ClientCredentialsCreator: apps_basic.NewClientCredentialsGeneratorMock(t),
+		AuthHelper:               tools.NewAuthHelperMock(t),
+	}
+
+	loadedMeta, err := metaCodec.Load(metaPath)
+	assert.Nil(t, err)
+
+	assert.Equal(t, "appSecretValue", loadedMeta.AppSecret)
+	assert.Equal(t, map[string]string(nil), loadedMeta.Secrets)
 }

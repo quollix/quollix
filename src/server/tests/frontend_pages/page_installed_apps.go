@@ -52,11 +52,11 @@ func (i *InstalledAppsPage) AssertHasApp(maintainer, appName, versionPrefix stri
 	return i
 }
 
-func (i *InstalledAppsPage) ListApps() []api.AppDto {
+func (i *InstalledAppsPage) ListApps() []api.AdminAppDto {
 	entries := i.listAppEntries()
-	out := make([]api.AppDto, 0, len(entries))
+	out := make([]api.AdminAppDto, 0, len(entries))
 	for _, entry := range entries {
-		out = append(out, api.AppDto{
+		out = append(out, api.AdminAppDto{
 			Maintainer:  entry.Maintainer,
 			AppName:     entry.AppName,
 			VersionName: entry.Version,

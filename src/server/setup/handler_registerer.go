@@ -91,7 +91,7 @@ func (h *HandlerRegisterer) aggregateRoutes() []users.Route {
 func (h *HandlerRegisterer) anonymousRoutes() []users.Route {
 	return []users.Route{
 		{Path: api.Paths.BackendSettingsBaseDomainRead, HandlerFunc: h.SettingsHandler.ReadBaseDomainHandler, AccessLevel: tools.AnonymousLevel},
-		{Path: api.Paths.BackendAppsList, HandlerFunc: h.AppsHandler.AppListHandler, AccessLevel: tools.AnonymousLevel},
+		{Path: api.Paths.BackendAppsListForNonAdmin, HandlerFunc: h.AppsHandler.AppListForNonAdminHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.BackendSignIn, HandlerFunc: h.UserHandler.SignInHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.BackendCheckAuth, HandlerFunc: h.UserHandler.CheckAuthHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.BackendHealth, HandlerFunc: HealthHandler, AccessLevel: tools.AnonymousLevel},
@@ -132,6 +132,7 @@ func (h *HandlerRegisterer) adminRoutes() []users.Route {
 
 func (h *HandlerRegisterer) adminAppRoutes() []users.Route {
 	return []users.Route{
+		{Path: api.Paths.BackendAppsListForAdmin, HandlerFunc: h.AppsHandler.AppListForAdminHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppsStart, HandlerFunc: h.AppsHandler.AppStartHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppsStop, HandlerFunc: h.AppsHandler.AppStopHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppsChangeAccessPolicy, HandlerFunc: h.AppsHandler.ChangeAccessPolicyHandler, AccessLevel: tools.AdminLevel},
@@ -139,6 +140,7 @@ func (h *HandlerRegisterer) adminAppRoutes() []users.Route {
 		{Path: api.Paths.BackendAppOperationInfo, HandlerFunc: h.AppsHandler.AppOperationInfoHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendIsDatabaseAvailable, HandlerFunc: h.AppsHandler.IsDatabaseAvailableHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppAutomaticMaintenanceSettings, HandlerFunc: h.AppsHandler.UpdateAutomaticMaintenanceSettingsHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendAppSecretRegenerate, HandlerFunc: h.AppsHandler.RegenerateAppSecretHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppsRegenerateOidcCredentials, HandlerFunc: h.AppsHandler.RegenerateOidcClientCredentials, AccessLevel: tools.AdminLevel},
 	}
 }
@@ -290,6 +292,8 @@ func (h *HandlerRegisterer) frontendRoutes() []users.Route {
 		{Path: api.Paths.FrontendUsers, HandlerFunc: h.TemplateHandler.UsersHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendStore, HandlerFunc: h.TemplateHandler.StoreHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendVersions, HandlerFunc: h.TemplateHandler.VersionsHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.FrontendAppsWithSecrets, HandlerFunc: h.TemplateHandler.AppsWithSecretsHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.FrontendAppSecret, HandlerFunc: h.TemplateHandler.AppSecretHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendBackedUpApps, HandlerFunc: h.TemplateHandler.BackedUpAppsHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendListBackups, HandlerFunc: h.TemplateHandler.ListBackupsHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendSetPassword, HandlerFunc: h.TemplateHandler.SetPasswordHandler, AccessLevel: tools.AnonymousLevel},

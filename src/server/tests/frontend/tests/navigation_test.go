@@ -19,6 +19,7 @@ const (
 	sidebarLinkStore         = "sidebar-link-store"
 	sidebarLinkMaintenance   = "sidebar-link-maintenance"
 	sidebarLinkAppSso        = "sidebar-link-app-sso"
+	sidebarLinkAppSecrets    = "sidebar-link-app-secrets"
 	sidebarLinkProviders     = "sidebar-link-providers"
 	sidebarLinkClients       = "sidebar-link-clients"
 	sidebarLinkUsers         = "sidebar-link-users"
@@ -46,6 +47,9 @@ func TestSidebarNavigationAsAdmin(t *testing.T) {
 
 	frame.Browser.ClickSidebarLink(sidebarGroupApps, sidebarLinkAppSso)
 	frame.Assert.PagePath(api.Paths.FrontendAppSso)
+
+	frame.Browser.ClickSidebarLink(sidebarGroupApps, sidebarLinkAppSecrets)
+	frame.Assert.PagePath(api.Paths.FrontendAppsWithSecrets)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupIdentity, sidebarLinkUsers)
 	frame.Assert.PagePath(api.Paths.FrontendUsers)

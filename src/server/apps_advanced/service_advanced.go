@@ -85,8 +85,7 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.Binary
 		true,
 	)
 
-	_, err = a.AppRepo.CreateApp(app)
-	return err
+	return a.AppService.UpsertAppInDatabase(app)
 }
 
 func (a *AppsServiceAdvancedImpl) conductAppUpdate(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName, port string) error {
@@ -114,7 +113,7 @@ func (a *AppsServiceAdvancedImpl) conductAppUpdate(versionFile *api.BinaryFile, 
 	appFromDatabase.VersionCreationTimestamp = composeArchive.VersionCreationTimestamp
 	appFromDatabase.VersionContent = versionFile.Content
 	appFromDatabase.Port = port
-	return a.AppRepo.UpdateApp(appFromDatabase)
+	return a.AppService.UpsertAppInDatabase(appFromDatabase)
 }
 
 func (a *AppsServiceAdvancedImpl) DownloadAppFromApplication(appId int) (*api.BinaryFile, error) {

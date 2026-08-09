@@ -5,8 +5,10 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"testing"
 	"time"
 
+	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api_client"
 
 	u "github.com/quollix/common/utils"
@@ -76,6 +78,13 @@ func ExchangeAppAccessSecretForCookieWithUrl(client *api_client.QuollixClient, s
 
 func ReadSampleAppEnvValue(client *api_client.QuollixClient, name string) (string, error) {
 	return readSampleAppUrl(client, sampleAppHttpsUrl+"/env/"+name)
+}
+
+func ReadRequiredSampleAppEnvValue(t *testing.T, client *api_client.QuollixClient, name string) string {
+	value, err := ReadSampleAppEnvValue(client, name)
+	assert.Nil(t, err)
+	assert.Equal(t, 64, len(value))
+	return value
 }
 
 func ReadSampleAppHeaderValue(client *api_client.QuollixClient, baseUrl string, name string) (string, error) {

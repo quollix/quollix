@@ -95,7 +95,7 @@ func TestAppListingInBackupRepo(t *testing.T) {
 }
 
 func TestFileBackupAndRestore(t *testing.T) {
-	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *api.AppDto) {
+	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *api.AdminAppDto) {
 		appClient := GetAppClient(t, client)
 		assert.Nil(t, StoreStringInSampleApp(appClient, "sample string"))
 
@@ -138,7 +138,9 @@ func TestDatabaseBackupAndRestore(t *testing.T) {
 }
 
 func TestRestoreAppMetaData(t *testing.T) {
-	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *api.AppDto) {
+	var originalSharedSecret string
+	var originalVersionSecret string
+	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *api.AdminAppDto) {
 		app.AccessPolicy = api.Policies.PublicAccessPolicy
 		assert.Nil(t, client.Apps.SetAccessPolicy(app.AppId, api.Policies.PublicAccessPolicy))
 		assert.True(t, app.AutomaticUpdatesEnabled)
@@ -151,6 +153,8 @@ func TestRestoreAppMetaData(t *testing.T) {
 		originalAppSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
 		assert.Nil(t, err)
 		assert.Equal(t, app.AppSecret, originalAppSecret)
+		originalSharedSecret = ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_SHARED")
+		originalVersionSecret = ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_VERSION_TWO")
 	})
 	defer fixture.client.Test.ResetTestState()
 
@@ -163,6 +167,31 @@ func TestRestoreAppMetaData(t *testing.T) {
 	restoredAppSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
 	assert.Nil(t, err)
 	assert.Equal(t, restoredApp.AppSecret, restoredAppSecret)
+	assert.Equal(t, originalSharedSecret, ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_SHARED"))
+	assert.Equal(t, originalVersionSecret, ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_VERSION_TWO"))
+}
+
+func TestRestoreAppSecretsOverwriteInstalledAppSecrets(t *testing.T) {
+	var backupSharedSecret string
+	var backupVersionSecret string
+	fixture := createSampleAppWithBackupAndDeleteIt(t, func(client *api_client.QuollixClient, app *api.AdminAppDto) {
+		appClient := GetAppClient(t, client)
+		backupSharedSecret = ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_SHARED")
+		backupVersionSecret = ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_VERSION_TWO")
+	})
+	defer fixture.client.Test.ResetTestState()
+
+	_, err := InstallAndStartSample(t, fixture.client, "2.0")
+	assert.Nil(t, err)
+	installedAppClient := GetAppClient(t, fixture.client)
+	assert.True(t, backupSharedSecret != ReadRequiredSampleAppEnvValue(t, installedAppClient, "SECRET_SAMPLE_SHARED"))
+	assert.True(t, backupVersionSecret != ReadRequiredSampleAppEnvValue(t, installedAppClient, "SECRET_SAMPLE_VERSION_TWO"))
+
+	assert.Nil(t, fixture.client.Backups.Restore(fixture.backup.BackupId))
+
+	restoredAppClient := GetAppClient(t, fixture.client)
+	assert.Equal(t, backupSharedSecret, ReadRequiredSampleAppEnvValue(t, restoredAppClient, "SECRET_SAMPLE_SHARED"))
+	assert.Equal(t, backupVersionSecret, ReadRequiredSampleAppEnvValue(t, restoredAppClient, "SECRET_SAMPLE_VERSION_TWO"))
 }
 
 func configureBackupRepo(t *testing.T, client *api_client.QuollixClient) {
@@ -202,7 +231,7 @@ func assertAppsNumbersInBackupRepo(t *testing.T, client *api_client.QuollixClien
 	assert.Equal(t, expectedAppNumberInBackupRepo, len(backupRepoApps))
 }
 
-func assertAppState(t *testing.T, expected *api.AppDto, actual *api.AppDto) {
+func assertAppState(t *testing.T, expected *api.AdminAppDto, actual *api.AdminAppDto) {
 	assert.Equal(t, expected.Maintainer, actual.Maintainer)
 	assert.Equal(t, expected.AppName, actual.AppName)
 	assert.Equal(t, expected.VersionName, actual.VersionName)
@@ -219,10 +248,10 @@ func assertAppState(t *testing.T, expected *api.AppDto, actual *api.AppDto) {
 	assert.Equal(t, expected.AutomaticBackupsEnabled, actual.AutomaticBackupsEnabled)
 }
 
-func assertPostgresDetails(t *testing.T, client *api_client.QuollixClient) api.AppDto {
+func assertPostgresDetails(t *testing.T, client *api_client.QuollixClient) api.AdminAppDto {
 	installedApps := ListInstalledApps(t, client)
 
-	var postgresApp api.AppDto
+	var postgresApp api.AdminAppDto
 	for _, app := range installedApps {
 		if app.AppName == u.OfficialDatabaseAppName {
 			postgresApp = app
@@ -240,12 +269,12 @@ func assertPostgresDetails(t *testing.T, client *api_client.QuollixClient) api.A
 
 type SampleAppBackupFixture struct {
 	client      *api_client.QuollixClient
-	app         *api.AppDto
-	originalApp *api.AppDto
+	app         *api.AdminAppDto
+	originalApp *api.AdminAppDto
 	backup      api.BackupInfo
 }
 
-func createSampleAppWithBackupAndDeleteIt(t *testing.T, beforeBackup func(client *api_client.QuollixClient, app *api.AppDto)) SampleAppBackupFixture {
+func createSampleAppWithBackupAndDeleteIt(t *testing.T, beforeBackup func(client *api_client.QuollixClient, app *api.AdminAppDto)) SampleAppBackupFixture {
 	client := prepareSshRemoteServerSetup(t)
 
 	app, err := InstallAndStartSample(t, client, "2.0")

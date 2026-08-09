@@ -44,6 +44,7 @@ type AppStoreClientMock struct {
 	Config                     *tools.GlobalConfig
 	VersionValidator           validation.VersionValidator
 	AppRepository              apps_basic.AppRepository
+	AppService                 apps_basic.AppService
 	ClientCredentialsGenerator apps_basic.ClientCredentialsGenerator
 	AuthHelper                 u.AuthHelper
 	AppServiceHelper           apps_basic.AppServiceHelper
@@ -214,8 +215,7 @@ func (h *AppStoreClientMock) createNewTestApp(
 		false,
 	)
 
-	_, err = h.AppRepository.CreateApp(newApp)
-	return err
+	return h.AppService.UpsertAppInDatabase(newApp)
 }
 
 func (h *AppStoreClientMock) updateExistingTestApp(appName string, appContent []byte) error {
@@ -224,7 +224,7 @@ func (h *AppStoreClientMock) updateExistingTestApp(appName string, appContent []
 		return err
 	}
 	app.VersionContent = appContent
-	return h.AppRepository.UpdateApp(app)
+	return h.AppService.UpsertAppInDatabase(app)
 }
 
 func (h *AppStoreClientMock) ListVersions(userName, appName string) ([]store.LeanVersionDto, error) {

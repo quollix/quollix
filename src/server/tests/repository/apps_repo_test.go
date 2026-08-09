@@ -22,6 +22,10 @@ func TestAppCreateAndRead(t *testing.T) {
 
 	expectedApp := apps_basic.GetSampleApp()
 	expectedApp.VersionCreationTimestamp = time.Date(2026, time.July, 10, 12, 34, 56, 789123000, time.UTC)
+	expectedApp.Secrets = map[string]string{
+		"SECRET_POSTGRES_PASSWORD": "postgres-secret",
+		"SECRET_SESSION_SECRET":    "session-secret",
+	}
 	expectedApp.AppId, err = AppRepo.CreateApp(expectedApp)
 	assert.Nil(t, err)
 
@@ -59,6 +63,9 @@ func TestAppDeletion(t *testing.T) {
 	assert.Nil(t, err)
 
 	app := apps_basic.GetSampleApp()
+	app.Secrets = map[string]string{
+		"SECRET_POSTGRES_PASSWORD": "postgres-secret",
+	}
 	app.AppId, err = AppRepo.CreateApp(app)
 	assert.Nil(t, err)
 
@@ -71,6 +78,47 @@ func TestAppDeletion(t *testing.T) {
 	apps, err = AppRepo.ListApps()
 	assert.Nil(t, err)
 	assert.Equal(t, len(initialApps), len(apps))
+
+	secretCount := 0
+	assert.Nil(t, DatabaseConnector.GetDB().QueryRow("SELECT COUNT(*) FROM app_secrets WHERE app_id = $1", app.AppId).Scan(&secretCount))
+	assert.Equal(t, 0, secretCount)
+}
+
+func TestAppListLoadsSecretsForMultipleApps(t *testing.T) {
+	InitDeps()
+	defer AppRepo.Wipe()
+
+	firstApp := apps_basic.GetSampleApp()
+	firstApp.Secrets = map[string]string{
+		"SECRET_FIRST_PASSWORD": "first-secret",
+	}
+	var err error
+	firstApp.AppId, err = AppRepo.CreateApp(firstApp)
+	assert.Nil(t, err)
+
+	secondApp := apps_basic.GetSampleApp()
+	secondApp.AppName = "second-app"
+	secondApp.ClientId = "1234567890abcdef"
+	secondApp.ClientSecret = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+	secondApp.AppSecret = "fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
+	secondApp.VersionContent = []byte("second-content")
+	secondApp.Secrets = map[string]string{
+		"SECRET_SECOND_PASSWORD": "second-secret",
+		"SECRET_SECOND_TOKEN":    "second-token",
+	}
+	secondApp.AppId, err = AppRepo.CreateApp(secondApp)
+	assert.Nil(t, err)
+
+	apps, err := AppRepo.ListApps()
+	assert.Nil(t, err)
+
+	actualById := map[int]*apps_basic.RepoApp{}
+	for _, app := range apps {
+		appCopy := app
+		actualById[app.AppId] = &appCopy
+	}
+	AssertAppEquality(t, firstApp, actualById[firstApp.AppId])
+	AssertAppEquality(t, secondApp, actualById[secondApp.AppId])
 }
 
 func TestDoesAppExist(t *testing.T) {
@@ -122,6 +170,9 @@ func TestUpdateApp(t *testing.T) {
 		false,
 	)
 	updatedApp.AppId = app.AppId
+	updatedApp.Secrets = map[string]string{
+		"SECRET_UPDATED_PASSWORD": "updated-secret",
+	}
 
 	assert.Nil(t, AppRepo.UpdateApp(updatedApp))
 

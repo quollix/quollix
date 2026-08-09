@@ -34,6 +34,7 @@ func NewAppStoreClient(
 	generator apps_basic.ClientCredentialsGenerator,
 	authHelper u.AuthHelper,
 	appRepository apps_basic.AppRepository,
+	appService apps_basic.AppService,
 	appServiceHelper apps_basic.AppServiceHelper,
 	versionSigningService store.VersionSigningService,
 ) app_store.AppStoreClientLean {
@@ -45,6 +46,7 @@ func NewAppStoreClient(
 			ClientCredentialsGenerator: generator,
 			AuthHelper:                 authHelper,
 			AppRepository:              appRepository,
+			AppService:                 appService,
 			AppServiceHelper:           appServiceHelper,
 			VersionSigningService:      versionSigningService,
 		}

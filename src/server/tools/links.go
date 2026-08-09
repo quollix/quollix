@@ -23,6 +23,7 @@ type UsageDocsLinksType struct {
 	Users         string
 	AppStore      string
 	StoreVersions string
+	AppSecrets    string
 	Backups       string
 	AppSso        string
 	Federation    string
@@ -55,6 +56,7 @@ var Links = LinksType{
 		Users:         UsageDocsBaseUrl + "/users",
 		AppStore:      UsageDocsBaseUrl + "/app-store",
 		StoreVersions: UsageDocsBaseUrl + "/app-store",
+		AppSecrets:    UsageDocsBaseUrl + "/app-secrets",
 		Backups:       UsageDocsBaseUrl + "/backups",
 		AppSso:        UsageDocsBaseUrl + "/app-sso",
 		Federation:    UsageDocsBaseUrl + "/federation",

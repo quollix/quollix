@@ -60,6 +60,103 @@ func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	ianaTimezone, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.IanaTimeZone)
 	assert.Nil(t, err)
 	assert.Equal(t, "Europe/London", ianaTimezone)
+
+	sharedSecret, err := ReadSampleAppEnvValue(appClient, "SECRET_SAMPLE_SHARED")
+	assert.Nil(t, err)
+	assert.Equal(t, 64, len(sharedSecret))
+
+	versionSecret, err := ReadSampleAppEnvValue(appClient, "SECRET_SAMPLE_VERSION_TWO")
+	assert.Nil(t, err)
+	assert.Equal(t, 64, len(versionSecret))
+	assert.True(t, sharedSecret != versionSecret)
+
+	migratedPassword, err := ReadSampleAppEnvValue(appClient, "SAMPLE_LEGACY_PASSWORD")
+	assert.Nil(t, err)
+	assert.Equal(t, 64, len(migratedPassword))
+	assert.True(t, migratedPassword != "password")
+
+}
+
+func TestReinstallingSampleAppRenewsSecrets(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	firstInstall, err := InstallAndStartSample(t, client, "2.0")
+	assert.Nil(t, err)
+	firstAppClient := GetAppClient(t, client)
+	firstSharedSecret := ReadRequiredSampleAppEnvValue(t, firstAppClient, "SECRET_SAMPLE_SHARED")
+	firstVersionSecret := ReadRequiredSampleAppEnvValue(t, firstAppClient, "SECRET_SAMPLE_VERSION_TWO")
+
+	assert.Nil(t, client.Apps.Delete(firstInstall.AppId))
+
+	_, err = InstallAndStartSample(t, client, "2.0")
+	assert.Nil(t, err)
+	secondAppClient := GetAppClient(t, client)
+	secondSharedSecret := ReadRequiredSampleAppEnvValue(t, secondAppClient, "SECRET_SAMPLE_SHARED")
+	secondVersionSecret := ReadRequiredSampleAppEnvValue(t, secondAppClient, "SECRET_SAMPLE_VERSION_TWO")
+
+	assert.True(t, firstSharedSecret != secondSharedSecret)
+	assert.True(t, firstVersionSecret != secondVersionSecret)
+}
+
+func TestUpdatingSampleAppPreservesExistingSecretsAndGeneratesNewSecrets(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	appBeforeUpdate, err := InstallAndStartSample(t, client, "1.0")
+	assert.Nil(t, err)
+	appClientBeforeUpdate := GetAppClient(t, client)
+	sharedSecretBeforeUpdate := ReadRequiredSampleAppEnvValue(t, appClientBeforeUpdate, "SECRET_SAMPLE_SHARED")
+	versionOneSecret := ReadRequiredSampleAppEnvValue(t, appClientBeforeUpdate, "SECRET_SAMPLE_VERSION_ONE")
+	legacyPasswordBeforeUpdate, err := ReadSampleAppEnvValue(appClientBeforeUpdate, "SAMPLE_LEGACY_PASSWORD")
+	assert.Nil(t, err)
+	assert.Equal(t, "password", legacyPasswordBeforeUpdate)
+
+	assert.Nil(t, client.Apps.Update(appBeforeUpdate.AppId))
+
+	appClientAfterUpdate := GetAppClient(t, client)
+	sharedSecretAfterUpdate := ReadRequiredSampleAppEnvValue(t, appClientAfterUpdate, "SECRET_SAMPLE_SHARED")
+	versionTwoSecret := ReadRequiredSampleAppEnvValue(t, appClientAfterUpdate, "SECRET_SAMPLE_VERSION_TWO")
+	migratedPasswordAfterUpdate, err := ReadSampleAppEnvValue(appClientAfterUpdate, "SAMPLE_LEGACY_PASSWORD")
+	assert.Nil(t, err)
+
+	assert.Equal(t, sharedSecretBeforeUpdate, sharedSecretAfterUpdate)
+	assert.Equal(t, "password", migratedPasswordAfterUpdate)
+	assert.Equal(t, 64, len(versionTwoSecret))
+	assert.True(t, versionTwoSecret != versionOneSecret)
+	assert.True(t, versionTwoSecret != sharedSecretAfterUpdate)
+}
+
+func TestRegeneratingSampleAppSecretChangesStoredSecret(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	installedApp, err := InstallAndStartSample(t, client, "2.0")
+	assert.Nil(t, err)
+	appBeforeRegeneration := GetInstalledSample(t, client)
+	storedSecretBeforeRegeneration := appBeforeRegeneration.Secrets["SECRET_SAMPLE_SHARED"]
+	assert.Equal(t, 64, len(storedSecretBeforeRegeneration))
+
+	appClient := GetAppClient(t, client)
+	runningSecretBeforeRegeneration := ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_SHARED")
+	assert.Equal(t, storedSecretBeforeRegeneration, runningSecretBeforeRegeneration)
+
+	assert.Nil(t, client.Apps.RegenerateSecret(installedApp.AppId, "SECRET_SAMPLE_SHARED"))
+
+	appAfterRegeneration := GetInstalledSample(t, client)
+	storedSecretAfterRegeneration := appAfterRegeneration.Secrets["SECRET_SAMPLE_SHARED"]
+	assert.Equal(t, 64, len(storedSecretAfterRegeneration))
+	assert.True(t, storedSecretAfterRegeneration != storedSecretBeforeRegeneration)
+
+	runningSecretAfterRegeneration := ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_SHARED")
+	assert.Equal(t, runningSecretBeforeRegeneration, runningSecretAfterRegeneration)
+
+	assert.Nil(t, client.Apps.Stop(installedApp.AppId))
+	assert.Nil(t, client.Apps.Start(installedApp.AppId))
+
+	appClientAfterRestart := GetAppClient(t, client)
+	runningSecretAfterRestart := ReadRequiredSampleAppEnvValue(t, appClientAfterRestart, "SECRET_SAMPLE_SHARED")
+	assert.Equal(t, storedSecretAfterRegeneration, runningSecretAfterRestart)
 }
 
 func TestStartingAppAlreadyRunningIsPossible(t *testing.T) {
@@ -199,30 +296,38 @@ func TestInstalledAppListing_ByAccessPolicy(t *testing.T) {
 	anonymousClient := api_client.NewQuollixClient()
 
 	type listingExpectation struct {
-		policy                   string
-		adminVisibleAppCount     int
-		userVisibleAppCount      int
-		anonymousVisibleAppCount int
+		policy                      string
+		adminVisibleAppCount        int
+		userVisibleAppCount         int
+		anonymousVisibleAppCount    int
+		shouldUserSeeSampleApp      bool
+		shouldAnonymousSeeSampleApp bool
 	}
 
 	testCases := []listingExpectation{
 		{
-			policy:                   api.Policies.AdminOnlyAccessPolicy,
-			adminVisibleAppCount:     2,
-			userVisibleAppCount:      0,
-			anonymousVisibleAppCount: 0,
+			policy:                      api.Policies.AdminOnlyAccessPolicy,
+			adminVisibleAppCount:        2,
+			userVisibleAppCount:         0,
+			anonymousVisibleAppCount:    0,
+			shouldUserSeeSampleApp:      false,
+			shouldAnonymousSeeSampleApp: false,
 		},
 		{
-			policy:                   api.Policies.AuthenticatedAccessPolicy,
-			adminVisibleAppCount:     2,
-			userVisibleAppCount:      1,
-			anonymousVisibleAppCount: 0,
+			policy:                      api.Policies.AuthenticatedAccessPolicy,
+			adminVisibleAppCount:        2,
+			userVisibleAppCount:         1,
+			anonymousVisibleAppCount:    0,
+			shouldUserSeeSampleApp:      true,
+			shouldAnonymousSeeSampleApp: false,
 		},
 		{
-			policy:                   api.Policies.PublicAccessPolicy,
-			adminVisibleAppCount:     2,
-			userVisibleAppCount:      1,
-			anonymousVisibleAppCount: 1,
+			policy:                      api.Policies.PublicAccessPolicy,
+			adminVisibleAppCount:        2,
+			userVisibleAppCount:         1,
+			anonymousVisibleAppCount:    1,
+			shouldUserSeeSampleApp:      true,
+			shouldAnonymousSeeSampleApp: true,
 		},
 	}
 
@@ -232,14 +337,40 @@ func TestInstalledAppListing_ByAccessPolicy(t *testing.T) {
 
 			adminApps := ListInstalledApps(t, adminClient)
 			assert.Equal(t, testCase.adminVisibleAppCount, len(adminApps))
+			adminSampleApp, adminSampleAppExists := findAppByName(adminApps, tools.SampleApp)
+			assert.True(t, adminSampleAppExists)
+			assertAppSensitiveDataVisibleToAdmin(t, adminSampleApp)
 
-			userApps := ListInstalledApps(t, userClient)
+			userApps := ListInstalledAppsForNonAdmin(t, userClient)
 			assert.Equal(t, testCase.userVisibleAppCount, len(userApps))
+			userSampleApp, userSampleAppExists := findNonAdminAppByName(userApps, tools.SampleApp)
+			assert.Equal(t, testCase.shouldUserSeeSampleApp, userSampleAppExists)
+			if userSampleAppExists {
+				assertNonAdminAppDtoContainsOnlyAppIdentity(t, userSampleApp)
+			}
 
-			anonymousApps := ListInstalledApps(t, anonymousClient)
+			anonymousApps := ListInstalledAppsForNonAdmin(t, anonymousClient)
 			assert.Equal(t, testCase.anonymousVisibleAppCount, len(anonymousApps))
+			anonymousSampleApp, anonymousSampleAppExists := findNonAdminAppByName(anonymousApps, tools.SampleApp)
+			assert.Equal(t, testCase.shouldAnonymousSeeSampleApp, anonymousSampleAppExists)
+			if anonymousSampleAppExists {
+				assertNonAdminAppDtoContainsOnlyAppIdentity(t, anonymousSampleApp)
+			}
 		})
 	}
+}
+
+func assertAppSensitiveDataVisibleToAdmin(t *testing.T, app api.AdminAppDto) {
+	assert.Equal(t, 64, len(app.ClientSecret))
+	assert.Equal(t, 64, len(app.AppSecret))
+	assert.True(t, len(app.VersionContent) > 0)
+	assert.True(t, len(app.Secrets) > 0)
+	assert.Equal(t, 64, len(app.Secrets["SECRET_SAMPLE_SHARED"]))
+}
+
+func assertNonAdminAppDtoContainsOnlyAppIdentity(t *testing.T, app api.NonAdminAppDto) {
+	assert.Equal(t, tools.SampleMaintainer, app.Maintainer)
+	assert.Equal(t, tools.SampleApp, app.AppName)
 }
 
 func TestSetUnknownAccessPolicy(t *testing.T) {
