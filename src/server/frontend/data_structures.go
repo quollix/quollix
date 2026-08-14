@@ -167,6 +167,7 @@ type InstalledAppPageDto struct {
 	IsRunning                         bool
 	IsOfficialDatabaseApp             bool
 	IsOfficial                        bool
+	IsPublic                          bool
 }
 
 type AppsWithSecretsPageContent struct {

@@ -58,7 +58,8 @@ func TestUserWithoutAccessClicksInstalledAppsLink(t *testing.T) {
 	frame.Session.SignInViaClient(component.SampleUsername, component.SampleUserPassword)
 
 	frame.Pages.VisitURL(sampleAppDirectURL + "/")
-	frame.Assert.HostEventually(sampleAppHost).Assert.PageContainsEventually(tools.AppUnavailableTitle)
+	frame.Assert.HostEventually("quollix.localhost").Assert.PathEventually(api.Paths.FrontendAppOpen)
+	frame.Assert.PageContainsEventually(tools.AppUnavailableTitle)
 	frame.Assert.PageContainsEventually(tools.AppUnavailableMessage)
 
 	clickInstalledAppsLink(t, frame)

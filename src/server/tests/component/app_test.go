@@ -385,7 +385,7 @@ func TestInstalledAppListing_ByAccessPolicy(t *testing.T) {
 			userSampleApp, userSampleAppExists := findNonAdminAppByName(userApps, tools.SampleApp)
 			assert.Equal(t, testCase.shouldUserSeeSampleApp, userSampleAppExists)
 			if userSampleAppExists {
-				assertNonAdminAppDtoContainsOnlyAppIdentity(t, userSampleApp)
+				assertNonAdminAppDtoContainsSafeAppFields(t, userSampleApp, testCase.policy == api.Policies.PublicAccessPolicy)
 			}
 
 			anonymousApps := ListInstalledAppsForNonAdmin(t, anonymousClient)
@@ -393,7 +393,7 @@ func TestInstalledAppListing_ByAccessPolicy(t *testing.T) {
 			anonymousSampleApp, anonymousSampleAppExists := findNonAdminAppByName(anonymousApps, tools.SampleApp)
 			assert.Equal(t, testCase.shouldAnonymousSeeSampleApp, anonymousSampleAppExists)
 			if anonymousSampleAppExists {
-				assertNonAdminAppDtoContainsOnlyAppIdentity(t, anonymousSampleApp)
+				assertNonAdminAppDtoContainsSafeAppFields(t, anonymousSampleApp, true)
 			}
 		})
 	}
@@ -407,9 +407,10 @@ func assertAppSensitiveDataVisibleToAdmin(t *testing.T, app api.AdminAppDto) {
 	assert.Equal(t, 64, len(app.Secrets["SECRET_SAMPLE_SHARED"]))
 }
 
-func assertNonAdminAppDtoContainsOnlyAppIdentity(t *testing.T, app api.NonAdminAppDto) {
+func assertNonAdminAppDtoContainsSafeAppFields(t *testing.T, app api.NonAdminAppDto, expectedIsPublic bool) {
 	assert.Equal(t, tools.SampleMaintainer, app.Maintainer)
 	assert.Equal(t, tools.SampleApp, app.AppName)
+	assert.Equal(t, expectedIsPublic, app.IsPublic)
 }
 
 func TestSetUnknownAccessPolicy(t *testing.T) {

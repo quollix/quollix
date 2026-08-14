@@ -3,9 +3,10 @@ package apps_basic
 import (
 	"fmt"
 	"maps"
-	"server/tools"
 	"strconv"
 	"time"
+
+	"server/tools"
 
 	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
@@ -81,6 +82,7 @@ func (a *AppServiceHelperImpl) ConvertToNonAdminAppDtos(apps []RepoApp) []api.No
 		appDtos = append(appDtos, api.NonAdminAppDto{
 			Maintainer: app.Maintainer,
 			AppName:    app.AppName,
+			IsPublic:   app.AccessPolicy == api.Policies.PublicAccessPolicy,
 		})
 	}
 	return appDtos

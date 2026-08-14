@@ -2,9 +2,10 @@ package apps_basic
 
 import (
 	"errors"
-	"server/tools"
 	"strconv"
 	"testing"
+
+	"server/tools"
 
 	"github.com/quollix/common/assert"
 	api "github.com/quollix/common/quollix/api"
@@ -172,6 +173,7 @@ func TestConvertToNonAdminAppDtos(t *testing.T) {
 	assert.Equal(t, []api.NonAdminAppDto{{
 		Maintainer: "custom-maintainer",
 		AppName:    "my-app",
+		IsPublic:   true,
 	}}, appDtos)
 }
 

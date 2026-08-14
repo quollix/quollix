@@ -186,6 +186,7 @@ func installedAppPageDtosForAdmin(apps []api.AdminAppDto, now time.Time) []Insta
 			IsRunning:                         app.IsRunning,
 			IsOfficialDatabaseApp:             app.IsOfficialDatabaseApp,
 			IsOfficial:                        app.IsOfficial,
+			IsPublic:                          app.AccessPolicy == api.Policies.PublicAccessPolicy,
 		})
 	}
 	return appDtos
@@ -198,6 +199,7 @@ func installedAppPageDtosForNonAdmin(apps []api.NonAdminAppDto) []InstalledAppPa
 			Maintainer: app.Maintainer,
 			AppName:    app.AppName,
 			IsRunning:  true,
+			IsPublic:   app.IsPublic,
 		})
 	}
 	return appDtos

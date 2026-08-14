@@ -84,8 +84,7 @@
         {{else}}
         <button type="button" class="open-btn lean" onclick="openFromRow(
                         '{{$app.AppName}}',
-                        '{{$app.AccessPolicy}}',
-                        '{{$.Static.Policies.PublicAccessPolicy}}',
+                        {{$app.IsPublic}},
                         '{{$.Globals.Host}}'                        )" {{if not $app.IsRunning }} disabled aria-disabled="true"
           {{end}}>
           Open

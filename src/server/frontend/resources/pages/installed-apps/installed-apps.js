@@ -33,11 +33,9 @@ window.changeAccessPolicy = async (selectionMenu) => {
 }
 
 
-window.openFromRow = async (appName, appAccessPolicy, publicAccessPolicy, host) => {
-    const isPublicAccessPolicy = appAccessPolicy === publicAccessPolicy
-
+window.openFromRow = async (appName, isPublic, host) => {
     const base = `${location.protocol}//${appName}.${host}/`
-    if (isPublicAccessPolicy) {
+    if (isPublic) {
         window.open(base, '_blank')
     } else {
         const res = await window.doRequest("{{ $.Static.Paths.BackendSecret }}", {

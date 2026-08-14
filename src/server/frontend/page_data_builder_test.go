@@ -153,6 +153,7 @@ func TestBuildInstalledAppsPage_ForAdmin_ReturnsAdminFieldsAndSortsByMaintainerT
 	assert.Equal(t, "2025-12-31 23:00:00", pageContent.Apps[0].VersionCreationTimestampTooltip)
 	assert.True(t, pageContent.Apps[0].IsRunning)
 	assert.True(t, pageContent.Apps[0].IsOfficial)
+	assert.True(t, pageContent.Apps[0].IsPublic)
 
 	assert.Equal(t, "a-maintainer", pageContent.Apps[1].Maintainer)
 	assert.Equal(t, "z-app", pageContent.Apps[1].AppName)
@@ -169,7 +170,7 @@ func TestBuildInstalledAppsPage_ForNonAdmin_ReturnsLeanFieldsAndSortsByMaintaine
 	testObjects.AppService.EXPECT().
 		ListAppsForNonAdmin(123, tools.UserLevel).
 		Return([]api.NonAdminAppDto{
-			{Maintainer: "b-maintainer", AppName: "a-app"},
+			{Maintainer: "b-maintainer", AppName: "a-app", IsPublic: true},
 			{Maintainer: "a-maintainer", AppName: "z-app"},
 			{Maintainer: "a-maintainer", AppName: "a-app"},
 		}, nil)
@@ -181,9 +182,23 @@ func TestBuildInstalledAppsPage_ForNonAdmin_ReturnsLeanFieldsAndSortsByMaintaine
 	assert.Equal(t, []InstalledAppPageDto{
 		{Maintainer: "a-maintainer", AppName: "a-app", IsRunning: true},
 		{Maintainer: "a-maintainer", AppName: "z-app", IsRunning: true},
-		{Maintainer: "b-maintainer", AppName: "a-app", IsRunning: true},
+		{Maintainer: "b-maintainer", AppName: "a-app", IsRunning: true, IsPublic: true},
 	}, pageContent.Apps)
 	assert.False(t, pageContent.IsBackupEnabled)
+}
+
+func TestBuildInstalledAppsPage_ForNonAdmin_MapsIsPublic(t *testing.T) {
+	testObjects := getTestObjects(t)
+
+	testObjects.AppService.EXPECT().
+		ListAppsForNonAdmin(123, tools.UserLevel).
+		Return([]api.NonAdminAppDto{{Maintainer: "a-maintainer", AppName: "a-app", IsPublic: true}}, nil)
+	testObjects.SshRepo.EXPECT().IsRemoteBackupEnabled().Return(false, nil)
+
+	pageContent, err := testObjects.Builder.BuildInstalledAppsPage(123, tools.UserLevel)
+	assert.Nil(t, err)
+
+	assert.True(t, pageContent.Apps[0].IsPublic)
 }
 
 func TestBuildInstalledAppsPage_WhenBackupEnabled_SetsFlag(t *testing.T) {
