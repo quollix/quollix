@@ -108,13 +108,15 @@ footer {
 }
 
 #outer-page-container {
-  background-color: var(--deep-dark);
+  background-color: var(--medium-dark);
+  border-left: 1px solid var(--light-dark);
+  border-top: 1px solid var(--light-dark);
   padding: 1rem;
   min-height: 100%
 }
 
 #inner-page-container {
-  background-color: var(--medium-dark);
+  background-color: inherit;
   padding: 1rem
 }
 

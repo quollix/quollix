@@ -151,8 +151,22 @@ type UserFrontendDto struct {
 }
 
 type AppsPageContent struct {
-	Apps            []api.AdminAppDto
+	Apps            []InstalledAppPageDto
 	IsBackupEnabled bool
+}
+
+type InstalledAppPageDto struct {
+	AppId                             string
+	Maintainer                        string
+	AppName                           string
+	VersionName                       string
+	AccessPolicy                      string
+	DocsUrl                           string
+	VersionCreationTimestampFormatted string
+	VersionCreationTimestampTooltip   string
+	IsRunning                         bool
+	IsOfficialDatabaseApp             bool
+	IsOfficial                        bool
 }
 
 type AppsWithSecretsPageContent struct {
@@ -167,6 +181,7 @@ type AppSecretPageContent struct {
 type AppSecretRow struct {
 	Name  string
 	Value string
+	Used  bool
 }
 
 type MaintenanceWindowOption struct {

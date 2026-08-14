@@ -11,53 +11,55 @@ import (
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
+	"github.com/quollix/common/quollix/test_environment"
 	u "github.com/quollix/common/utils"
 )
 
 func TestOidcLoginFlowBetweenTwoQuollixInstances(t *testing.T) {
 	clients := SetupAndGetClients(t)
-	defer clients.Reset(t)
+	defer clients.Reset()
 
-	frame := frontend_pages.NewBrowserFrame(t, ClientBaseUrl, nil)
+	frame := frontend_pages.NewBrowserFrame(t, test_environment.OidcClientBaseUrl, nil)
 	signInViaOidcInBrowser(frame)
 	openAccountPage(frame)
-	frame.Assert.PageContainsEventually("Name: " + ProviderAdminUsername)
-	frame.Assert.PageContainsEventually("Email: " + ProviderAdminUsername + "@example.invalid")
+	frame.Assert.PageContainsEventually("Name: " + test_environment.OidcProviderAdminUsername)
+	frame.Assert.PageContainsEventually("Email: " + test_environment.OidcProviderAdminUsername + "@example.invalid")
 }
 
 func TestOidcAccountPage_SetLocalPasswordShowsChangePasswordForm(t *testing.T) {
 	clients := SetupAndGetClients(t)
-	defer clients.Reset(t)
+	defer clients.Reset()
 	oidcUserClient := signInViaOidcHttpClient(t, clients)
 
-	frame := frontend_pages.NewBrowserFrame(t, ClientBaseUrl, oidcUserClient)
+	frame := frontend_pages.NewBrowserFrame(t, test_environment.OidcClientBaseUrl, oidcUserClient)
 	frame.Session.SetBrowserAuthCookie(oidcUserClient.Parent.Cookie)
 	frame.Pages.GoToAccountPage().AssertSetPasswordFormState()
 
 	frame.Pages.AccountPage.
-		EnterSetPassword(ProviderAdminLocalPassword, "different-password").
+		EnterSetPassword(test_environment.OidcProviderAdminPassword, "different-password").
 		SaveSetPassword()
 	frame.Assert.SnackbarVisibleWithTextEventually("Passwords do not match")
 	frame.Pages.AccountPage.AssertSetPasswordFormState()
-	err := NewClientClient().Auth.SignIn(ProviderAdminUsername, ProviderAdminLocalPassword)
+	err := api_client.NewQuollixClientForRootUrl(test_environment.OidcClientBaseUrl).Auth.SignIn(test_environment.OidcProviderAdminUsername, test_environment.OidcProviderAdminPassword)
 	u.AssertDeepStackErrorFromRequest(t, err, users.IncorrectLoginCredentialsError)
 
 	frame.Pages.AccountPage.
-		EnterSetPassword(ProviderAdminLocalPassword, ProviderAdminLocalPassword).
+		EnterSetPassword(test_environment.OidcProviderAdminPassword, test_environment.OidcProviderAdminPassword).
 		SaveSetPasswordAndWaitForReload().
 		AssertChangePasswordFormState()
 
-	passwordLoginClient := NewClientClient()
-	assert.Nil(t, passwordLoginClient.Auth.SignIn(ProviderAdminUsername, ProviderAdminLocalPassword))
+	passwordLoginClient := api_client.NewQuollixClientForRootUrl(test_environment.OidcClientBaseUrl)
+	assert.Nil(t, passwordLoginClient.Auth.SignIn(test_environment.OidcProviderAdminUsername, test_environment.OidcProviderAdminPassword))
 }
 
 func signInViaOidcInBrowser(frame *frontend_pages.FrameType) {
 	frame.Page.MustNavigate(frame.BaseUrl + api.Paths.FrontendSignIn)
-	frame.Page.MustElementMatchingText(".oidc-provider-button", OidcProviderName).MustClick()
-	frame.Assert.HostEventually("quollix." + ProviderHost)
+	frame.Page.MustElementMatchingText(".oidc-provider-button", test_environment.OidcProviderName).MustClick()
+	frame.Assert.HostEventually("quollix." + test_environment.OidcProviderHost)
 
-	loginViaBrowser(frame, ProviderAdminUsername, tools.DefaultAdminPassword)
-	frame.Assert.HostEventually("quollix." + ClientHost)
+	loginViaBrowser(frame, test_environment.OidcProviderAdminUsername, tools.DefaultAdminPassword)
+	frame.Assert.HostEventually("quollix." + test_environment.OidcClientHost)
 }
 
 func openAccountPage(frame *frontend_pages.FrameType) {

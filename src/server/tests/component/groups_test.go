@@ -8,6 +8,7 @@ import (
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
 
+	"server/apps_basic"
 	"server/groups"
 	"server/tools"
 
@@ -141,12 +142,15 @@ func TestQuollixClient_FullAccessViaGroupFlow(t *testing.T) {
 	userClient := api_client.NewQuollixClient()
 	assert.Nil(t, userClient.Auth.SignIn(SampleUsername, SampleUserPassword))
 
-	userAppClient := GetAppClient(t, userClient)
-	AssertSampleAppUnavailablePage(t, userAppClient.Parent.Cookie)
+	assert.False(t, hasVisibleSampleAppForNonAdmin(ListInstalledAppsForNonAdmin(t, userClient)))
+	_, err = userClient.AppAccess.GetSecret(tools.SampleApp)
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
 
 	assert.Nil(t, client.Groups.GrantAppAccess(group.Id, tools.SampleApp))
 
-	userAppClient = GetAppClient(t, userClient)
+	assert.True(t, hasVisibleSampleAppForNonAdmin(ListInstalledAppsForNonAdmin(t, userClient)))
+	userAppClient := GetAppClient(t, userClient)
 	err = AssertSampleAppContent(userAppClient, "this is version 2.0")
 	assert.Nil(t, err)
 }

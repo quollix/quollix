@@ -24,6 +24,7 @@ type frontendBuilderTestObjects struct {
 	Builder                    *FrontendPageDataBuilderImpl
 	AppService                 *apps_basic.AppServiceMock
 	AppRepo                    *apps_basic.AppRepositoryMock
+	ComposeSecretExtractor     *apps_basic.ComposeSecretExtractorMock
 	UserRepo                   *users.UserRepositoryMock
 	ConfigsRepo                *configs.ConfigsRepositoryMock
 	ConfigsService             *configs.ConfigsServiceMock
@@ -42,6 +43,7 @@ type frontendBuilderTestObjects struct {
 func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 	appService := apps_basic.NewAppServiceMock(t)
 	appRepo := apps_basic.NewAppRepositoryMock(t)
+	composeSecretExtractor := apps_basic.NewComposeSecretExtractorMock(t)
 	userRepo := users.NewUserRepositoryMock(t)
 	configsRepo := configs.NewConfigsRepositoryMock(t)
 	configsService := configs.NewConfigsServiceMock(t)
@@ -60,6 +62,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 	builder := &FrontendPageDataBuilderImpl{
 		AppService:                 appService,
 		AppRepo:                    appRepo,
+		ComposeSecretExtractor:     composeSecretExtractor,
 		UserRepo:                   userRepo,
 		ConfigsRepo:                configsRepo,
 		ConfigsService:             configsService,
@@ -81,6 +84,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 		Builder:                    builder,
 		AppService:                 appService,
 		AppRepo:                    appRepo,
+		ComposeSecretExtractor:     composeSecretExtractor,
 		UserRepo:                   userRepo,
 		ConfigsRepo:                configsRepo,
 		ConfigsService:             configsService,
@@ -109,27 +113,46 @@ func TestBuildSignInPage_ReturnsOidcAuthProvidersWithoutSecrets(t *testing.T) {
 	assert.Equal(t, []SignInOidcProviderDto{{Id: 2, Name: "Keycloak"}}, pageContent.OidcAuthProviders)
 }
 
-func TestBuildInstalledAppsPage_SortsByMaintainerThenAppName(t *testing.T) {
+func TestBuildInstalledAppsPage_ForAdmin_ReturnsAdminFieldsAndSortsByMaintainerThenAppName(t *testing.T) {
 	testObjects := getTestObjects(t)
 	now := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 	testObjects.AppService.EXPECT().
-		ListAppsForRole(123, tools.UserLevel).
+		ListAppsForAdmin().
 		Return([]api.AdminAppDto{
-			{Maintainer: "b-maintainer", AppName: "a-app", VersionCreationTimestamp: now.Add(-3 * time.Hour)},
-			{Maintainer: "a-maintainer", AppName: "z-app", VersionCreationTimestamp: now.Add(-2 * time.Hour)},
-			{Maintainer: "a-maintainer", AppName: "a-app", VersionCreationTimestamp: now.Add(-1 * time.Hour)},
+			{AppId: "3", Maintainer: "b-maintainer", AppName: "a-app", VersionCreationTimestamp: now.Add(-3 * time.Hour)},
+			{AppId: "2", Maintainer: "a-maintainer", AppName: "z-app", VersionCreationTimestamp: now.Add(-2 * time.Hour)},
+			{
+				AppId:                    "1",
+				Maintainer:               "a-maintainer",
+				AppName:                  "a-app",
+				VersionName:              "1.0.0",
+				AccessPolicy:             api.Policies.PublicAccessPolicy,
+				DocsUrl:                  "https://docs.example/app",
+				VersionCreationTimestamp: now.Add(-1 * time.Hour),
+				IsRunning:                true,
+				IsOfficialDatabaseApp:    false,
+				IsOfficial:               true,
+				ClientSecret:             "must-not-be-renderable",
+				AppSecret:                "must-not-be-renderable",
+			},
 		}, nil)
 	testObjects.SshRepo.EXPECT().IsRemoteBackupEnabled().Return(false, nil)
 	testObjects.OsWrapper.EXPECT().Now().Return(now)
 
-	pageContent, err := testObjects.Builder.BuildInstalledAppsPage(123, tools.UserLevel)
+	pageContent, err := testObjects.Builder.BuildInstalledAppsPage(123, tools.AdminLevel)
 	assert.Nil(t, err)
 
 	assert.Equal(t, "a-maintainer", pageContent.Apps[0].Maintainer)
 	assert.Equal(t, "a-app", pageContent.Apps[0].AppName)
+	assert.Equal(t, "1", pageContent.Apps[0].AppId)
+	assert.Equal(t, "1.0.0", pageContent.Apps[0].VersionName)
+	assert.Equal(t, api.Policies.PublicAccessPolicy, pageContent.Apps[0].AccessPolicy)
+	assert.Equal(t, "https://docs.example/app", pageContent.Apps[0].DocsUrl)
 	assert.Equal(t, "1h ago", pageContent.Apps[0].VersionCreationTimestampFormatted)
 	assert.Equal(t, "2025-12-31 23:00:00", pageContent.Apps[0].VersionCreationTimestampTooltip)
+	assert.True(t, pageContent.Apps[0].IsRunning)
+	assert.True(t, pageContent.Apps[0].IsOfficial)
 
 	assert.Equal(t, "a-maintainer", pageContent.Apps[1].Maintainer)
 	assert.Equal(t, "z-app", pageContent.Apps[1].AppName)
@@ -140,12 +163,34 @@ func TestBuildInstalledAppsPage_SortsByMaintainerThenAppName(t *testing.T) {
 	assert.False(t, pageContent.IsBackupEnabled)
 }
 
+func TestBuildInstalledAppsPage_ForNonAdmin_ReturnsLeanFieldsAndSortsByMaintainerThenAppName(t *testing.T) {
+	testObjects := getTestObjects(t)
+
+	testObjects.AppService.EXPECT().
+		ListAppsForNonAdmin(123, tools.UserLevel).
+		Return([]api.NonAdminAppDto{
+			{Maintainer: "b-maintainer", AppName: "a-app"},
+			{Maintainer: "a-maintainer", AppName: "z-app"},
+			{Maintainer: "a-maintainer", AppName: "a-app"},
+		}, nil)
+	testObjects.SshRepo.EXPECT().IsRemoteBackupEnabled().Return(false, nil)
+
+	pageContent, err := testObjects.Builder.BuildInstalledAppsPage(123, tools.UserLevel)
+	assert.Nil(t, err)
+
+	assert.Equal(t, []InstalledAppPageDto{
+		{Maintainer: "a-maintainer", AppName: "a-app", IsRunning: true},
+		{Maintainer: "a-maintainer", AppName: "z-app", IsRunning: true},
+		{Maintainer: "b-maintainer", AppName: "a-app", IsRunning: true},
+	}, pageContent.Apps)
+	assert.False(t, pageContent.IsBackupEnabled)
+}
+
 func TestBuildInstalledAppsPage_WhenBackupEnabled_SetsFlag(t *testing.T) {
 	testObjects := getTestObjects(t)
 
-	testObjects.AppService.EXPECT().ListAppsForRole(123, tools.UserLevel).Return([]api.AdminAppDto{}, nil)
+	testObjects.AppService.EXPECT().ListAppsForNonAdmin(123, tools.UserLevel).Return([]api.NonAdminAppDto{}, nil)
 	testObjects.SshRepo.EXPECT().IsRemoteBackupEnabled().Return(true, nil)
-	testObjects.OsWrapper.EXPECT().Now().Return(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC))
 
 	pageContent, err := testObjects.Builder.BuildInstalledAppsPage(123, tools.UserLevel)
 	assert.Nil(t, err)
@@ -282,7 +327,7 @@ func TestBuildAppSsoPage_FiltersOfficialDatabaseApp_AndSortsByMaintainerThenAppN
 	testObjects := getTestObjects(t)
 
 	testObjects.AppService.EXPECT().
-		ListAppsForRole(users.AnonymousUserId, tools.AdminLevel).
+		ListAppsForAdmin().
 		Return([]api.AdminAppDto{
 			{Maintainer: "b-maintainer", AppName: "a-app"},
 			{Maintainer: "a-maintainer", AppName: u.OfficialDatabaseAppName},
@@ -327,7 +372,7 @@ func TestBuildAppSsoPage_ReturnsAppsForAdmin(t *testing.T) {
 	appDtosReturnedByMock = append(appDtosReturnedByMock, api.AdminAppDto{Maintainer: u.OfficialMaintainer, AppName: u.OfficialDatabaseAppName})
 
 	testObjects.AppService.EXPECT().
-		ListAppsForRole(users.AnonymousUserId, tools.AdminLevel).
+		ListAppsForAdmin().
 		Return(appDtosReturnedByMock, nil)
 
 	pageContent, err := testObjects.Builder.BuildAppSsoPage()
@@ -340,7 +385,7 @@ func TestBuildAppsWithSecretsPage_FiltersAppsWithoutSecretsAndSortsByMaintainerT
 	testObjects := getTestObjects(t)
 
 	testObjects.AppService.EXPECT().
-		ListAppsForRole(users.AnonymousUserId, tools.AdminLevel).
+		ListAppsForAdmin().
 		Return([]api.AdminAppDto{
 			{Maintainer: "b-maintainer", AppName: "a-app", Secrets: map[string]string{"SECRET_SHARED": "one"}},
 			{Maintainer: "a-maintainer", AppName: "without-secrets"},
@@ -365,22 +410,25 @@ func TestBuildAppsWithSecretsPage_FiltersAppsWithoutSecretsAndSortsByMaintainerT
 
 func TestBuildAppSecretPage_ReturnsAppAndSortedSecretRows(t *testing.T) {
 	testObjects := getTestObjects(t)
+	versionContent := []byte("compose-content")
 
 	testObjects.AppService.EXPECT().
-		ListAppsForRole(users.AnonymousUserId, tools.AdminLevel).
+		ListAppsForAdmin().
 		Return([]api.AdminAppDto{
 			{AppId: "1", Maintainer: "other-maintainer", AppName: "other-app", Secrets: map[string]string{"SECRET_OTHER": "other"}},
 			{
-				AppId:       "2",
-				Maintainer:  "maintainer",
-				AppName:     "app",
-				VersionName: "1.0",
+				AppId:          "2",
+				Maintainer:     "maintainer",
+				AppName:        "app",
+				VersionName:    "1.0",
+				VersionContent: versionContent,
 				Secrets: map[string]string{
 					"SECRET_Z": "z-value",
 					"SECRET_A": "a-value",
 				},
 			},
 		}, nil)
+	testObjects.ComposeSecretExtractor.EXPECT().ExtractSecretSet(versionContent).Return(map[string]bool{"SECRET_A": true}, nil)
 
 	pageContent, err := testObjects.Builder.BuildAppSecretPage(2)
 	assert.Nil(t, err)
@@ -391,8 +439,8 @@ func TestBuildAppSecretPage_ReturnsAppAndSortedSecretRows(t *testing.T) {
 	assert.Equal(t, "1.0", pageContent.App.VersionName)
 
 	assert.Equal(t, []AppSecretRow{
-		{Name: "SECRET_A", Value: "a-value"},
-		{Name: "SECRET_Z", Value: "z-value"},
+		{Name: "SECRET_A", Value: "a-value", Used: true},
+		{Name: "SECRET_Z", Value: "z-value", Used: false},
 	}, pageContent.Secrets)
 }
 
@@ -578,7 +626,7 @@ func TestBuildMaintenancePage_SortsByMaintainerThenAppName(t *testing.T) {
 	testObjects := getTestObjects(t)
 
 	testObjects.AppService.EXPECT().
-		ListAppsForRole(users.AnonymousUserId, tools.AdminLevel).
+		ListAppsForAdmin().
 		Return([]api.AdminAppDto{
 			{Maintainer: "b-maintainer", AppName: "a-app"},
 			{Maintainer: "a-maintainer", AppName: "z-app"},

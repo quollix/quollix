@@ -49,7 +49,7 @@ func InstalledAppDocsUrl(appName string) string {
 var Links = LinksType{
 	Website:            websiteBaseUrl,
 	GitHubRepositories: "https://github.com/orgs/quollix/repositories",
-	FeedbackDocs:       websiteBaseUrl + "/docs/feedback/",
+	FeedbackDocs:       websiteBaseUrl + "/docs/resources/feedback/",
 	UsageDocs: UsageDocsLinksType{
 		Settings:      UsageDocsBaseUrl + "/settings",
 		InstalledApps: UsageDocsBaseUrl + "/installed-apps",

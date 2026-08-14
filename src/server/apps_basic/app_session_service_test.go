@@ -108,7 +108,7 @@ func TestAppSessionService_CreateAppSessionCookieFromSecretCreatesAppAudienceSes
 		AppName:    "sample-app",
 	}
 	quollixCookieValue := "quollix-cookie-value"
-	secret, err := secretStorage.GenerateSecretForCookie(quollixCookieValue)
+	secret, err := secretStorage.GenerateSecretForCookie(quollixCookieValue, app.AppName)
 	assert.Nil(t, err)
 	sessionRepo.EXPECT().
 		GetAuthenticatedSession(authHelper.GetSHA256Hash(quollixCookieValue), users.QuollixSessionAudience()).

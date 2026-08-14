@@ -112,7 +112,7 @@ func (h *HandlerRegisterer) authenticatedRoutes() []users.Route {
 		{Path: api.Paths.BackendUsersSignOut, HandlerFunc: h.UserHandler.SignOutHandler, AccessLevel: tools.UserLevel},
 		{Path: api.Paths.BackendUsersSetOwnPassword, HandlerFunc: h.UserHandler.UserSetsOwnPasswordHandler, AccessLevel: tools.UserLevel},
 		{Path: api.Paths.BackendUsersChangeOwnPassword, HandlerFunc: h.UserHandler.UserChangesOwnPasswordHandler, AccessLevel: tools.UserLevel},
-		{Path: api.Paths.BackendSecret, HandlerFunc: h.UserHandler.SecretHandler, AccessLevel: tools.UserLevel},
+		{Path: api.Paths.BackendSecret, HandlerFunc: h.AppsHandler.SecretHandler, AccessLevel: tools.UserLevel},
 	}
 }
 
@@ -140,7 +140,9 @@ func (h *HandlerRegisterer) adminAppRoutes() []users.Route {
 		{Path: api.Paths.BackendAppOperationInfo, HandlerFunc: h.AppsHandler.AppOperationInfoHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendIsDatabaseAvailable, HandlerFunc: h.AppsHandler.IsDatabaseAvailableHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppAutomaticMaintenanceSettings, HandlerFunc: h.AppsHandler.UpdateAutomaticMaintenanceSettingsHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendAppSecretUpdate, HandlerFunc: h.AppsHandler.UpdateAppSecretHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppSecretRegenerate, HandlerFunc: h.AppsHandler.RegenerateAppSecretHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendAppSecretDelete, HandlerFunc: h.AppsHandler.DeleteAppSecretHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendAppsRegenerateOidcCredentials, HandlerFunc: h.AppsHandler.RegenerateOidcClientCredentials, AccessLevel: tools.AdminLevel},
 	}
 }

@@ -25,8 +25,8 @@ type AppSecretAppEntry struct {
 }
 
 type AppSecretEntry struct {
-	Name               string
-	ValueDisplayedInUi string
+	Name  string
+	Value string
 }
 
 func (a *AppsWithSecretsPage) ListApps() []AppSecretAppEntry {
@@ -132,9 +132,35 @@ func (a *AppSecretPage) AssertSecretCount(expected int) *AppSecretPage {
 	return a
 }
 
-func (a *AppSecretPage) AssertSecretMasked(name string) *AppSecretPage {
-	actual := a.GetRequiredSecret(name).ValueDisplayedInUi
-	assert.Equal(a.Frame.T, "****************", actual)
+func (a *AppSecretPage) AssertSecretVisibility(name string, visible bool) *AppSecretPage {
+	expectedType := "password"
+	if visible {
+		expectedType = "text"
+	}
+
+	err := u.Eventually(func() error {
+		row := a.findRowBySecretName(name)
+		actualType := getInputTypeInRow(a.Frame.T, row, ".app-secret-value-edit")
+		if actualType != expectedType {
+			return fmt.Errorf("unexpected app secret input type: %q", actualType)
+		}
+		return nil
+	})
+	assert.Nil(a.Frame.T, err)
+	return a
+}
+
+func (a *AppSecretPage) AssertSecretValue(name, expected string) *AppSecretPage {
+	actual := a.GetRequiredSecret(name).Value
+	assert.Equal(a.Frame.T, expected, actual)
+	return a
+}
+
+func (a *AppSecretPage) AssertSecretDeleteButtonPresent(name string, expected bool) *AppSecretPage {
+	row := a.findRowBySecretName(name)
+	buttons, err := row.Elements(".app-secret-delete-button")
+	assert.Nil(a.Frame.T, err)
+	assert.Equal(a.Frame.T, expected, len(buttons) == 1)
 	return a
 }
 
@@ -159,15 +185,37 @@ func (a *AppSecretPage) RegenerateSecret(name string) *AppSecretPage {
 	return a
 }
 
-func (a *AppSecretPage) readSecretEntry(row *browsertest.Element) AppSecretEntry {
-	nameCell, err := row.Element(".app-secret-name-cell")
+func (a *AppSecretPage) DeleteSecret(name string) *AppSecretPage {
+	row := a.findRowBySecretName(name)
+	deleteButton, err := row.Element(".app-secret-delete-button")
 	assert.Nil(a.Frame.T, err)
-	valueCell, err := row.Element(".app-secret-value-cell span.mono")
+	deleteButton.MustClick()
+	a.Frame.Browser.ConfirmDialog()
+	a.Frame.Assert.SnackbarVisibleWithTextEventually("Secret deleted successfully.")
+	return a
+}
+
+func (a *AppSecretPage) ToggleSecretVisibility(name string) *AppSecretPage {
+	row := a.findRowBySecretName(name)
+	GetRequiredElementInRow(a.Frame.T, row, ".app-secret-visibility-toggle-button").MustClick()
+	return a
+}
+
+func (a *AppSecretPage) UpdateSecret(name, value string) *AppSecretPage {
+	row := a.findRowBySecretName(name)
+	setInputValueInRow(a.Frame.T, row, ".app-secret-value-edit", value)
+	GetRequiredElementInRow(a.Frame.T, row, ".app-secret-save-button").MustClick()
+	a.Frame.Assert.SnackbarVisibleWithTextEventually("Secret saved.")
+	return a
+}
+
+func (a *AppSecretPage) readSecretEntry(row *browsertest.Element) AppSecretEntry {
+	nameCell, err := row.Element(".app-secret-name-cell .mono")
 	assert.Nil(a.Frame.T, err)
 
 	return AppSecretEntry{
-		Name:               strings.TrimSpace(nameCell.MustText()),
-		ValueDisplayedInUi: strings.TrimSpace(valueCell.MustText()),
+		Name:  strings.TrimSpace(nameCell.MustText()),
+		Value: getInputValueInRow(a.Frame.T, row, ".app-secret-value-edit"),
 	}
 }
 

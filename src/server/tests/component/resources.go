@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"server/apps_basic"
 	"server/certificates"
 	"server/tools"
 
@@ -80,7 +81,7 @@ func GetAppClient(t *testing.T, quollixClient *api_client.QuollixClient) *api_cl
 	appClient := api_client.NewQuollixClient()
 	quollixCookie := *quollixClient.Parent.Cookie
 	appClient.Parent.Cookie = &quollixCookie
-	secret, err := quollixClient.AppAccess.GetSecret()
+	secret, err := quollixClient.AppAccess.GetSecret(tools.SampleApp)
 	assert.Nil(t, err)
 	assert.Nil(t, ExchangeAppAccessSecretForCookie(appClient, secret))
 	return appClient
@@ -134,16 +135,21 @@ func RunAccessPoliciesTest(t *testing.T, adminClient *api_client.QuollixClient, 
 				}
 
 				var appCookie *http.Cookie
-				if !currentActor.isAnonymous {
+				if !currentActor.isAnonymous && expectedAccess {
 					appCookie = GetAppClient(t, currentActor.client).Parent.Cookie
 				}
-				assertAppAccessPolicyResponse(t, appCookie, currentActor.isAnonymous, expectedAccess)
+				if !currentActor.isAnonymous && !expectedAccess {
+					_, err := currentActor.client.AppAccess.GetSecret(tools.SampleApp)
+					assert.NotNil(t, err)
+					u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AccessDeniedError)
+				}
+				assertAppAccessPolicyResponse(t, appCookie, expectedAccess)
 			}
 		})
 	}
 }
 
-func assertAppAccessPolicyResponse(t *testing.T, appCookie *http.Cookie, isAnonymous bool, expectedAccess bool) {
+func assertAppAccessPolicyResponse(t *testing.T, appCookie *http.Cookie, expectedAccess bool) {
 	statusCode, headers, body, err := requestSampleAppWithUrlNoRedirect(sampleAppHttpsUrl+sampleEndpoint, appCookie)
 	assert.Nil(t, err)
 	if expectedAccess {
@@ -151,7 +157,7 @@ func assertAppAccessPolicyResponse(t *testing.T, appCookie *http.Cookie, isAnony
 		assert.Equal(t, sampleBodyV20, body)
 		return
 	}
-	if isAnonymous {
+	if appCookie == nil {
 		assert.Equal(t, http.StatusFound, statusCode)
 		assertAppOpenRedirect(t, headers.Get("Location"))
 		return

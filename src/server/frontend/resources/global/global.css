@@ -1,7 +1,6 @@
 :root {
     --light-dark: #3a4254;
     --medium-dark: #13171F;
-    --deep-dark: #0B0E13;
     --alert-color: #ff3333;
     --alert-hover-color: #cc0000;
     --button-hover-color: #016699;
@@ -31,7 +30,12 @@
     color: white;
     border-radius: 8px;
     padding: 12px;
-    border: 2px solid var(--deep-dark);
+    border: 2px solid var(--medium-dark);
+}
+
+.snackbar span {
+    /* long texts, e.g. when copying app secrets to clipboard, would break the layout without this option */
+    overflow-wrap: anywhere;
 }
 
 .snackbar .snackbar-close {

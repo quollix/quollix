@@ -58,7 +58,7 @@ func (a *AppSessionServiceImpl) AuthorizeAppRequest(r *http.Request, app *AppReq
 }
 
 func (a *AppSessionServiceImpl) CreateAppSessionCookieFromSecret(urlSecret string, app *AppRequestData) (*http.Cookie, error) {
-	cookieValue, err := a.SecretAndCookieStorage.LoadCookieViaSecret(urlSecret)
+	cookieValue, err := a.SecretAndCookieStorage.LoadCookieViaSecret(urlSecret, app.AppName)
 	if err != nil {
 		return nil, err
 	}

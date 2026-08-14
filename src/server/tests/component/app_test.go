@@ -4,12 +4,13 @@ package component
 
 import (
 	"fmt"
-	"server/apps_advanced"
-	"server/apps_basic"
-	"server/tools"
 	"strings"
 	"testing"
 	"time"
+
+	"server/apps_advanced"
+	"server/apps_basic"
+	"server/tools"
 
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
@@ -74,7 +75,6 @@ func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 64, len(migratedPassword))
 	assert.True(t, migratedPassword != "password")
-
 }
 
 func TestReinstallingSampleAppRenewsSecrets(t *testing.T) {
@@ -127,6 +127,31 @@ func TestUpdatingSampleAppPreservesExistingSecretsAndGeneratesNewSecrets(t *test
 	assert.True(t, versionTwoSecret != sharedSecretAfterUpdate)
 }
 
+func TestDeletingAppSecretOnlyAllowsUnusedSecrets(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	appBeforeUpdate, err := InstallSample(t, client, "1.0")
+	assert.Nil(t, err)
+	appBeforeDeletion := GetInstalledSample(t, client)
+	assert.True(t, appBeforeDeletion.Secrets["SECRET_SAMPLE_VERSION_ONE"] != "")
+
+	assert.Nil(t, client.Apps.Update(appBeforeUpdate.AppId))
+	appAfterUpdate := GetInstalledSample(t, client)
+	assert.True(t, appAfterUpdate.Secrets["SECRET_SAMPLE_VERSION_ONE"] != "")
+	assert.True(t, appAfterUpdate.Secrets["SECRET_SAMPLE_VERSION_TWO"] != "")
+
+	assert.Nil(t, client.Apps.DeleteSecret(appAfterUpdate.AppId, "SECRET_SAMPLE_VERSION_ONE"))
+	appAfterUnusedSecretDeletion := GetInstalledSample(t, client)
+	_, oldSecretExists := appAfterUnusedSecretDeletion.Secrets["SECRET_SAMPLE_VERSION_ONE"]
+	assert.False(t, oldSecretExists)
+
+	err = client.Apps.DeleteSecret(appAfterUpdate.AppId, "SECRET_SAMPLE_VERSION_TWO")
+	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AppSecretInUseError)
+	appAfterUsedSecretDeletionAttempt := GetInstalledSample(t, client)
+	assert.True(t, appAfterUsedSecretDeletionAttempt.Secrets["SECRET_SAMPLE_VERSION_TWO"] != "")
+}
+
 func TestRegeneratingSampleAppSecretChangesStoredSecret(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
@@ -157,6 +182,20 @@ func TestRegeneratingSampleAppSecretChangesStoredSecret(t *testing.T) {
 	appClientAfterRestart := GetAppClient(t, client)
 	runningSecretAfterRestart := ReadRequiredSampleAppEnvValue(t, appClientAfterRestart, "SECRET_SAMPLE_SHARED")
 	assert.Equal(t, storedSecretAfterRegeneration, runningSecretAfterRestart)
+}
+
+func TestUpdatingSampleAppSecretChangesStoredSecret(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	installedApp, err := InstallAndStartSample(t, client, "2.0")
+	assert.Nil(t, err)
+	updatedSecret := "manually-updated-secret"
+
+	assert.Nil(t, client.Apps.UpdateSecret(installedApp.AppId, "SECRET_SAMPLE_SHARED", updatedSecret))
+
+	appAfterUpdate := GetInstalledSample(t, client)
+	assert.Equal(t, updatedSecret, appAfterUpdate.Secrets["SECRET_SAMPLE_SHARED"])
 }
 
 func TestStartingAppAlreadyRunningIsPossible(t *testing.T) {

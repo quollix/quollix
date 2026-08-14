@@ -2,6 +2,7 @@ package apps_basic
 
 import (
 	"maps"
+
 	"server/tools"
 
 	api "github.com/quollix/common/quollix/api"
@@ -11,6 +12,9 @@ import (
 const (
 	RunningAppState    = "Running"
 	NotRunningAppState = "Not running"
+
+	AppSecretNotFoundError = "app secret not found" // #nosec G101 (CWE-798): Potential hardcoded credentials
+	AppSecretInUseError    = "app secret is in use"
 )
 
 type AppService interface {
@@ -22,11 +26,13 @@ type AppService interface {
 	SetAppShouldBeRunning(appId int, shouldBeRunning bool) error
 	SetAccessPolicy(appId int, policy string) error
 	UpsertAppInDatabase(app *RepoApp) error
-	ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AdminAppDto, error)
+	ListAppsForAdmin() ([]api.AdminAppDto, error)
 	ListAppsForNonAdmin(userId int, role tools.UserAccessLevel) ([]api.NonAdminAppDto, error)
 	UpdateAppAutoMaintenanceSettings(appId int, autoUpdateEnabled, autoBackupEnabled bool) error
 	RegenerateOidcClientCredentials(appId int) error
+	UpdateAppSecret(appId int, secretName, value string) error
 	RegenerateAppSecret(appId int, secretName string) error
+	DeleteUnusedAppSecret(appId int, secretName string) error
 }
 
 type AppServiceImpl struct {
@@ -34,7 +40,7 @@ type AppServiceImpl struct {
 	DockerService              tools.DockerService
 	AppServiceHelper           AppServiceHelper
 	AppDetector                AppDetector
-	ComposeExtractor           ComposeExtractorImpl
+	ComposeExtractor           ComposeExtractor
 	ComposeSecretExtractor     ComposeSecretExtractor
 	ClientCredentialsGenerator ClientCredentialsGenerator
 	DatabaseIndependentRuntime DatabaseIndependentRuntime
@@ -65,13 +71,47 @@ func (a *AppServiceImpl) RegenerateAppSecret(appId int, secretName string) error
 		return err
 	}
 	if _, exists := app.Secrets[secretName]; !exists {
-		return u.Logger.NewError("app secret not found", tools.AppIdField, appId, "secret_name", secretName)
+		return u.Logger.NewError(AppSecretNotFoundError, tools.AppIdField, appId, "secret_name", secretName)
 	}
 
 	app.Secrets[secretName], err = a.AuthHelper.GenerateSecret()
 	if err != nil {
 		return err
 	}
+	return a.AppRepo.UpdateApp(app)
+}
+
+func (a *AppServiceImpl) UpdateAppSecret(appId int, secretName, value string) error {
+	app, err := a.AppRepo.GetAppById(appId)
+	if err != nil {
+		return err
+	}
+	if _, exists := app.Secrets[secretName]; !exists {
+		return u.Logger.NewError(AppSecretNotFoundError, tools.AppIdField, appId, "secret_name", secretName)
+	}
+
+	app.Secrets[secretName] = value
+	return a.AppRepo.UpdateApp(app)
+}
+
+func (a *AppServiceImpl) DeleteUnusedAppSecret(appId int, secretName string) error {
+	app, err := a.AppRepo.GetAppById(appId)
+	if err != nil {
+		return err
+	}
+	if _, exists := app.Secrets[secretName]; !exists {
+		return u.Logger.NewError(AppSecretNotFoundError, tools.AppIdField, appId, "secret_name", secretName)
+	}
+
+	requiredSecrets, err := a.ComposeSecretExtractor.ExtractSecretSet(app.VersionContent)
+	if err != nil {
+		return err
+	}
+	if requiredSecrets[secretName] {
+		return u.Logger.NewError(AppSecretInUseError, tools.AppIdField, appId, "secret_name", secretName)
+	}
+
+	delete(app.Secrets, secretName)
 	return a.AppRepo.UpdateApp(app)
 }
 
@@ -209,15 +249,17 @@ func (a *AppServiceImpl) UpsertAppInDatabase(app *RepoApp) error {
 }
 
 func (a *AppServiceImpl) ensureAppSecrets(app *RepoApp, existingApp *RepoApp) error {
-	var existingSecrets map[string]string
+	secrets := maps.Clone(app.Secrets)
 	if existingApp != nil {
-		existingSecrets = existingApp.Secrets
+		secrets = maps.Clone(existingApp.Secrets)
+		maps.Copy(secrets, app.Secrets)
+	}
+	if secrets == nil {
+		u.Logger.Warn("this path should never be triggered, secrets should never be nil but rather an empty map")
+		secrets = map[string]string{}
 	}
 
-	secrets := copyAppSecrets(existingSecrets)
-	maps.Copy(secrets, app.Secrets)
-
-	requiredSecrets, err := a.ComposeSecretExtractor.Extract(app.VersionContent)
+	requiredSecrets, err := a.ComposeSecretExtractor.ExtractSecrets(app.VersionContent)
 	if err != nil {
 		return err
 	}
@@ -240,33 +282,15 @@ func (a *AppServiceImpl) ensureAppSecrets(app *RepoApp, existingApp *RepoApp) er
 	return nil
 }
 
-func copyAppSecrets(secrets map[string]string) map[string]string {
-	copiedSecrets := map[string]string{}
-	maps.Copy(copiedSecrets, secrets)
-	return copiedSecrets
-}
-
-func (a *AppServiceImpl) ListAppsForRole(userId int, role tools.UserAccessLevel) ([]api.AdminAppDto, error) {
-	filteredApps, err := a.listVisibleRepoApps(userId, role)
+func (a *AppServiceImpl) ListAppsForAdmin() ([]api.AdminAppDto, error) {
+	repoApps, err := a.AppRepo.ListApps()
 	if err != nil {
 		return nil, err
 	}
-	appDtos := a.AppServiceHelper.ConvertToAdminAppDtos(filteredApps)
-	if role != tools.AdminLevel {
-		clearSensitiveAppDtoFields(appDtos)
-	}
-	return appDtos, nil
+	return a.AppServiceHelper.ConvertToAdminAppDtos(repoApps), nil
 }
 
 func (a *AppServiceImpl) ListAppsForNonAdmin(userId int, role tools.UserAccessLevel) ([]api.NonAdminAppDto, error) {
-	filteredApps, err := a.listVisibleRepoApps(userId, role)
-	if err != nil {
-		return nil, err
-	}
-	return a.AppServiceHelper.ConvertToNonAdminAppDtos(filteredApps), nil
-}
-
-func (a *AppServiceImpl) listVisibleRepoApps(userId int, role tools.UserAccessLevel) ([]RepoApp, error) {
 	repoApps, err := a.AppRepo.ListApps()
 	if err != nil {
 		return nil, err
@@ -277,21 +301,7 @@ func (a *AppServiceImpl) listVisibleRepoApps(userId int, role tools.UserAccessLe
 			filteredApps = append(filteredApps, app)
 		}
 	}
-	return filteredApps, nil
-}
-
-func clearSensitiveAppDtoFields(apps []api.AdminAppDto) {
-	for i := range apps {
-		apps[i].AppId = ""
-		apps[i].Port = ""
-		apps[i].ClientId = ""
-		apps[i].ClientSecret = ""
-		apps[i].AppSecret = ""
-		apps[i].VersionContent = nil
-		apps[i].Secrets = nil
-		apps[i].AutomaticBackupsEnabled = false
-		apps[i].AutomaticUpdatesEnabled = false
-	}
+	return a.AppServiceHelper.ConvertToNonAdminAppDtos(filteredApps), nil
 }
 
 func (a *AppServiceImpl) UpdateAppAutoMaintenanceSettings(appId int, autoUpdateEnabled, autoBackupEnabled bool) error {

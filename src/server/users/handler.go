@@ -138,22 +138,6 @@ func (s *UserHandler) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 }
 
-func (s *UserHandler) SecretHandler(w http.ResponseWriter, r *http.Request) {
-	u.Logger.Debug("SecretHandler called")
-	cookie, err := r.Cookie(api.BrandAppAuthCookieName)
-	if err != nil {
-		u.WriteResponseError(w, expectedCookieNotFoundError, err)
-		return
-	}
-
-	secret, err := s.SecretStorage.GenerateSecretForCookie(cookie.Value)
-	if err != nil {
-		u.WriteResponseError(w, nil, err)
-		return
-	}
-	u.SendJsonResponse(w, secret)
-}
-
 func (s *UserHandler) CheckAuthHandler(w http.ResponseWriter, r *http.Request) {
 	r, err := s.AuthService.GetRequestWithAuthContext(w, r)
 	if err != nil {

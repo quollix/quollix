@@ -1,6 +1,8 @@
 package backups
 
 import (
+	"maps"
+
 	"server/apps_basic"
 	"server/backup_server"
 	"server/tools"
@@ -43,7 +45,10 @@ func (f *RestoreFinalizerImpl) FinalizeRestore(info *api.BackupInfo, snapshot *A
 		snapshot.Meta.AutomaticUpdatesEnabled,
 		snapshot.Meta.AutomaticBackupsEnabled,
 	)
-	app.Secrets = snapshot.Meta.Secrets
+	app.Secrets = maps.Clone(snapshot.Meta.Secrets)
+	if app.Secrets == nil {
+		app.Secrets = map[string]string{}
+	}
 
 	if f.AppDetector.IsOfficialDatabaseApp(app.AppName) {
 		if err := f.DatabaseConnector.StartDatabaseAndConnect(); err != nil {

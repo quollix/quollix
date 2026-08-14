@@ -12,17 +12,16 @@ import (
 const InvalidSecretPlaceholderError = "invalid secret placeholder"
 
 type ComposeSecretExtractor interface {
-	Extract(composeContent []byte) ([]string, error)
+	ExtractSecrets(composeContent []byte) ([]string, error)
+	ExtractSecretSet(composeContent []byte) (map[string]bool, error)
 }
-
-type ComposeSecretExtractorImpl struct{}
 
 var (
 	composePlaceholderPattern = regexp.MustCompile(`\$\{([^}]+)\}`)
 	secretNamePattern         = regexp.MustCompile(`^SECRET_[A-Z0-9_]+$`)
 )
 
-func (e *ComposeSecretExtractorImpl) Extract(composeContent []byte) ([]string, error) {
+func (e *ComposeExtractorImpl) ExtractSecrets(composeContent []byte) ([]string, error) {
 	var composeMap map[string]any
 	if err := yaml.Unmarshal(composeContent, &composeMap); err != nil {
 		return nil, err
@@ -47,4 +46,17 @@ func (e *ComposeSecretExtractorImpl) Extract(composeContent []byte) ([]string, e
 	}
 	sort.Strings(secretNames)
 	return secretNames, nil
+}
+
+func (e *ComposeExtractorImpl) ExtractSecretSet(composeContent []byte) (map[string]bool, error) {
+	requiredSecrets, err := e.ExtractSecrets(composeContent)
+	if err != nil {
+		return nil, err
+	}
+
+	requiredSecretSet := make(map[string]bool, len(requiredSecrets))
+	for _, secretName := range requiredSecrets {
+		requiredSecretSet[secretName] = true
+	}
+	return requiredSecretSet, nil
 }

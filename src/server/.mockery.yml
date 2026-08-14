@@ -107,6 +107,10 @@ packages:
         config:
           filename: client_credentials_generator_mock.go
           structname: ClientCredentialsGeneratorMock
+      ComposeSecretExtractor:
+        config:
+          filename: compose_secret_extractor_mock.go
+          structname: ComposeSecretExtractorMock
   server/groups:
     interfaces:
       GroupRepository:

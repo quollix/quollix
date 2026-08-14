@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
 	"server/tools"
 	"server/users"
-	"strconv"
 
 	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
@@ -14,8 +15,10 @@ import (
 )
 
 var (
-	InvalidAccessPolicyError = "invalid access policy"
-	ExpectedAppStartErrors   = u.MapOf(tools.DockerHubRateLimitReachedErrorMessage, tools.DockerImageUnsupportedPlatformErrorMessage)
+	InvalidAccessPolicyError      = "invalid access policy"
+	ExpectedAppStartErrors        = u.MapOf(tools.DockerHubRateLimitReachedErrorMessage, tools.DockerImageUnsupportedPlatformErrorMessage)
+	AppSecretEditExpectedErrors   = u.MapOf(AppSecretNotFoundError)
+	AppSecretDeleteExpectedErrors = u.MapOf(AppSecretNotFoundError, AppSecretInUseError)
 )
 
 type AppsHandler struct {
@@ -23,6 +26,8 @@ type AppsHandler struct {
 	AppService             AppService
 	AppRepo                AppRepository
 	UserRepo               users.UserRepository
+	SecretStorage          users.SecretAndCookieStorage
+	Authorizer             Authorizer
 	AuthHelper             u.AuthHelper
 	AppDetector            AppDetector
 	DatabaseConnector      tools.DatabaseConnector
@@ -32,7 +37,7 @@ type AppsHandler struct {
 }
 
 func (a *AppsHandler) AppListForAdminHandler(w http.ResponseWriter, r *http.Request) {
-	appDtos, err := a.AppService.ListAppsForRole(users.AnonymousUserId, tools.AdminLevel)
+	appDtos, err := a.AppService.ListAppsForAdmin()
 	if err != nil {
 		u.WriteResponseError(w, nil, err)
 		return
@@ -55,6 +60,45 @@ func (a *AppsHandler) AppListForNonAdminHandler(w http.ResponseWriter, r *http.R
 	}
 
 	u.SendJsonResponse(w, appDtos)
+}
+
+func (a *AppsHandler) SecretHandler(w http.ResponseWriter, r *http.Request) {
+	u.Logger.Debug("SecretHandler called")
+	request, ok := validation.ReadBody[api.AppAccessSecretRequest](w, r)
+	if !ok {
+		return
+	}
+
+	cookie, err := r.Cookie(api.BrandAppAuthCookieName)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	userId, role, err := a.UserService.GetUserIdAndRoleFromQuollixRequest(r)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	app, err := a.AppRepo.GetAppRequestData(request.AppName)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	err = a.Authorizer.Authorize(app.AccessPolicy, role, userId, app.AppName)
+	if err != nil {
+		u.WriteResponseError(w, u.MapOf(AccessDeniedError), err)
+		return
+	}
+
+	secret, err := a.SecretStorage.GenerateSecretForCookie(cookie.Value, app.AppName)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+	u.SendJsonResponse(w, secret)
 }
 
 func (a *AppsHandler) AppStartHandler(w http.ResponseWriter, r *http.Request) {
@@ -203,7 +247,6 @@ func (a *AppsHandler) AppPruneHandler(w http.ResponseWriter, r *http.Request) {
 		u.WriteResponseError(w, OfficialDatabaseAppErrorMap, err)
 		return
 	}
-
 }
 
 func (a *AppsHandler) AppOperationInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -262,7 +305,7 @@ func (a *AppsHandler) RegenerateOidcClientCredentials(w http.ResponseWriter, r *
 }
 
 func (a *AppsHandler) RegenerateAppSecretHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[api.AppSecretRegenerationRequest](w, r)
+	request, ok := validation.ReadBody[api.AppSecretRequest](w, r)
 	if !ok {
 		return
 	}
@@ -275,7 +318,45 @@ func (a *AppsHandler) RegenerateAppSecretHandler(w http.ResponseWriter, r *http.
 
 	err = a.AppService.RegenerateAppSecret(appId, request.Name)
 	if err != nil {
+		u.WriteResponseError(w, AppSecretEditExpectedErrors, err)
+		return
+	}
+}
+
+func (a *AppsHandler) UpdateAppSecretHandler(w http.ResponseWriter, r *http.Request) {
+	request, ok := validation.ReadBody[api.AppSecretUpdateRequest](w, r)
+	if !ok {
+		return
+	}
+
+	appId, err := strconv.Atoi(request.AppId)
+	if err != nil {
 		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	err = a.AppService.UpdateAppSecret(appId, request.Name, request.Value)
+	if err != nil {
+		u.WriteResponseError(w, AppSecretEditExpectedErrors, err)
+		return
+	}
+}
+
+func (a *AppsHandler) DeleteAppSecretHandler(w http.ResponseWriter, r *http.Request) {
+	request, ok := validation.ReadBody[api.AppSecretRequest](w, r)
+	if !ok {
+		return
+	}
+
+	appId, err := strconv.Atoi(request.AppId)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+
+	err = a.AppService.DeleteUnusedAppSecret(appId, request.Name)
+	if err != nil {
+		u.WriteResponseError(w, AppSecretDeleteExpectedErrors, err)
 		return
 	}
 }

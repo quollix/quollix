@@ -40,7 +40,9 @@ window.openFromRow = async (appName, appAccessPolicy, publicAccessPolicy, host) 
     if (isPublicAccessPolicy) {
         window.open(base, '_blank')
     } else {
-        const res = await window.doRequest("{{ $.Static.Paths.BackendSecret }}", null)
+        const res = await window.doRequest("{{ $.Static.Paths.BackendSecret }}", {
+            app_name: appName,
+        })
         const body = await res.text()
         if (!res.ok) {
             showSnackbar(body || 'Request failed')

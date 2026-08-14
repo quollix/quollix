@@ -13,6 +13,7 @@ import (
 
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
+	"github.com/quollix/common/quollix/test_environment"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -29,8 +30,8 @@ var oidcHttpClient = &http.Client{
 	},
 }
 
-func signInViaOidcHttpClient(t *testing.T, clients *TwoInstanceClients) *api_client.QuollixClient {
-	oidcClientLogin := api_client.NewQuollixClientForRootUrl(ClientBaseUrl)
+func signInViaOidcHttpClient(t *testing.T, clients *test_environment.OidcTwoInstanceClients) *api_client.QuollixClient {
+	oidcClientLogin := api_client.NewQuollixClientForRootUrl(test_environment.OidcClientBaseUrl)
 	callbackResponse := sendOidcLoginCallbackRequest(t, clients.ProviderAdmin, oidcClientLogin, clients.ClientAdmin)
 	defer u.Close(callbackResponse.Body)
 
@@ -53,7 +54,7 @@ func sendOidcLoginCallbackRequest(t *testing.T, oidcProviderAdmin *api_client.Qu
 	defer u.Close(providerResponse.Body)
 	assert.Equal(t, http.StatusFound, providerResponse.StatusCode)
 	callbackUrl := getRedirectLocation(t, providerResponse)
-	assert.Equal(t, "quollix."+ClientHost, callbackUrl.Host)
+	assert.Equal(t, "quollix."+test_environment.OidcClientHost, callbackUrl.Host)
 
 	return sendOidcGetRequest(t, oidcClientLogin, callbackUrl.String())
 }

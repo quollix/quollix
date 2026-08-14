@@ -10,8 +10,8 @@ import (
 var SecretDoesNotExistError = "secret does not exist"
 
 type SecretAndCookieStorage interface {
-	LoadCookieViaSecret(secret string) (string, error)
-	GenerateSecretForCookie(cookieValue string) (string, error)
+	LoadCookieViaSecret(secret string, appName string) (string, error)
+	GenerateSecretForCookie(cookieValue string, appName string) (string, error)
 }
 
 type SecretAndCookieStorageImpl struct {
@@ -19,22 +19,32 @@ type SecretAndCookieStorageImpl struct {
 	AuthHelper u.AuthHelper
 }
 
-func (s *SecretAndCookieStorageImpl) LoadCookieViaSecret(secret string) (string, error) {
-	cookieValue, ok := s.Secrets.Load(secret)
+type secretEntry struct {
+	CookieValue string
+	AppName     string
+}
+
+func (s *SecretAndCookieStorageImpl) LoadCookieViaSecret(secret string, appName string) (string, error) {
+	rawEntry, ok := s.Secrets.LoadAndDelete(secret)
 	if !ok {
 		return "", u.Logger.NewError(SecretDoesNotExistError)
 	}
-	cookieValueString := cookieValue.(string)
-	s.Secrets.Delete(secret)
-	return cookieValueString, nil
+	entry := rawEntry.(secretEntry)
+	if entry.AppName != appName {
+		return "", u.Logger.NewError(SecretDoesNotExistError)
+	}
+	return entry.CookieValue, nil
 }
 
-func (s *SecretAndCookieStorageImpl) GenerateSecretForCookie(cookieValue string) (string, error) {
+func (s *SecretAndCookieStorageImpl) GenerateSecretForCookie(cookieValue string, appName string) (string, error) {
 	secret, err := s.AuthHelper.GenerateSecret()
 	if err != nil {
 		return "", err
 	}
-	s.Secrets.Store(secret, cookieValue)
+	s.Secrets.Store(secret, secretEntry{
+		CookieValue: cookieValue,
+		AppName:     appName,
+	})
 	time.AfterFunc(3*time.Second, func() {
 		// Secrets should be consumed almost immediately by users, so storage is only temporary.
 		s.Secrets.Delete(secret)

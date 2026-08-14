@@ -124,7 +124,7 @@ func (t *TemplateHandlerImpl) AppsWithSecretsHandler(w http.ResponseWriter, r *h
 	pageRenderRequest := frontendpages.PageRenderRequest{
 		PageName:             "apps-with-secrets",
 		InfoIconRedirectPath: tools.Links.UsageDocs.AppSecrets,
-		PageTitle:            "Apps with Secrets",
+		PageTitle:            "Apps with secrets",
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)
@@ -144,9 +144,9 @@ func (t *TemplateHandlerImpl) AppSecretHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	pageRenderRequest := frontendpages.PageRenderRequest{
-		PageName:             "app-secret",
+		PageName:             "app-secrets",
 		InfoIconRedirectPath: tools.Links.UsageDocs.AppSecrets,
-		PageTitle:            "App Secrets",
+		PageTitle:            "App secrets",
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)
@@ -177,6 +177,26 @@ func (t *TemplateHandlerImpl) OpenInstalledAppHandler(w http.ResponseWriter, r *
 		return
 	}
 
+	appRequestData, err := t.AppsHandler.AppRepo.GetAppRequestData(app)
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	userId, role, err := t.AppsHandler.UserService.GetUserIdAndRoleFromQuollixRequest(r)
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+
+	err = t.AppsHandler.Authorizer.Authorize(appRequestData.AccessPolicy, role, userId, appRequestData.AppName)
+	if err != nil {
+		if writeErr := tools.WriteAppUnavailablePage(w, baseDomain); writeErr != nil {
+			u.Logger.Error(writeErr)
+		}
+		return
+	}
+
 	appPath, err := parseAppOpenPath(r.URL.Query().Get("path"))
 	if err != nil {
 		t.pageCreationFailed(w, err)
@@ -189,7 +209,7 @@ func (t *TemplateHandlerImpl) OpenInstalledAppHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	secret, err := t.SecretStorage.GenerateSecretForCookie(cookie.Value)
+	secret, err := t.SecretStorage.GenerateSecretForCookie(cookie.Value, appRequestData.AppName)
 	if err != nil {
 		t.pageCreationFailed(w, err)
 		return
@@ -197,7 +217,7 @@ func (t *TemplateHandlerImpl) OpenInstalledAppHandler(w http.ResponseWriter, r *
 
 	appURL := url.URL{
 		Scheme:   "https",
-		Host:     app + "." + baseDomain,
+		Host:     appRequestData.AppName + "." + baseDomain,
 		Path:     appPath.Path,
 		RawQuery: appPath.RawQuery,
 	}
@@ -539,7 +559,7 @@ func (t *TemplateHandlerImpl) AppSsoHandler(w http.ResponseWriter, r *http.Reque
 	pageRenderRequest := frontendpages.PageRenderRequest{
 		PageName:             "sso",
 		InfoIconRedirectPath: tools.Links.UsageDocs.AppSso,
-		PageTitle:            "Single Sign-On for Apps",
+		PageTitle:            "Single sign-on for apps",
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)
@@ -554,7 +574,7 @@ func (t *TemplateHandlerImpl) ProvidersHandler(w http.ResponseWriter, r *http.Re
 	pageRenderRequest := frontendpages.PageRenderRequest{
 		PageName:             "providers",
 		InfoIconRedirectPath: tools.Links.UsageDocs.OidcProviders,
-		PageTitle:            "OIDC Providers",
+		PageTitle:            "OIDC providers",
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)
@@ -569,7 +589,7 @@ func (t *TemplateHandlerImpl) OidcClientsHandler(w http.ResponseWriter, r *http.
 	pageRenderRequest := frontendpages.PageRenderRequest{
 		PageName:             "clients",
 		InfoIconRedirectPath: tools.Links.UsageDocs.OidcClients,
-		PageTitle:            "OIDC Clients",
+		PageTitle:            "OIDC clients",
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)

@@ -34,7 +34,7 @@ type BackupServiceImpl struct {
 	SshRepositoryConfigService backup_server.SshRepositoryService
 	AppDetector                apps_basic.AppDetector
 	SshRepository              backup_server.SshRepository
-	ComposeExtractor           apps_basic.ComposeExtractorImpl
+	ComposeExtractor           apps_basic.ComposeExtractor
 	DatabaseIndependentRuntime apps_basic.DatabaseIndependentRuntime
 }
 

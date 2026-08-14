@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"server/system_config_migrations"
-
 	"github.com/quollix/common/quollix/api_client"
 	u "github.com/quollix/common/utils"
 )
@@ -30,16 +28,16 @@ func TestInitialAdminPassword() {
 
 func testInitialAdminPassword() error {
 	DeployLocalContainer(false, containerEnv(false, true))
-	generatedPassword, err := waitForGeneratedInitialAdminPassword()
+	generatedCredentials, err := waitForGeneratedInitialAdminCredentials()
 	if err != nil {
 		return u.Logger.NewError("could not read generated initial admin password from container logs", "error", err.Error())
 	}
-	if generatedPassword == "password" {
-		return u.Logger.NewError("generated password should not be 'password', but random generated", "actual", generatedPassword)
+	if generatedCredentials.Password == "password" {
+		return u.Logger.NewError("generated password should not be 'password', but random generated", "actual", generatedCredentials.Password)
 	}
 
 	client := api_client.NewQuollixClient()
-	if err := client.Auth.SignIn(system_config_migrations.DefaultInitialAdminName, generatedPassword); err != nil {
+	if err := client.Auth.SignIn(generatedCredentials.Username, generatedCredentials.Password); err != nil {
 		return u.Logger.NewError("could not sign in with generated initial admin password", "error", err.Error())
 	}
 
@@ -47,21 +45,26 @@ func testInitialAdminPassword() error {
 	if err != nil {
 		return u.Logger.NewError("could not verify generated-password sign-in session", "error", err.Error())
 	}
-	if currentUser.Username != system_config_migrations.DefaultInitialAdminName || !currentUser.IsAdmin {
+	if currentUser.Username != generatedCredentials.Username || !currentUser.IsAdmin {
 		return u.Logger.NewError("generated-password sign-in returned unexpected user", "username", currentUser.Username, "is_admin", currentUser.IsAdmin)
 	}
 
 	return nil
 }
 
-func waitForGeneratedInitialAdminPassword() (string, error) {
+type initialAdminCredentials struct {
+	Username string
+	Password string
+}
+
+func waitForGeneratedInitialAdminCredentials() (initialAdminCredentials, error) {
 	var lastErr error
 	for range 30 {
 		logs, err := readQuollixContainerLogs()
 		if err != nil {
 			lastErr = err
-		} else if password, err := extractGeneratedInitialAdminPassword(logs); err == nil {
-			return password, nil
+		} else if credentials, err := extractGeneratedInitialAdminCredentials(logs); err == nil {
+			return credentials, nil
 		} else {
 			lastErr = err
 		}
@@ -71,7 +74,7 @@ func waitForGeneratedInitialAdminPassword() (string, error) {
 	if lastErr == nil {
 		lastErr = u.Logger.NewError("password log line was not found")
 	}
-	return "", lastErr
+	return initialAdminCredentials{}, lastErr
 }
 
 func readQuollixContainerLogs() (string, error) {
@@ -82,23 +85,23 @@ func readQuollixContainerLogs() (string, error) {
 	return string(output), nil
 }
 
-func extractGeneratedInitialAdminPassword(logs string) (string, error) {
+func extractGeneratedInitialAdminCredentials(logs string) (initialAdminCredentials, error) {
 	scanner := bufio.NewScanner(strings.NewReader(logs))
 	for scanner.Scan() {
-		if password, found := extractGeneratedInitialAdminPasswordFromLine(scanner.Text()); found {
-			return password, nil
+		if credentials, found := extractGeneratedInitialAdminCredentialsFromLine(scanner.Text()); found {
+			return credentials, nil
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return "", u.Logger.NewError(err.Error())
+		return initialAdminCredentials{}, u.Logger.NewError(err.Error())
 	}
-	return "", u.Logger.NewError("password log line was not found")
+	return initialAdminCredentials{}, u.Logger.NewError("password log line was not found")
 }
 
-func extractGeneratedInitialAdminPasswordFromLine(line string) (string, bool) {
+func extractGeneratedInitialAdminCredentialsFromLine(line string) (initialAdminCredentials, bool) {
 	var fields map[string]any
 	if err := json.Unmarshal([]byte(line), &fields); err != nil {
-		return "", false
+		return initialAdminCredentials{}, false
 	}
 
 	message := jsonStringField(fields, "message")
@@ -106,14 +109,15 @@ func extractGeneratedInitialAdminPasswordFromLine(line string) (string, bool) {
 		message = jsonStringField(fields, "msg")
 	}
 	if !strings.Contains(message, initialAdminPasswordLogSearchText) {
-		return "", false
+		return initialAdminCredentials{}, false
 	}
 
+	username := jsonStringField(fields, "username")
 	password := jsonStringField(fields, "password")
-	if password == "" {
-		return "", false
+	if username == "" || password == "" {
+		return initialAdminCredentials{}, false
 	}
-	return password, true
+	return initialAdminCredentials{Username: username, Password: password}, true
 }
 
 func jsonStringField(fields map[string]any, key string) string {
