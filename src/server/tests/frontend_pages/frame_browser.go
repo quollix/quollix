@@ -44,6 +44,6 @@ func (b *FrameBrowser) ClickSidebarTopLevelLink(itemID string) {
 }
 
 func (b *FrameBrowser) ConfirmDialog() *FrameType {
-	assert.Nil(b.Frame.T, b.Frame.Page.ClickElement("#confirm-button"))
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#confirm-dialog[open] #confirm-button", browserTimeout))
 	return b.Frame
 }

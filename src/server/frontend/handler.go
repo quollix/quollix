@@ -183,22 +183,35 @@ func (t *TemplateHandlerImpl) OpenInstalledAppHandler(w http.ResponseWriter, r *
 		return
 	}
 
+	if appRequestData.AccessPolicy == api.Policies.PublicAccessPolicy {
+		appURL, err := buildAppOpenURL(r.URL.Query().Get("path"), appRequestData.AppName, baseDomain)
+		if err != nil {
+			t.pageCreationFailed(w, err)
+			return
+		}
+
+		http.Redirect(w, r, appURL.String(), http.StatusFound) // #nosec G710 (CWE-601): Open redirect; target host is built from app repository data and configured base domain, and the request path is validated as relative before use.
+		return
+	}
+
 	userId, role, err := t.AppsHandler.UserService.GetUserIdAndRoleFromQuollixRequest(r)
 	if err != nil {
 		t.pageCreationFailed(w, err)
 		return
 	}
-
-	err = t.AppsHandler.Authorizer.Authorize(appRequestData.AccessPolicy, role, userId, appRequestData.AppName)
-	if err != nil {
-		if writeErr := tools.WriteAppUnavailablePage(w, baseDomain); writeErr != nil {
-			u.Logger.Error(writeErr)
-		}
+	if role == tools.AnonymousLevel {
+		http.Redirect(w, r, users.BuildSignInURLForRequest(r), http.StatusFound) // #nosec G710 (CWE-601): Open redirect; redirect target is the local sign-in path, request URI is encoded into next and validated before use.
 		return
 	}
 
-	appPath, err := parseAppOpenPath(r.URL.Query().Get("path"))
+	err = t.AppsHandler.Authorizer.Authorize(appRequestData.AccessPolicy, role, userId, appRequestData.AppName)
 	if err != nil {
+		if u.ExtractError(err) == apps_basic.AccessDeniedError {
+			if writeErr := tools.WriteAppUnavailablePage(w, baseDomain); writeErr != nil {
+				u.Logger.Error(writeErr)
+			}
+			return
+		}
 		t.pageCreationFailed(w, err)
 		return
 	}
@@ -215,17 +228,30 @@ func (t *TemplateHandlerImpl) OpenInstalledAppHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	appURL := url.URL{
-		Scheme:   "https",
-		Host:     appRequestData.AppName + "." + baseDomain,
-		Path:     appPath.Path,
-		RawQuery: appPath.RawQuery,
+	appURL, err := buildAppOpenURL(r.URL.Query().Get("path"), appRequestData.AppName, baseDomain)
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
 	}
 	query := appURL.Query()
 	query.Set("quollix-secret", secret)
 	appURL.RawQuery = query.Encode()
 
-	http.Redirect(w, r, appURL.String(), http.StatusFound)
+	http.Redirect(w, r, appURL.String(), http.StatusFound) // #nosec G710 (CWE-601): Open redirect; target host is built from app repository data and configured base domain, and the request path is validated as relative before use.
+}
+
+func buildAppOpenURL(rawPath, appName, baseDomain string) (*url.URL, error) {
+	appPath, err := parseAppOpenPath(rawPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &url.URL{
+		Scheme:   "https",
+		Host:     appName + "." + baseDomain,
+		Path:     appPath.Path,
+		RawQuery: appPath.RawQuery,
+	}, nil
 }
 
 func parseAppOpenPath(rawPath string) (*url.URL, error) {

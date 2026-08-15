@@ -94,6 +94,13 @@ func (i *InstalledAppsPage) IsOpenButtonPresent(appName string) bool {
 	return i.GetRequiredApp(appName).OpenButtonPresent
 }
 
+func (i *InstalledAppsPage) AssertOpenButtonPresentAndEnabled(appName string) *InstalledAppsPage {
+	app := i.GetRequiredApp(appName)
+	assert.True(i.Frame.T, app.OpenButtonPresent)
+	assert.True(i.Frame.T, app.OpenButtonEnabled)
+	return i
+}
+
 func (i *InstalledAppsPage) ClickOpenButton(appName string) *InstalledAppsPage {
 	assert.Nil(i.Frame.T, i.Frame.Quollix.InstalledApps.ClickOpenButton(appName))
 	return i

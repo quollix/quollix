@@ -115,7 +115,10 @@ func TestOpenRunningAppViaOpenButtonAsAuthenticatedAndAnonymous(t *testing.T) {
 		AssertAppStatusAndOpenButtonEventually("sampleapp", true, true).
 		OpenSampleAppInNewTabAndAssertSampleAppContent().
 		SetAccessPolicyPublic("sampleapp")
-	frame.Session.SignOut().Pages.GoToInstalledAppsPage().OpenSampleAppInNewTabAndAssertSampleAppContent()
+	frame.Session.SignOut().
+		Pages.GoToInstalledAppsPage().
+		AssertOpenButtonPresentAndEnabled("sampleapp").
+		OpenSampleAppInNewTabAndAssertSampleAppContent()
 }
 
 func TestSampleAppAccessPolicySelection(t *testing.T) {

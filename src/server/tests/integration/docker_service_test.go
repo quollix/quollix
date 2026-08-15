@@ -26,16 +26,15 @@ var (
 	dockerService = &tools.DockerServiceImpl{}
 )
 
-func cleanup(t *testing.T) {
-	err := exec.Command("docker", "rm", "-f", tools.BrandAppContainerName).Run()
-	assert.Nil(t, err)
+func cleanupDockerServiceTestResources() {
+	_ = exec.Command("docker", "rm", "-f", tools.BrandAppContainerName).Run()
 	dockerService.RemoveNetwork(sampleMaintainer, sampleApp)
-	err = exec.Command("docker", "rmi", "-f", sampleImageTag).Run()
-	assert.Nil(t, err)
+	_ = exec.Command("docker", "rmi", "-f", sampleImageTag).Run()
 }
 
 func TestDockerService_CreateAndRemoveNetwork(t *testing.T) {
-	defer cleanup(t)
+	cleanupDockerServiceTestResources()
+	t.Cleanup(cleanupDockerServiceTestResources)
 	assert.False(t, dockerNetworkExists(sampleNetwork))
 
 	dockerService.CreateDockerNetwork(sampleMaintainer, sampleApp)
@@ -61,19 +60,16 @@ type dockerNetworkSettings struct {
 }
 
 func TestDockerService_AttachBrandAppToNetwork(t *testing.T) {
-	defer cleanup(t)
+	cleanupDockerServiceTestResources()
+	t.Cleanup(cleanupDockerServiceTestResources)
 	host := "example.com"
 	appNetworkAlias := sampleApp + "." + host
 	hostNetworkAlias := api.BrandAppDomainPrefix + host
 
-	err := exec.Command("docker", "rm", "-f", tools.BrandAppContainerName).Run()
-	assert.Nil(t, err)
-	dockerService.RemoveNetwork(sampleMaintainer, sampleApp)
-
 	dockerService.CreateDockerNetwork(sampleMaintainer, sampleApp)
 	assert.True(t, dockerNetworkExists(sampleNetwork))
 
-	_, err = exec.Command(
+	_, err := exec.Command(
 		"docker", "run", "-d",
 		"--name", tools.BrandAppContainerName,
 		"alpine:latest",
@@ -176,7 +172,8 @@ func dockerVolumeExists(volumeName string) bool {
 }
 
 func TestDockerService_BuildDockerImage_AndDoesDockerImageExist(t *testing.T) {
-	defer cleanup(t)
+	cleanupDockerServiceTestResources()
+	t.Cleanup(cleanupDockerServiceTestResources)
 	buildContextDirectory := t.TempDir()
 
 	dockerfilePath := filepath.Join(buildContextDirectory, "Dockerfile")

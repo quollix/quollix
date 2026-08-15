@@ -181,6 +181,38 @@ func TestUserCannotGetFrontendAppOpenSecretForRestrictedApp(t *testing.T) {
 	assert.Equal(t, "", response.Header.Get("Location"))
 }
 
+func TestAppPolicyChangeRevokesExistingUserAppSessionCookie(t *testing.T) {
+	adminClient := GetClientAndLogin(t)
+	defer adminClient.Test.ResetTestState()
+	sampleApp, err := InstallAndStartSample(t, adminClient, tools.SampleAppVersion2Name)
+	assert.Nil(t, err)
+	assert.Nil(t, adminClient.Apps.SetAccessPolicy(sampleApp.AppId, api.Policies.AuthenticatedAccessPolicy))
+
+	InviteUserAndSetPassword(t, adminClient, SampleUsername, SampleUserPassword, SampleUserEmail)
+	userClient := api_client.NewQuollixClient()
+	assert.Nil(t, userClient.Auth.SignIn(SampleUsername, SampleUserPassword))
+	appClient := GetAppClient(t, userClient)
+	appCookie := *appClient.Parent.Cookie
+	assert.Nil(t, AssertSampleAppContentWithCookie(&appCookie))
+
+	assert.Nil(t, adminClient.Apps.SetAccessPolicy(sampleApp.AppId, api.Policies.AdminOnlyAccessPolicy))
+
+	AssertSampleAppUnavailablePage(t, &appCookie)
+}
+
+func TestAppPolicyChangeRevokesAnonymousPublicAccess(t *testing.T) {
+	adminClient := GetClientAndLogin(t)
+	defer adminClient.Test.ResetTestState()
+	sampleApp, err := InstallAndStartSample(t, adminClient, tools.SampleAppVersion2Name)
+	assert.Nil(t, err)
+	assert.Nil(t, adminClient.Apps.SetAccessPolicy(sampleApp.AppId, api.Policies.PublicAccessPolicy))
+	assert.Nil(t, AssertSampleAppDefaultContent(api_client.NewQuollixClient(), true))
+
+	assert.Nil(t, adminClient.Apps.SetAccessPolicy(sampleApp.AppId, api.Policies.AdminOnlyAccessPolicy))
+
+	AssertSampleAppOpenRedirect(t, nil)
+}
+
 func TestCookiesAreRandom(t *testing.T) {
 	cloud := api_client.NewQuollixClient()
 	defer cloud.Test.ResetTestState()
