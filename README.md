@@ -18,7 +18,7 @@ Please read the [contribution documentation](https://quollix.org/docs/contributi
 
 ### License
 
-This project is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). See [LICENSE](LICENSE) for details.
+This project is licensed under the [MIT License](LICENSE).
 
 Quollix branding is not part of that license. See [TRADEMARKS.md](TRADEMARKS.md).
 
