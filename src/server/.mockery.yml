@@ -189,6 +189,16 @@ packages:
         config:
           filename: version_verifier_mock.go
           structname: VersionVerifierMock
+  server/app_migrations:
+    interfaces:
+      ComposeDatabaseExtractor:
+        config:
+          filename: compose_database_extractor_mock.go
+          structname: ComposeDatabaseExtractorMock
+      AppMigrationCommandExecutor:
+        config:
+          filename: app_migration_command_executor_mock.go
+          structname: AppMigrationCommandExecutorMock
   github.com/quollix/common/validation:
     interfaces:
       VersionValidator:

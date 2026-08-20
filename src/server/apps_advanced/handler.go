@@ -3,6 +3,7 @@ package apps_advanced
 import (
 	"fmt"
 	"net/http"
+	"server/app_migrations"
 	"server/apps_basic"
 	"strconv"
 
@@ -12,9 +13,23 @@ import (
 )
 
 var (
-	ExpectedAppUploadErrors = u.MapOf(AppFromAnotherMaintainerExistsAlreadyError, CanNotUploadOlderAppVersionOverNewer)
-	CantUpdateAppError      = "can't update app because the latest version is already installed"
-	ExpectedUpdateErrors    = u.MapOf(CantUpdateAppError, apps_basic.OperationNotAllowedOnSystemAppError)
+	expectedAppDatabaseMigrationErrors = []string{
+		app_migrations.InvalidPostgresEnvironmentError,
+		app_migrations.MissingPostgresDataVolumeError,
+		app_migrations.MultiplePostgresServicesError,
+		app_migrations.MultipleRabbitMQServicesError,
+		app_migrations.PostgresDataVolumeChangedError,
+		app_migrations.PostgresUserChangedError,
+	}
+	ExpectedAppUploadErrors = u.MapOf(append([]string{
+		AppFromAnotherMaintainerExistsAlreadyError,
+		CanNotUploadOlderAppVersionOverNewer,
+	}, expectedAppDatabaseMigrationErrors...)...)
+	CantUpdateAppError   = "can't update app because the latest version is already installed"
+	ExpectedUpdateErrors = u.MapOf(append([]string{
+		CantUpdateAppError,
+		apps_basic.OperationNotAllowedOnSystemAppError,
+	}, expectedAppDatabaseMigrationErrors...)...)
 )
 
 type AppsAdvancedHandler struct {

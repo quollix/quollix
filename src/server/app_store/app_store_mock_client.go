@@ -83,22 +83,54 @@ func (h *AppStoreClientMock) InitializeSampleApp() error {
 		LatestVersionName:              tools.SampleAppVersion2Name,
 		LatestVersionCreationTimestamp: tools.SampleAppVersion2CreationTimestamp,
 	})
+	h.Apps = append(h.Apps, store.AppWithLatestVersion{
+		Maintainer:                     tools.SampleMaintainer,
+		AppName:                        tools.SamplePostgresApp,
+		LatestVersionName:              tools.SamplePostgresAppVersion18Name,
+		LatestVersionCreationTimestamp: tools.SamplePostgresAppVersion18CreationTimestamp,
+	})
+	h.Apps = append(h.Apps, store.AppWithLatestVersion{
+		Maintainer:                     tools.SampleMaintainer,
+		AppName:                        tools.SampleRabbitMQApp,
+		LatestVersionName:              tools.SampleRabbitMQAppVersion312Name,
+		LatestVersionCreationTimestamp: tools.SampleRabbitMQAppVersion312CreationTimestamp,
+	})
 
 	appVersion0Content := []byte(tools.SampleAppVersion0ComposeYAML)
-	if err := h.addVersion(tools.SampleMaintainer, tools.SampleApp, tools.SampleAppVersion0Name, appVersion0Content, tools.SampleAppVersion0CreationTimestamp); err != nil {
+	if err := h.addVersion(tools.SampleApp, tools.SampleAppVersion0Name, appVersion0Content, tools.SampleAppVersion0CreationTimestamp); err != nil {
 		return err
 	}
 
 	appVersion1Content := []byte(tools.SampleAppVersion1ComposeYAML)
-	if err := h.addVersion(tools.SampleMaintainer, tools.SampleApp, tools.SampleAppVersion1Name, appVersion1Content, tools.SampleAppCreationTimestamp.Add(-time.Hour)); err != nil {
+	if err := h.addVersion(tools.SampleApp, tools.SampleAppVersion1Name, appVersion1Content, tools.SampleAppCreationTimestamp.Add(-time.Hour)); err != nil {
 		return err
 	}
 
 	appVersion2Content := []byte(tools.SampleAppVersion2ComposeYAML)
-	if err := h.addVersion(tools.SampleMaintainer, tools.SampleApp, tools.SampleAppVersion2Name, appVersion2Content, tools.SampleAppCreationTimestamp.Add(+time.Hour)); err != nil {
+	if err := h.addVersion(tools.SampleApp, tools.SampleAppVersion2Name, appVersion2Content, tools.SampleAppCreationTimestamp.Add(+time.Hour)); err != nil {
 		return err
 	}
 	if err := h.addInvalidSignedVersion(tools.SampleMaintainer, tools.SampleApp, "1.5", appVersion2Content, tools.SampleAppCreationTimestamp); err != nil {
+		return err
+	}
+
+	postgresVersion17Content := []byte(tools.SamplePostgresAppVersion17ComposeYAML)
+	if err := h.addVersion(tools.SamplePostgresApp, tools.SamplePostgresAppVersion17Name, postgresVersion17Content, tools.SamplePostgresAppVersion17CreationTimestamp); err != nil {
+		return err
+	}
+
+	postgresVersion18Content := []byte(tools.SamplePostgresAppVersion18ComposeYAML)
+	if err := h.addVersion(tools.SamplePostgresApp, tools.SamplePostgresAppVersion18Name, postgresVersion18Content, tools.SamplePostgresAppVersion18CreationTimestamp); err != nil {
+		return err
+	}
+
+	rabbitMQVersion311Content := []byte(tools.SampleRabbitMQAppVersion311ComposeYAML)
+	if err := h.addVersion(tools.SampleRabbitMQApp, tools.SampleRabbitMQAppVersion311Name, rabbitMQVersion311Content, tools.SampleRabbitMQAppVersion311CreationTimestamp); err != nil {
+		return err
+	}
+
+	rabbitMQVersion312Content := []byte(tools.SampleRabbitMQAppVersion312ComposeYAML)
+	if err := h.addVersion(tools.SampleRabbitMQApp, tools.SampleRabbitMQAppVersion312Name, rabbitMQVersion312Content, tools.SampleRabbitMQAppVersion312CreationTimestamp); err != nil {
 		return err
 	}
 
@@ -252,13 +284,13 @@ func (h *AppStoreClientMock) DownloadVersion(userName, appName, versionName stri
 	return nil, u.Logger.NewError("version not found")
 }
 
-func (h *AppStoreClientMock) addVersion(maintainer, appName, versionName string, content []byte, versionCreationTimestamp time.Time) error {
+func (h *AppStoreClientMock) addVersion(appName, versionName string, content []byte, versionCreationTimestamp time.Time) error {
 	privateKey, err := decodeTestingPrivateKey()
 	if err != nil {
 		return err
 	}
 	version := &store.Version{
-		Maintainer:               maintainer,
+		Maintainer:               tools.SampleMaintainer,
 		AppName:                  appName,
 		VersionName:              versionName,
 		Content:                  content,

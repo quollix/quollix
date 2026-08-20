@@ -43,11 +43,11 @@ func (d *TestStateResetHandler) resetTestState() {
 
 	go func() {
 		defer waitGroup.Done()
-		err := runDockerCmd(".", "rm", "-f", tools.SampleAppContainerName)
+		err := runDockerCmd(".", "rm", "-f", tools.SampleAppContainerName, tools.SamplePostgresAppContainerName, tools.SampleRabbitMQAppContainerName)
 		if err != nil {
 			u.Logger.Error(err.Error())
 		}
-		err = runDockerCmd(".", "volume", "rm", "-f", tools.SampleAppDockerVolume)
+		err = runDockerCmd(".", "volume", "rm", "-f", tools.SampleAppDockerVolume, tools.SamplePostgresAppDockerVolume, tools.SampleRabbitMQAppDockerVolume)
 		if err != nil {
 			u.Logger.Error(err.Error())
 		}

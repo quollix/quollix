@@ -20,8 +20,8 @@ func TestAppSecretsPage(t *testing.T) {
 	_, err := component.InstallSample(t, frame.Client, "2.0")
 	assert.Nil(t, err)
 
-	oldSampleApp := component.GetInstalledSample(t, frame.Client)
-	oldSharedSecret := oldSampleApp.Secrets["SECRET_SAMPLE_SHARED"]
+	oldSharedSecret, err := frame.Client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_SHARED")
+	assert.Nil(t, err)
 	assert.Equal(t, 64, len(oldSharedSecret))
 
 	page := frame.Pages.OpenAppsWithSecretsPage()
@@ -46,8 +46,11 @@ func TestAppSecretsPage(t *testing.T) {
 	detailPage.UpdateSecret("SECRET_SAMPLE_SHARED", updatedSharedSecret)
 
 	err = u.Eventually(func() error {
-		newSampleApp := component.GetInstalledSample(t, frame.Client)
-		if newSampleApp.Secrets["SECRET_SAMPLE_SHARED"] != updatedSharedSecret {
+		newSharedSecret, err := frame.Client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_SHARED")
+		if err != nil {
+			return err
+		}
+		if newSharedSecret != updatedSharedSecret {
 			return u.Logger.NewError("app secret was not updated")
 		}
 		return nil
@@ -57,8 +60,10 @@ func TestAppSecretsPage(t *testing.T) {
 	detailPage.RegenerateSecret("SECRET_SAMPLE_SHARED")
 
 	err = u.Eventually(func() error {
-		newSampleApp := component.GetInstalledSample(t, frame.Client)
-		newSharedSecret := newSampleApp.Secrets["SECRET_SAMPLE_SHARED"]
+		newSharedSecret, err := frame.Client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_SHARED")
+		if err != nil {
+			return err
+		}
 		if newSharedSecret == updatedSharedSecret {
 			return u.Logger.NewError("app secret was not regenerated")
 		}

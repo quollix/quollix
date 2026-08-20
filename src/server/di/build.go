@@ -1,6 +1,7 @@
 package di
 
 import (
+	"server/app_migrations"
 	"server/app_store"
 	"server/apps_advanced"
 	"server/apps_basic"
@@ -145,6 +146,9 @@ var SharedSet = wire.NewSet(
 	wire.Struct(new(backups.SnapshotPackagerImpl), "*"),
 	wire.Struct(new(backups.MetaCodecImpl), "*"),
 	wire.Struct(new(apps_basic.ComposeExtractorImpl), "*"),
+	wire.Struct(new(app_migrations.ComposeDatabaseExtractorImpl), "*"),
+	wire.Struct(new(app_migrations.AppMigrationCommandExecutorImpl), "*"),
+	wire.Struct(new(app_migrations.AppDatabaseMigratorImpl), "*"),
 	wire.Struct(new(configs.EmailRepoImpl), "*"),
 	wire.Struct(new(certificates2.CertificatePersisterImpl), "*"),
 	wire.Struct(new(backup_server.ResticSnapshotsParserImpl), "*"),
@@ -208,6 +212,9 @@ var SharedSet = wire.NewSet(
 	wire.Struct(new(apps_advanced.AppsServiceAdvancedImpl), "*"),
 	wire.Struct(new(apps_advanced.AppsAdvancedHandler), "*"),
 	wire.Bind(new(apps_basic.ComposeExtractor), new(*apps_basic.ComposeExtractorImpl)),
+	wire.Bind(new(app_migrations.ComposeDatabaseExtractor), new(*app_migrations.ComposeDatabaseExtractorImpl)),
+	wire.Bind(new(app_migrations.AppMigrationCommandExecutor), new(*app_migrations.AppMigrationCommandExecutorImpl)),
+	wire.Bind(new(app_migrations.AppDatabaseMigrator), new(*app_migrations.AppDatabaseMigratorImpl)),
 	wire.Bind(new(apps_basic.ComposeSecretExtractor), new(*apps_basic.ComposeExtractorImpl)),
 	wire.Bind(new(apps_advanced.AppsServiceAdvanced), new(*apps_advanced.AppsServiceAdvancedImpl)),
 	wire.Bind(new(app_store.AppStoreService), new(*app_store.AppStoreServiceImpl)),

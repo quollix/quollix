@@ -133,23 +133,28 @@ func TestDeletingAppSecretOnlyAllowsUnusedSecrets(t *testing.T) {
 
 	appBeforeUpdate, err := InstallSample(t, client, "1.0")
 	assert.Nil(t, err)
-	appBeforeDeletion := GetInstalledSample(t, client)
-	assert.True(t, appBeforeDeletion.Secrets["SECRET_SAMPLE_VERSION_ONE"] != "")
+	versionOneSecretBeforeDeletion, err := client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_VERSION_ONE")
+	assert.Nil(t, err)
+	assert.True(t, versionOneSecretBeforeDeletion != "")
 
 	assert.Nil(t, client.Apps.Update(appBeforeUpdate.AppId))
-	appAfterUpdate := GetInstalledSample(t, client)
-	assert.True(t, appAfterUpdate.Secrets["SECRET_SAMPLE_VERSION_ONE"] != "")
-	assert.True(t, appAfterUpdate.Secrets["SECRET_SAMPLE_VERSION_TWO"] != "")
+	versionOneSecretAfterUpdate, err := client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_VERSION_ONE")
+	assert.Nil(t, err)
+	assert.True(t, versionOneSecretAfterUpdate != "")
+	versionTwoSecretAfterUpdate, err := client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_VERSION_TWO")
+	assert.Nil(t, err)
+	assert.True(t, versionTwoSecretAfterUpdate != "")
 
-	assert.Nil(t, client.Apps.DeleteSecret(appAfterUpdate.AppId, "SECRET_SAMPLE_VERSION_ONE"))
+	assert.Nil(t, client.Apps.DeleteSecret(appBeforeUpdate.AppId, "SECRET_SAMPLE_VERSION_ONE"))
 	appAfterUnusedSecretDeletion := GetInstalledSample(t, client)
 	_, oldSecretExists := appAfterUnusedSecretDeletion.Secrets["SECRET_SAMPLE_VERSION_ONE"]
 	assert.False(t, oldSecretExists)
 
-	err = client.Apps.DeleteSecret(appAfterUpdate.AppId, "SECRET_SAMPLE_VERSION_TWO")
+	err = client.Apps.DeleteSecret(appBeforeUpdate.AppId, "SECRET_SAMPLE_VERSION_TWO")
 	u.AssertDeepStackErrorFromRequest(t, err, apps_basic.AppSecretInUseError)
-	appAfterUsedSecretDeletionAttempt := GetInstalledSample(t, client)
-	assert.True(t, appAfterUsedSecretDeletionAttempt.Secrets["SECRET_SAMPLE_VERSION_TWO"] != "")
+	versionTwoSecretAfterUsedSecretDeletionAttempt, err := client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_VERSION_TWO")
+	assert.Nil(t, err)
+	assert.True(t, versionTwoSecretAfterUsedSecretDeletionAttempt != "")
 }
 
 func TestRegeneratingSampleAppSecretChangesStoredSecret(t *testing.T) {
@@ -158,8 +163,8 @@ func TestRegeneratingSampleAppSecretChangesStoredSecret(t *testing.T) {
 
 	installedApp, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
-	appBeforeRegeneration := GetInstalledSample(t, client)
-	storedSecretBeforeRegeneration := appBeforeRegeneration.Secrets["SECRET_SAMPLE_SHARED"]
+	storedSecretBeforeRegeneration, err := client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_SHARED")
+	assert.Nil(t, err)
 	assert.Equal(t, 64, len(storedSecretBeforeRegeneration))
 
 	appClient := GetAppClient(t, client)
@@ -168,8 +173,8 @@ func TestRegeneratingSampleAppSecretChangesStoredSecret(t *testing.T) {
 
 	assert.Nil(t, client.Apps.RegenerateSecret(installedApp.AppId, "SECRET_SAMPLE_SHARED"))
 
-	appAfterRegeneration := GetInstalledSample(t, client)
-	storedSecretAfterRegeneration := appAfterRegeneration.Secrets["SECRET_SAMPLE_SHARED"]
+	storedSecretAfterRegeneration, err := client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_SHARED")
+	assert.Nil(t, err)
 	assert.Equal(t, 64, len(storedSecretAfterRegeneration))
 	assert.True(t, storedSecretAfterRegeneration != storedSecretBeforeRegeneration)
 
@@ -194,8 +199,9 @@ func TestUpdatingSampleAppSecretChangesStoredSecret(t *testing.T) {
 
 	assert.Nil(t, client.Apps.UpdateSecret(installedApp.AppId, "SECRET_SAMPLE_SHARED", updatedSecret))
 
-	appAfterUpdate := GetInstalledSample(t, client)
-	assert.Equal(t, updatedSecret, appAfterUpdate.Secrets["SECRET_SAMPLE_SHARED"])
+	storedSecretAfterUpdate, err := client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_SHARED")
+	assert.Nil(t, err)
+	assert.Equal(t, updatedSecret, storedSecretAfterUpdate)
 }
 
 func TestStartingAppAlreadyRunningIsPossible(t *testing.T) {

@@ -1,6 +1,9 @@
 package apps_advanced
 
 import (
+	"maps"
+
+	"server/app_migrations"
 	"server/app_store"
 	"server/apps_basic"
 	"server/backup_server"
@@ -35,6 +38,7 @@ type AppsServiceAdvancedImpl struct {
 	AppStoreService            app_store.AppStoreService
 	SshRepositoryService       backup_server.SshRepositoryService
 	AppDetector                apps_basic.AppDetector
+	AppDatabaseMigrator        app_migrations.AppDatabaseMigrator
 }
 
 func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName) error {
@@ -49,7 +53,7 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.Binary
 	}
 
 	if doesAppWithMaintainerExist {
-		return a.conductAppUpdate(versionFile, composeArchive, port)
+		return a.updateAppFromUploadedVersion(versionFile, composeArchive, port)
 	}
 
 	doesAppExist, err := a.AppRepo.DoesAppExist(composeArchive.AppName)
@@ -88,7 +92,7 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.Binary
 	return a.AppService.UpsertAppInDatabase(app)
 }
 
-func (a *AppsServiceAdvancedImpl) conductAppUpdate(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName, port string) error {
+func (a *AppsServiceAdvancedImpl) updateAppFromUploadedVersion(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName, port string) error {
 	appFromDatabase, err := a.AppRepo.GetAppByName(composeArchive.AppName)
 	if err != nil {
 		return err
@@ -98,22 +102,12 @@ func (a *AppsServiceAdvancedImpl) conductAppUpdate(versionFile *api.BinaryFile, 
 		return u.Logger.NewError(CanNotUploadOlderAppVersionOverNewer)
 	}
 
-	isEnabled, err := a.SshRepo.IsRemoteBackupEnabled()
-	if err != nil {
-		return err
-	}
-	if isEnabled {
-		err := a.BackupsService.CreateBackup(appFromDatabase.AppId, tools.PreUpdateBackupDescription)
-		if err != nil {
-			return err
-		}
-	}
-
-	appFromDatabase.VersionName = composeArchive.Version
-	appFromDatabase.VersionCreationTimestamp = composeArchive.VersionCreationTimestamp
-	appFromDatabase.VersionContent = versionFile.Content
-	appFromDatabase.Port = port
-	return a.AppService.UpsertAppInDatabase(appFromDatabase)
+	uploadedRepoApp := *appFromDatabase
+	uploadedRepoApp.VersionName = composeArchive.Version
+	uploadedRepoApp.VersionCreationTimestamp = composeArchive.VersionCreationTimestamp
+	uploadedRepoApp.VersionContent = versionFile.Content
+	uploadedRepoApp.Port = port
+	return a.replaceInstalledAppVersion(appFromDatabase, &uploadedRepoApp)
 }
 
 func (a *AppsServiceAdvancedImpl) DownloadAppFromApplication(appId int) (*api.BinaryFile, error) {
@@ -159,8 +153,7 @@ func (b *AppsServiceAdvancedImpl) UpdateAppViaAppStore(appId int) error {
 	}
 	latestVersionInAppStore := getLatestVersion(versions)
 	if latestVersionInAppStore.CreationTimestamp.After(app.VersionCreationTimestamp) {
-		app.VersionName = latestVersionInAppStore.Name
-		err = b.installNewVersion(app)
+		err = b.updateAppFromStoreVersion(app, latestVersionInAppStore.Name)
 		if err != nil {
 			return err
 		}
@@ -170,10 +163,33 @@ func (b *AppsServiceAdvancedImpl) UpdateAppViaAppStore(appId int) error {
 	return nil
 }
 
-func (b *AppsServiceAdvancedImpl) installNewVersion(app *apps_basic.RepoApp) error {
-	u.Logger.Info("updating app", tools.AppField, app.AppName)
-	err := b.AppService.StopApp(app.AppId)
+func (b *AppsServiceAdvancedImpl) updateAppFromStoreVersion(app *apps_basic.RepoApp, versionName string) error {
+	downloadedRepoApp, err := b.AppStoreService.DownloadVersion(app.Maintainer, app.AppName, versionName)
 	if err != nil {
+		return err
+	}
+	return b.replaceInstalledAppVersion(app, downloadedRepoApp)
+}
+
+func (b *AppsServiceAdvancedImpl) replaceInstalledAppVersion(app *apps_basic.RepoApp, newApp *apps_basic.RepoApp) error {
+	u.Logger.Info("updating app", tools.AppField, app.AppName)
+	shouldBeRunning := app.ShouldBeRunning
+
+	newApp.ShouldBeRunning = shouldBeRunning
+	newApp.ClientId = app.ClientId
+	newApp.ClientSecret = app.ClientSecret
+	newApp.AppSecret = app.AppSecret
+	newApp.Secrets = maps.Clone(app.Secrets)
+
+	oldComposeContent, _, err := apps_basic.CompleteAppComposeYaml(app, "", "")
+	if err != nil {
+		return err
+	}
+	newComposeContent, _, err := apps_basic.CompleteAppComposeYaml(newApp, "", "")
+	if err != nil {
+		return err
+	}
+	if err = b.AppDatabaseMigrator.ValidateForAppUpdate(oldComposeContent, newComposeContent); err != nil {
 		return err
 	}
 
@@ -181,7 +197,6 @@ func (b *AppsServiceAdvancedImpl) installNewVersion(app *apps_basic.RepoApp) err
 	if err != nil {
 		return err
 	}
-
 	if isBackupEnabled {
 		err = b.BackupsService.CreateBackup(app.AppId, tools.PreUpdateBackupDescription)
 		if err != nil {
@@ -189,19 +204,27 @@ func (b *AppsServiceAdvancedImpl) installNewVersion(app *apps_basic.RepoApp) err
 		}
 	}
 
-	downloadedRepoApp, err := b.AppStoreService.DownloadVersion(app.Maintainer, app.AppName, app.VersionName)
+	err = b.stopAppAndApplyInstalledAppVersionReplacement(app, newApp, oldComposeContent, newComposeContent, shouldBeRunning)
 	if err != nil {
 		return err
 	}
-	downloadedRepoApp.ShouldBeRunning = app.ShouldBeRunning
-	downloadedRepoApp.ClientId = app.ClientId
-	downloadedRepoApp.ClientSecret = app.ClientSecret
-	downloadedRepoApp.AppSecret = app.AppSecret
-	err = b.AppService.UpsertAppInDatabase(downloadedRepoApp)
+	return nil
+}
+
+func (b *AppsServiceAdvancedImpl) stopAppAndApplyInstalledAppVersionReplacement(app *apps_basic.RepoApp, newApp *apps_basic.RepoApp, oldComposeContent, newComposeContent []byte, shouldBeRunning bool) error {
+	err := b.AppService.StopApp(app.AppId)
 	if err != nil {
 		return err
 	}
-	if app.ShouldBeRunning {
+	if err = b.AppDatabaseMigrator.MigrateForAppUpdate(app.Maintainer, app.AppName, oldComposeContent, newComposeContent); err != nil {
+		return err
+	}
+
+	err = b.AppService.UpsertAppInDatabase(newApp)
+	if err != nil {
+		return err
+	}
+	if shouldBeRunning {
 		return b.AppService.StartApp(app.AppId)
 	}
 	return nil

@@ -1,7 +1,6 @@
 package apps_basic
 
 import (
-	"maps"
 	"os"
 	"path/filepath"
 
@@ -9,7 +8,6 @@ import (
 	"server/tools"
 
 	u "github.com/quollix/common/utils"
-	"github.com/quollix/common/validation"
 )
 
 type AppRuntimeSpec struct {
@@ -50,18 +48,8 @@ func (r *DatabaseIndependentRuntimeImpl) StartApp(spec *AppRuntimeSpec) error {
 	}
 	defer u.RemoveDir(composeDir)
 
-	envVars := map[string]string{
-		tools.ComposeEnvVars.BaseDomain:       spec.BaseDomain,
-		tools.ComposeEnvVars.LegacyServerHost: spec.BaseDomain,
-		tools.ComposeEnvVars.ClientId:         spec.App.ClientId,
-		tools.ComposeEnvVars.ClientSecret:     spec.App.ClientSecret,
-		tools.ComposeEnvVars.AppSecret:        spec.App.AppSecret,
-		tools.ComposeEnvVars.IanaTimeZone:     spec.IanaTimeZone,
-	}
-	maps.Copy(envVars, spec.App.Secrets)
-
 	composeYamlPath := filepath.Join(composeDir, "docker-compose.yml")
-	completedComposeContent, err := validation.CompleteDockerComposeYaml(spec.App.Maintainer, spec.App.AppName, spec.App.VersionContent, envVars)
+	completedComposeContent, completedEnvVars, err := CompleteAppComposeYaml(spec.App, spec.BaseDomain, spec.IanaTimeZone)
 	if err != nil {
 		return err
 	}
@@ -70,7 +58,7 @@ func (r *DatabaseIndependentRuntimeImpl) StartApp(spec *AppRuntimeSpec) error {
 		return u.Logger.NewError(err.Error())
 	}
 
-	return r.DockerService.StartAppContainer(spec.App.Maintainer, spec.App.AppName, composeYamlPath, envVars)
+	return r.DockerService.StartAppContainer(spec.App.Maintainer, spec.App.AppName, composeYamlPath, completedEnvVars)
 }
 
 func (r *DatabaseIndependentRuntimeImpl) StopApp(app *RepoApp) error {

@@ -147,6 +147,8 @@ github.com/quollix/common v1.2.32 h1:OOiBunSJe4Z1hNOTjk05behwzvb7ptPLUxtuDviTVUk
 github.com/quollix/common v1.2.32/go.mod h1:WSdKHE65Wr6k07hXZ6qse+YfoCxbMhKjM30XA/rwwXQ=
 github.com/quollix/common v1.2.33 h1:mZ2ioDaACmS74CepIXUa2tgL9EN1+qW9AqkxiJBFf0U=
 github.com/quollix/common v1.2.33/go.mod h1:WSdKHE65Wr6k07hXZ6qse+YfoCxbMhKjM30XA/rwwXQ=
+github.com/quollix/common v1.2.34 h1:80WLcb66pQP1SokSAoD3hVOgxy1Wvfrl1MciUXckDw8=
+github.com/quollix/common v1.2.34/go.mod h1:WSdKHE65Wr6k07hXZ6qse+YfoCxbMhKjM30XA/rwwXQ=
 github.com/quollix/deepstack v1.2.0 h1:JlVKAcGd3r1o5sf/z6RfUYqK/pbE5k23/xexXbSFAhM=
 github.com/quollix/deepstack v1.2.0/go.mod h1:LALwUzJO9Fkk/K3VXVcPYeRsjVxHWjC91cuuw6h6DG0=
 github.com/quollix/taskrunner v1.2.3 h1:K406jrQAuev4o6vE3hcQuI3yKOoBvYuaOjQceZel7jE=
