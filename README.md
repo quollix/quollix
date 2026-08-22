@@ -14,7 +14,7 @@ Reboot the PC to complete the process.
 
 ### Contributing
 
-Please read the [contribution documentation](https://quollix.org/docs/contributing/) for more information on how to contribute to the project.
+Please read the [Community](https://quollix.org/docs/project/community/) articles for more information on how to contribute to the project and interact with others.
 
 ### License
 
