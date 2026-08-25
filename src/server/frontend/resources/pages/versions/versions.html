@@ -3,15 +3,6 @@
     <li id="versions-app-name">App Name: {{$.Page.App}}</li>
 </ul>
 
-<div id="version-filter-bar">
-    <input id="version-filter" type="text" placeholder="Filter versions...">
-    <button id="version-filter-install-button" type="button" class="lean"
-            onclick='installApp("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", document.getElementById("version-filter").value)'>Install</button>
-    <button id="version-filter-download-button" type="button" class="lean"
-            onclick='downloadVersion("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", document.getElementById("version-filter").value)'>Download</button>
-    <span id="exact-version-span">(this exact version)</span>
-</div>
-
 <table id="versions-table">
     <thead>
     <tr>
@@ -23,21 +14,22 @@
     <tbody id="versions-results-body">
     {{range $.Page.Versions}}
     {{$version := .}}
-    <tr class="version-row" data-version-name="{{$version.Name}}" data-created-at="{{$version.CreationTimestamp}}" data-created-at-pretty="{{$version.CreationTimestamp.Format "2006-01-02 15:04:05"}}">
+    <tr class="version-row" data-version-id="{{$version.VersionId}}" data-version-name="{{$version.Name}}" data-created-at-pretty="{{$version.CreationTimestampFormatted}}" data-can-install="{{$version.CanInstall}}">
         <td class="version-name">{{$version.Name}}</td>
-        <td class="version-upload-date"><time class="local-time version-created-at" datetime="{{$version.CreationTimestamp}}"></time></td>
+        <td class="version-upload-date version-created-at">{{$version.CreationTimestampFormatted}}</td>
         <td class="version-actions">
             <div class="actions-row">
                 <button type="button" class="lean icon-btn version-install-button"
-                        title="Install version"
-                        aria-label="Install version"
-                        onclick='installApp("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", "{{$version.Name}}")'>
+                        title="Install/update version"
+                        aria-label="Install/update version"
+                        {{if not $version.CanInstall}}disabled aria-disabled="true"{{end}}
+                        onclick='installVersionFromVersionsPage(this, {{$version.VersionId}})'>
                     <i class="mdi mdi-download-box-outline" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="lean icon-btn version-download-button"
                         title="Download version"
                         aria-label="Download version"
-                        onclick='downloadVersion("{{ $.Page.Maintainer }}", "{{ $.Page.App }}", "{{$version.Name}}")'>
+                        onclick='downloadStoreVersionForBrowser({{$version.VersionId}})'>
                     <i class="mdi mdi-download-outline" aria-hidden="true"></i>
                 </button>
             </div>

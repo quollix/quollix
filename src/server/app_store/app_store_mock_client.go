@@ -22,7 +22,7 @@ type AppStoreClientLean interface {
 	ReloadLocalApps() error
 	SearchForApps(maintainerSearchTerm, appSearchTerm string, searchForUnofficialApps bool) ([]store.AppWithLatestVersion, error)
 	ListVersions(userName, appName string) ([]store.LeanVersionDto, error)
-	DownloadVersion(userName, appName, versionName string) (*store.Version, error)
+	DownloadVersionByID(versionId int) (*store.Version, error)
 }
 
 type AppStoreClientImpl struct {
@@ -57,6 +57,8 @@ type publishedAppDefinition struct {
 }
 
 func (h *AppStoreClientMock) InitializeOnStartup() error {
+	h.Apps = h.Apps[:0]
+	h.Versions = h.Versions[:0]
 	return h.InitializeSampleApp()
 }
 
@@ -77,62 +79,68 @@ func (h *AppStoreClientMock) InitializeApps() error {
 }
 
 func (h *AppStoreClientMock) InitializeSampleApp() error {
+	appVersion0Content := []byte(tools.SampleAppVersion0ComposeYAML)
+	if _, err := h.addVersion(tools.SampleApp, tools.SampleAppVersion0Name, appVersion0Content, tools.SampleAppVersion0CreationTimestamp); err != nil {
+		return err
+	}
+
+	appVersion1Content := []byte(tools.SampleAppVersion1ComposeYAML)
+	if _, err := h.addVersion(tools.SampleApp, tools.SampleAppVersion1Name, appVersion1Content, tools.SampleAppCreationTimestamp.Add(-time.Hour)); err != nil {
+		return err
+	}
+
+	appVersion2Content := []byte(tools.SampleAppVersion2ComposeYAML)
+	appVersion2, err := h.addVersion(tools.SampleApp, tools.SampleAppVersion2Name, appVersion2Content, tools.SampleAppCreationTimestamp.Add(+time.Hour))
+	if err != nil {
+		return err
+	}
+	if _, err := h.addInvalidSignedVersion(tools.SampleMaintainer, tools.SampleApp, "1.5", appVersion2Content, tools.SampleAppCreationTimestamp); err != nil {
+		return err
+	}
+
+	postgresVersion17Content := []byte(tools.SamplePostgresAppVersion17ComposeYAML)
+	if _, err := h.addVersion(tools.SamplePostgresApp, tools.SamplePostgresAppVersion17Name, postgresVersion17Content, tools.SamplePostgresAppVersion17CreationTimestamp); err != nil {
+		return err
+	}
+
+	postgresVersion18Content := []byte(tools.SamplePostgresAppVersion18ComposeYAML)
+	postgresVersion18, err := h.addVersion(tools.SamplePostgresApp, tools.SamplePostgresAppVersion18Name, postgresVersion18Content, tools.SamplePostgresAppVersion18CreationTimestamp)
+	if err != nil {
+		return err
+	}
+
+	rabbitMQVersion311Content := []byte(tools.SampleRabbitMQAppVersion311ComposeYAML)
+	if _, err := h.addVersion(tools.SampleRabbitMQApp, tools.SampleRabbitMQAppVersion311Name, rabbitMQVersion311Content, tools.SampleRabbitMQAppVersion311CreationTimestamp); err != nil {
+		return err
+	}
+
+	rabbitMQVersion312Content := []byte(tools.SampleRabbitMQAppVersion312ComposeYAML)
+	rabbitMQVersion312, err := h.addVersion(tools.SampleRabbitMQApp, tools.SampleRabbitMQAppVersion312Name, rabbitMQVersion312Content, tools.SampleRabbitMQAppVersion312CreationTimestamp)
+	if err != nil {
+		return err
+	}
+
 	h.Apps = append(h.Apps, store.AppWithLatestVersion{
 		Maintainer:                     tools.SampleMaintainer,
 		AppName:                        tools.SampleApp,
+		LatestVersionId:                appVersion2.VersionId,
 		LatestVersionName:              tools.SampleAppVersion2Name,
 		LatestVersionCreationTimestamp: tools.SampleAppVersion2CreationTimestamp,
 	})
 	h.Apps = append(h.Apps, store.AppWithLatestVersion{
 		Maintainer:                     tools.SampleMaintainer,
 		AppName:                        tools.SamplePostgresApp,
+		LatestVersionId:                postgresVersion18.VersionId,
 		LatestVersionName:              tools.SamplePostgresAppVersion18Name,
 		LatestVersionCreationTimestamp: tools.SamplePostgresAppVersion18CreationTimestamp,
 	})
 	h.Apps = append(h.Apps, store.AppWithLatestVersion{
 		Maintainer:                     tools.SampleMaintainer,
 		AppName:                        tools.SampleRabbitMQApp,
+		LatestVersionId:                rabbitMQVersion312.VersionId,
 		LatestVersionName:              tools.SampleRabbitMQAppVersion312Name,
 		LatestVersionCreationTimestamp: tools.SampleRabbitMQAppVersion312CreationTimestamp,
 	})
-
-	appVersion0Content := []byte(tools.SampleAppVersion0ComposeYAML)
-	if err := h.addVersion(tools.SampleApp, tools.SampleAppVersion0Name, appVersion0Content, tools.SampleAppVersion0CreationTimestamp); err != nil {
-		return err
-	}
-
-	appVersion1Content := []byte(tools.SampleAppVersion1ComposeYAML)
-	if err := h.addVersion(tools.SampleApp, tools.SampleAppVersion1Name, appVersion1Content, tools.SampleAppCreationTimestamp.Add(-time.Hour)); err != nil {
-		return err
-	}
-
-	appVersion2Content := []byte(tools.SampleAppVersion2ComposeYAML)
-	if err := h.addVersion(tools.SampleApp, tools.SampleAppVersion2Name, appVersion2Content, tools.SampleAppCreationTimestamp.Add(+time.Hour)); err != nil {
-		return err
-	}
-	if err := h.addInvalidSignedVersion(tools.SampleMaintainer, tools.SampleApp, "1.5", appVersion2Content, tools.SampleAppCreationTimestamp); err != nil {
-		return err
-	}
-
-	postgresVersion17Content := []byte(tools.SamplePostgresAppVersion17ComposeYAML)
-	if err := h.addVersion(tools.SamplePostgresApp, tools.SamplePostgresAppVersion17Name, postgresVersion17Content, tools.SamplePostgresAppVersion17CreationTimestamp); err != nil {
-		return err
-	}
-
-	postgresVersion18Content := []byte(tools.SamplePostgresAppVersion18ComposeYAML)
-	if err := h.addVersion(tools.SamplePostgresApp, tools.SamplePostgresAppVersion18Name, postgresVersion18Content, tools.SamplePostgresAppVersion18CreationTimestamp); err != nil {
-		return err
-	}
-
-	rabbitMQVersion311Content := []byte(tools.SampleRabbitMQAppVersion311ComposeYAML)
-	if err := h.addVersion(tools.SampleRabbitMQApp, tools.SampleRabbitMQAppVersion311Name, rabbitMQVersion311Content, tools.SampleRabbitMQAppVersion311CreationTimestamp); err != nil {
-		return err
-	}
-
-	rabbitMQVersion312Content := []byte(tools.SampleRabbitMQAppVersion312ComposeYAML)
-	if err := h.addVersion(tools.SampleRabbitMQApp, tools.SampleRabbitMQAppVersion312Name, rabbitMQVersion312Content, tools.SampleRabbitMQAppVersion312CreationTimestamp); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -266,6 +274,7 @@ func (h *AppStoreClientMock) ListVersions(userName, appName string) ([]store.Lea
 			continue
 		}
 		versions = append(versions, store.LeanVersionDto{
+			VersionId:         version.VersionId,
 			Name:              version.VersionName,
 			CreationTimestamp: version.VersionCreationTimestamp,
 			SizeInBytes:       int64(len(version.Content)),
@@ -274,22 +283,23 @@ func (h *AppStoreClientMock) ListVersions(userName, appName string) ([]store.Lea
 	return versions, nil
 }
 
-func (h *AppStoreClientMock) DownloadVersion(userName, appName, versionName string) (*store.Version, error) {
+func (h *AppStoreClientMock) DownloadVersionByID(versionId int) (*store.Version, error) {
 	for index := range h.Versions {
 		version := &h.Versions[index]
-		if version.Maintainer == userName && version.AppName == appName && version.VersionName == versionName {
+		if version.VersionId == versionId {
 			return version, nil
 		}
 	}
-	return nil, u.Logger.NewError("version not found")
+	return nil, u.Logger.NewError("version not found", tools.VersionIdField, versionId)
 }
 
-func (h *AppStoreClientMock) addVersion(appName, versionName string, content []byte, versionCreationTimestamp time.Time) error {
+func (h *AppStoreClientMock) addVersion(appName, versionName string, content []byte, versionCreationTimestamp time.Time) (*store.Version, error) {
 	privateKey, err := decodeTestingPrivateKey()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	version := &store.Version{
+		VersionId:                h.nextVersionID(),
 		Maintainer:               tools.SampleMaintainer,
 		AppName:                  appName,
 		VersionName:              versionName,
@@ -300,21 +310,22 @@ func (h *AppStoreClientMock) addVersion(appName, versionName string, content []b
 
 	signature, err := h.VersionSigningService.SignVersion(privateKey, version)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	version.Signature = signature
 
 	h.Versions = append(h.Versions, *version)
-	return nil
+	return version, nil
 }
 
-func (h *AppStoreClientMock) addInvalidSignedVersion(maintainer, appName, versionName string, content []byte, versionCreationTimestamp time.Time) error {
+func (h *AppStoreClientMock) addInvalidSignedVersion(maintainer, appName, versionName string, content []byte, versionCreationTimestamp time.Time) (*store.Version, error) {
 	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return u.Logger.NewError(err.Error())
+		return nil, u.Logger.NewError(err.Error())
 	}
 
 	version := &store.Version{
+		VersionId:                h.nextVersionID(),
 		Maintainer:               maintainer,
 		AppName:                  appName,
 		VersionName:              versionName,
@@ -324,12 +335,12 @@ func (h *AppStoreClientMock) addInvalidSignedVersion(maintainer, appName, versio
 	}
 	signature, err := h.VersionSigningService.SignVersion(privateKey, version)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	version.Signature = signature
 
 	h.Versions = append(h.Versions, *version)
-	return nil
+	return version, nil
 }
 
 func (h *AppStoreClientMock) SearchForApps(maintainerSearchTerm string, appSearchTerm string, showUnofficialApps bool) ([]store.AppWithLatestVersion, error) {
@@ -348,6 +359,10 @@ func (h *AppStoreClientMock) SearchForApps(maintainerSearchTerm string, appSearc
 		results = append(results, app)
 	}
 	return results, nil
+}
+
+func (h *AppStoreClientMock) nextVersionID() int {
+	return len(h.Versions) + 1
 }
 
 func decodeTestingPrivateKey() (ed25519.PrivateKey, error) {

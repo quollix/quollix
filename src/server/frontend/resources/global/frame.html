@@ -48,9 +48,6 @@
         </header>
 
         <aside>
-            <div id="navigation-tab">
-                <h4>Navigation</h4>
-            </div>
             <nav id="sidebar-nav">
                 <ul id="sidebar-list">
                     <li>
@@ -63,6 +60,9 @@
                                 {{if .Globals.Auth.IsAdmin}}
                                 <li><a id="sidebar-link-store" class="sub-item" href="{{ $.Static.Paths.FrontendStore }}"><i
                                             class="mdi mdi-shopping-outline"></i>Store</a></li>
+                                <li><a id="sidebar-link-backups" class="sub-item"
+                                        href="{{ $.Static.Paths.FrontendBackedUpApps }}"><i
+                                            class="mdi mdi-database-outline"></i>Backups</a></li>
                                 <li><a id="sidebar-link-maintenance" class="sub-item"
                                         href="{{ $.Static.Paths.FrontendMaintenance }}"><i
                                             class="mdi mdi-tools"></i>Maintenance</a></li>
@@ -129,9 +129,6 @@
                         <details id="sidebar-group-system">
                             <summary><i class="mdi mdi-server-outline"></i>System</summary>
                             <ul>
-                                <li><a id="sidebar-link-backups" class="sub-item"
-                                        href="{{ $.Static.Paths.FrontendBackedUpApps }}"><i
-                                            class="mdi mdi-database-outline"></i>Backups</a></li>
                                 <li><a id="sidebar-link-terminal" class="sub-item"
                                         href="{{ $.Static.Paths.FrontendTerminalApps }}"><i
                                             class="mdi mdi-console"></i>Terminal</a></li>

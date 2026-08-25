@@ -2,10 +2,11 @@ package frontend
 
 import (
 	"net/http"
-	"server/backups"
-	"server/tools"
 	"sort"
 	"sync"
+
+	"server/backups"
+	"server/tools"
 
 	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
@@ -91,6 +92,7 @@ func (h *BackupsPageLoaderHandler) load(request api.MaintainerAndApp) {
 		backups = append(backups, BackupsDto{
 			BackupId:                      backup.BackupId,
 			VersionName:                   backup.VersionName,
+			VersionCreationDate:           backup.VersionCreationTimestamp.UTC().Format(tools.PrettyFrontendTimeLayout),
 			Description:                   backup.Description,
 			BackupCreationDate:            backup.BackupCreationTimestamp.Format(tools.PrettyFrontendTimeLayoutWithDay),
 			CreatedWithApplicationVersion: backup.ApplicationVersion,

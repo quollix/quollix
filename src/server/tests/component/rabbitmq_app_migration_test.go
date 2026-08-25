@@ -57,7 +57,11 @@ type rabbitMQGetMessageResponse struct {
 }
 
 func installSampleRabbitMQApp(t *testing.T, client *api_client.QuollixClient, version string) (*api.AdminAppDto, error) {
-	if err := client.Apps.InstallFromStore(tools.SampleMaintainer, tools.SampleRabbitMQApp, version); err != nil {
+	storeVersion, err := FindVersion(t, client, tools.SampleMaintainer, tools.SampleRabbitMQApp, version)
+	if err != nil {
+		return nil, err
+	}
+	if err := client.Apps.InstallFromStoreVersion(storeVersion.VersionId); err != nil {
 		return nil, err
 	}
 	return getInstalledSampleRabbitMQApp(t, client), nil

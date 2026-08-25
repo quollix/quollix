@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"server/tools"
+
 	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
@@ -13,6 +15,7 @@ const (
 	MaintainerResticTag         = "maintainer"
 	AppResticTag                = "app"
 	VersionResticTag            = "version"
+	VersionCreationTimestampTag = "version_creation_timestamp"
 	DescriptionResticTag        = "description"
 	ApplicationVersionResticTag = "application_version"
 )
@@ -43,19 +46,29 @@ func (p *ResticSnapshotsParserImpl) Parse(jsonStr string) ([]api.BackupInfo, err
 				tagMap[parts[0]] = parts[1]
 			}
 		}
+		versionCreationTimestamp := parseVersionCreationTimestamp(tagMap[VersionCreationTimestampTag])
 
 		backups = append(backups, api.BackupInfo{
-			BackupId:                snap.Id,
-			Maintainer:              tagMap[MaintainerResticTag],
-			AppName:                 tagMap[AppResticTag],
-			VersionName:             tagMap[VersionResticTag],
-			Description:             tagMap[DescriptionResticTag],
-			ApplicationVersion:      tagMap[ApplicationVersionResticTag],
-			BackupCreationTimestamp: parsedTime.UTC(),
+			BackupId:                 snap.Id,
+			Maintainer:               tagMap[MaintainerResticTag],
+			AppName:                  tagMap[AppResticTag],
+			VersionName:              tagMap[VersionResticTag],
+			VersionCreationTimestamp: versionCreationTimestamp,
+			Description:              tagMap[DescriptionResticTag],
+			ApplicationVersion:       tagMap[ApplicationVersionResticTag],
+			BackupCreationTimestamp:  parsedTime.UTC(),
 		})
 	}
 
 	return backups, nil
+}
+
+func parseVersionCreationTimestamp(value string) time.Time {
+	parsed, err := time.Parse(time.RFC3339Nano, value)
+	if err != nil {
+		return tools.DefaultTime
+	}
+	return parsed.UTC()
 }
 
 type Snapshot struct {

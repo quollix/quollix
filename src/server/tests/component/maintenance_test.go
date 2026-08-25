@@ -157,6 +157,28 @@ func TestMaintenanceJobExecutionConductsUpdatesAndCreatesBackups(t *testing.T) {
 	assertBackupCount(t, client, tools.SampleMaintainer, tools.SampleApp, 2)
 }
 
+func TestMaintenanceJobExecutionSkipsStoppedApps(t *testing.T) {
+	client := prepareSshRemoteServerSetup(t)
+	defer client.Test.ResetTestState()
+
+	sampleApp, err := InstallSample(t, client, "1.0")
+	assert.Nil(t, err)
+	assert.Nil(t, client.Apps.Stop(sampleApp.AppId))
+
+	assert.Nil(t, client.Maintenance.ExecuteJob())
+
+	sampleApp = GetInstalledSample(t, client)
+	assert.Equal(t, "1.0", sampleApp.VersionName)
+	assert.False(t, sampleApp.IsRunning)
+
+	assert.Nil(t, client.Apps.Start(sampleApp.AppId))
+	assert.Nil(t, client.Maintenance.ExecuteJob())
+
+	sampleApp = GetInstalledSample(t, client)
+	assert.Equal(t, "2.0", sampleApp.VersionName)
+	assert.True(t, sampleApp.IsRunning)
+}
+
 func assertBackupCount(t *testing.T, client *api_client.QuollixClient, maintainer string, appName string, expectedCount int) []api.BackupInfo {
 	backups, err := client.Backups.ListByApp(maintainer, appName)
 	assert.Nil(t, err)

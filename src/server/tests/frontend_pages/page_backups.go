@@ -16,6 +16,7 @@ type BackupsPage struct {
 
 type BackupRow struct {
 	VersionName                   string
+	VersionCreationDate           string
 	Description                   string
 	BackupCreationDate            string
 	CreatedWithApplicationVersion string
@@ -68,6 +69,11 @@ func (b *BackupsPage) ListBackups() []BackupRow {
 		version, err := versionCell.Text()
 		assert.Nil(b.Frame.T, err)
 
+		versionCreationDateCell, err := row.Element(".backup-version-creation-date-cell")
+		assert.Nil(b.Frame.T, err)
+		versionCreationDate, err := versionCreationDateCell.Text()
+		assert.Nil(b.Frame.T, err)
+
 		descriptionCell, err := row.Element(".backup-description-cell")
 		assert.Nil(b.Frame.T, err)
 		description, err := descriptionCell.Text()
@@ -93,6 +99,7 @@ func (b *BackupsPage) ListBackups() []BackupRow {
 
 		out = append(out, BackupRow{
 			VersionName:                   strings.TrimSpace(version),
+			VersionCreationDate:           strings.TrimSpace(versionCreationDate),
 			Description:                   strings.TrimSpace(description),
 			BackupCreationDate:            strings.TrimSpace(creationDate),
 			CreatedWithApplicationVersion: strings.TrimSpace(createdWithVersion),

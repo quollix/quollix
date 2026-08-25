@@ -22,6 +22,7 @@ func TestAppStoreContainsBothSampleVersions(t *testing.T) {
 	storeApp := storeApps[0]
 	assert.Equal(t, tools.SampleApp, storeApp.AppName)
 	assert.Equal(t, tools.SampleMaintainer, storeApp.Maintainer)
+	assert.True(t, storeApp.LatestVersionId > 0)
 	assert.Equal(t, "2.0", storeApp.LatestVersionName)
 	assert.Equal(t, tools.SampleAppVersion2CreationTimestamp, storeApp.LatestVersionCreationTimestamp)
 
@@ -35,19 +36,59 @@ func TestAppStoreContainsBothSampleVersions(t *testing.T) {
 }
 
 func assertLeanVersion(t *testing.T, actual *store.LeanVersionDto, expectedName string, expectedCreationTimestamp time.Time, expectedContent string) {
+	assert.True(t, actual.VersionId > 0)
 	assert.Equal(t, expectedName, actual.Name)
 	assert.Equal(t, expectedCreationTimestamp, actual.CreationTimestamp)
 	assert.Equal(t, int64(len([]byte(expectedContent))), actual.SizeInBytes)
 }
 
-func TestInstallingExistingAppShouldFail(t *testing.T) {
+func TestInstallingAppFromStoreStartsApp(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 	_, err := InstallSample(t, client, "2.0")
 	assert.Nil(t, err)
-	_, err = InstallSample(t, client, "2.0")
+
+	sampleApp := GetInstalledSample(t, client)
+	assert.True(t, sampleApp.IsRunning)
+}
+
+func TestInstallingSameOrOlderAppVersionFromStoreShouldFail(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	_, err := InstallSample(t, client, "1.0")
+	assert.Nil(t, err)
+
+	_, err = InstallSample(t, client, "1.0")
 	assert.NotNil(t, err)
-	u.AssertDeepStackErrorFromRequest(t, err, app_store.AppAlreadyInstalledError)
+	u.AssertDeepStackErrorFromRequest(t, err, app_store.CanNotInstallOlderAppVersionOverNewerOrEqual)
+
+	_, err = InstallSample(t, client, "0.0")
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, app_store.CanNotInstallOlderAppVersionOverNewerOrEqual)
+}
+
+func TestInstallingNewerAppVersionFromStoreUpdatesAppAndCreatesBackup(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	_, err := InstallSample(t, client, "1.0")
+	assert.Nil(t, err)
+	configureBackupRepo(t, client)
+
+	appBackups, err := client.Backups.ListByApp(tools.SampleMaintainer, tools.SampleApp)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(appBackups))
+
+	_, err = InstallSample(t, client, "2.0")
+	assert.Nil(t, err)
+	sampleApp := GetInstalledSample(t, client)
+	assert.Equal(t, "2.0", sampleApp.VersionName)
+	assert.True(t, sampleApp.IsRunning)
+
+	appBackups, err = client.Backups.ListByApp(tools.SampleMaintainer, tools.SampleApp)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(appBackups))
+	assert.Equal(t, "1.0", appBackups[0].VersionName)
+	assert.Equal(t, tools.PreUpdateBackupDescription, appBackups[0].Description)
 }
 
 func TestAppStoreSearch(t *testing.T) {
@@ -66,7 +107,9 @@ func TestAppStoreSearch(t *testing.T) {
 func TestPhysicalAppDownloadToUsersPc(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
-	appDownload, err := client.Apps.DownloadVersion(tools.SampleMaintainer, tools.SampleApp, tools.SampleAppVersion2Name)
+	storeVersion, err := FindVersion(t, client, tools.SampleMaintainer, tools.SampleApp, tools.SampleAppVersion2Name)
+	assert.Nil(t, err)
+	appDownload, err := client.Apps.DownloadStoreVersion(storeVersion.VersionId)
 	assert.Nil(t, err)
 	assert.Equal(t, "samplemaintainer_sampleapp_2.0_2021-01-01-01-00-00.yml", appDownload.FileName)
 	assert.Equal(t, []byte(tools.SampleAppVersion2ComposeYAML), appDownload.Content)
@@ -85,7 +128,9 @@ func TestDownloadShouldRejectVersionWithInvalidPackageSigning(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	_, err := client.Apps.DownloadVersion(tools.SampleMaintainer, tools.SampleApp, "1.5")
+	storeVersion, err := FindVersion(t, client, tools.SampleMaintainer, tools.SampleApp, "1.5")
+	assert.Nil(t, err)
+	_, err = client.Apps.DownloadStoreVersion(storeVersion.VersionId)
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, app_store.InvalidPackageSigningError)
 }

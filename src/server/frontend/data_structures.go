@@ -2,7 +2,6 @@ package frontend
 
 import (
 	api "github.com/quollix/common/quollix/api"
-	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 )
 
@@ -107,15 +106,24 @@ type BackupsPageLoadResponse struct {
 type BackupsDto struct {
 	BackupId                      string `json:"backup_id"`
 	VersionName                   string `json:"version_name"`
+	VersionCreationDate           string `json:"version_creation_date"`
 	Description                   string `json:"description"`
 	BackupCreationDate            string `json:"backup_creation_date"`
 	CreatedWithApplicationVersion string `json:"created_with_application_version"`
 }
 
 type VersionsPageContent struct {
-	Maintainer string
-	App        string
-	Versions   []store.LeanVersionDto
+	Maintainer  string
+	App         string
+	IsInstalled bool
+	Versions    []VersionDto
+}
+
+type VersionDto struct {
+	VersionId                  int
+	Name                       string
+	CreationTimestampFormatted string
+	CanInstall                 bool
 }
 
 type StorePageContent struct {
@@ -129,9 +137,10 @@ type StorePageContent struct {
 type StoreAppDto struct {
 	Maintainer                     string
 	AppName                        string
+	LatestVersionId                int
 	LatestVersionName              string
 	LatestVersionCreationTimestamp string
-	IsInstalled                    bool
+	CanInstall                     bool
 }
 
 type UsersPageContent struct {

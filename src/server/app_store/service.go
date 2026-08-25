@@ -11,14 +11,18 @@ import (
 )
 
 type AppStoreService interface {
-	DownloadVersion(maintainerName, appName, versionName string) (*apps_basic.RepoApp, error)
-	DownloadAndInstallVersion(versionTree *store.VersionTree) error
+	DownloadVersionByID(versionId int) (*apps_basic.RepoApp, error)
+	InstallDownloadedVersion(app *apps_basic.RepoApp) error
 	GetVersions(userName, appName string) ([]store.LeanVersionDto, error)
 	SearchForApps(sr *store.SearchRequest) ([]store.AppWithLatestVersion, error)
-	GetVersionDownload(versionTree *store.VersionTree) (*api.BinaryFile, error)
+	GetStoreVersionDownloadForBrowser(versionId int) (*api.BinaryFile, error)
 }
 
-var AppAlreadyInstalledError = "an app with that name is already installed"
+const (
+	AppAlreadyInstalledError                     = "an app with that name is already installed"
+	AppFromAnotherMaintainerExistsAlreadyError   = "this app already exists for another maintainer, install is therefore not possible"
+	CanNotInstallOlderAppVersionOverNewerOrEqual = "cannot install an older or same app version over an existing newer or same version"
+)
 
 type AppStoreServiceImpl struct {
 	AppStoreClientLean         AppStoreClientLean
@@ -32,8 +36,8 @@ type AppStoreServiceImpl struct {
 	VersionVerifier            VersionVerifier
 }
 
-func (a *AppStoreServiceImpl) DownloadVersion(maintainerName, appName, versionName string) (*apps_basic.RepoApp, error) {
-	fullTagInfo, err := a.AppStoreClientLean.DownloadVersion(maintainerName, appName, versionName)
+func (a *AppStoreServiceImpl) DownloadVersionByID(versionId int) (*apps_basic.RepoApp, error) {
+	fullTagInfo, err := a.AppStoreClientLean.DownloadVersionByID(versionId)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +56,7 @@ func (a *AppStoreServiceImpl) DownloadVersion(maintainerName, appName, versionNa
 		return nil, err
 	}
 
-	port, err := a.AppServiceHelper.GetPortFromComposeYaml(fullTagInfo.Content, appName)
+	port, err := a.AppServiceHelper.GetPortFromComposeYaml(fullTagInfo.Content, fullTagInfo.AppName)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +79,8 @@ func (a *AppStoreServiceImpl) DownloadVersion(maintainerName, appName, versionNa
 	return repoApp, nil
 }
 
-func (a *AppStoreServiceImpl) DownloadAndInstallVersion(versionTree *store.VersionTree) error {
-	doesAppExist, err := a.AppRepo.DoesAppExist(versionTree.AppName)
+func (a *AppStoreServiceImpl) InstallDownloadedVersion(app *apps_basic.RepoApp) error {
+	doesAppExist, err := a.AppRepo.DoesAppExist(app.AppName)
 	if err != nil {
 		return err
 	}
@@ -84,17 +88,16 @@ func (a *AppStoreServiceImpl) DownloadAndInstallVersion(versionTree *store.Versi
 		return u.Logger.NewError(AppAlreadyInstalledError)
 	}
 
-	app, err := a.DownloadVersion(versionTree.Maintainer, versionTree.AppName, versionTree.VersionName)
-	if err != nil {
-		return err
-	}
-
 	app.AccessPolicy = api.Policies.AdminOnlyAccessPolicy
 	err = a.AppService.UpsertAppInDatabase(app)
 	if err != nil {
 		return u.Logger.NewError(err.Error())
 	}
-	return nil
+	installedApp, err := a.AppRepo.GetAppByName(app.AppName)
+	if err != nil {
+		return err
+	}
+	return a.AppService.StartApp(installedApp.AppId)
 }
 
 func (a *AppStoreServiceImpl) GetVersions(userName, appName string) ([]store.LeanVersionDto, error) {
@@ -112,8 +115,8 @@ func (a *AppStoreServiceImpl) SearchForApps(sr *store.SearchRequest) ([]store.Ap
 	return apps, nil
 }
 
-func (a *AppStoreServiceImpl) GetVersionDownload(versionTree *store.VersionTree) (*api.BinaryFile, error) {
-	repoApp, err := a.DownloadVersion(versionTree.Maintainer, versionTree.AppName, versionTree.VersionName)
+func (a *AppStoreServiceImpl) GetStoreVersionDownloadForBrowser(versionId int) (*api.BinaryFile, error) {
+	repoApp, err := a.DownloadVersionByID(versionId)
 	if err != nil {
 		return nil, err
 	}

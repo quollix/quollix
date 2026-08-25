@@ -12,7 +12,7 @@
 {{if $.Page.IsPasswordSet}}
 <section id="change-password-section">
     <h3>Change password</h3>
-    <form class="horizontal-align">
+    <form class="inline-form-row account-password-form">
         <input type="password" id="change-password-current-input" name="oldPassword" placeholder="enter current password" required />
         <input type="password" id="change-password-new-input" name="newPassword" placeholder="enter new password" required />
         <input type="password" id="change-password-confirm-input" name="confirmPassword" placeholder="confirm new password" required />
@@ -23,7 +23,7 @@
 <section id="set-password-section">
     <h3>Set local password</h3>
     <p>You do not have a local password set. Set one to also sign in with your username and password if your external sign-in provider is unavailable.</p>
-    <form class="horizontal-align">
+    <form class="inline-form-row account-password-form">
         <input type="password" id="set-password-new-input" name="newPassword" placeholder="enter new password" required />
         <input type="password" id="set-password-confirm-input" name="confirmPassword" placeholder="confirm new password" required />
         <button type="button" id="set-password-button" onclick="setPassword(document.getElementById('set-password-new-input').value, document.getElementById('set-password-confirm-input').value)">Save</button>

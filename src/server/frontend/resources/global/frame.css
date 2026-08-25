@@ -52,11 +52,12 @@ footer {
 #sidebar-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0.5rem 0 0;
 }
 
 #sidebar-list i {
   padding-right: 0.5rem;
+  font-size: 0.95rem;
 }
 
 #sidebar-list .sub-item {
@@ -65,7 +66,7 @@ footer {
   color: #ddd;
   text-decoration: none;
   background: var(--medium-dark);
-  padding: 0.5rem 0 0.5rem 1rem;
+  padding: 0.3rem 0 0.3rem 1rem;
   cursor: pointer;
 }
 
@@ -73,8 +74,14 @@ footer {
   color: white;
 }
 
+#sidebar-list summary,
+#sidebar-list .sub-item,
+#sidebar-list .sidebar-top-link {
+  font-size: 0.92rem;
+}
+
 #sidebar-list details {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 #sidebar-list details[open] {
@@ -91,7 +98,11 @@ footer {
   text-decoration: none;
   cursor: pointer;
   color: white;
-  margin-bottom: 5px;
+  margin-bottom: 0px;
+}
+
+#sidebar-feedback-tab {
+  padding-bottom: 5px !important;
 }
 
 #main {
@@ -120,19 +131,6 @@ footer {
   padding: 1rem
 }
 
-#navigation-tab {
-  background-color: var(--light-dark);
-  padding-top: 0.5rem;
-  padding-left: 1rem;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-#navigation-tab h4 {
-  color: white;
-  margin: 0;
-}
-
 #cancel-button {
   margin-right: 0.5rem;
 }
@@ -145,6 +143,7 @@ footer {
 aside {
   display: flex;
   flex-direction: column;
+  border-top: 1px solid var(--light-dark);
 }
 
 #sidebar-user {

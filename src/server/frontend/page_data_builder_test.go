@@ -324,9 +324,10 @@ func TestBuildVersionsPage_SortsByCreationTimestampDesc(t *testing.T) {
 	testObjects.AppStoreClient.EXPECT().
 		ListVersions("maintainer", "app").
 		Return([]store.LeanVersionDto{
-			{Name: "older", CreationTimestamp: olderTimestamp},
-			{Name: "newer", CreationTimestamp: newerTimestamp},
+			{VersionId: 1, Name: "older", CreationTimestamp: olderTimestamp},
+			{VersionId: 2, Name: "newer", CreationTimestamp: newerTimestamp},
 		}, nil)
+	testObjects.AppRepo.EXPECT().DoesAppExist("app").Return(false, nil)
 
 	pageContent, err := testObjects.Builder.BuildVersionsPage("maintainer", "app")
 	assert.Nil(t, err)
@@ -336,6 +337,41 @@ func TestBuildVersionsPage_SortsByCreationTimestampDesc(t *testing.T) {
 
 	assert.Equal(t, "newer", pageContent.Versions[0].Name)
 	assert.Equal(t, "older", pageContent.Versions[1].Name)
+	assert.Equal(t, 2, pageContent.Versions[0].VersionId)
+	assert.Equal(t, 1, pageContent.Versions[1].VersionId)
+	assert.Equal(t, "2026-01-02 10:00:00", pageContent.Versions[0].CreationTimestampFormatted)
+	assert.Equal(t, "2026-01-01 10:00:00", pageContent.Versions[1].CreationTimestampFormatted)
+	assert.True(t, pageContent.Versions[0].CanInstall)
+	assert.True(t, pageContent.Versions[1].CanInstall)
+}
+
+func TestBuildVersionsPage_DisablesVersionsNotNewerThanInstalledApp(t *testing.T) {
+	testObjects := getTestObjects(t)
+
+	installedTimestamp := time.Date(2026, 1, 2, 10, 0, 0, 0, time.UTC)
+	newerTimestamp := time.Date(2026, 1, 3, 10, 0, 0, 0, time.UTC)
+
+	testObjects.AppStoreClient.EXPECT().
+		ListVersions("maintainer", "app").
+		Return([]store.LeanVersionDto{
+			{VersionId: 1, Name: "same", CreationTimestamp: installedTimestamp},
+			{VersionId: 2, Name: "newer", CreationTimestamp: newerTimestamp},
+		}, nil)
+	testObjects.AppRepo.EXPECT().DoesAppExist("app").Return(true, nil)
+	testObjects.AppRepo.EXPECT().GetAppByName("app").Return(&apps_basic.RepoApp{
+		Maintainer:               "maintainer",
+		AppName:                  "app",
+		VersionCreationTimestamp: installedTimestamp,
+	}, nil)
+
+	pageContent, err := testObjects.Builder.BuildVersionsPage("maintainer", "app")
+	assert.Nil(t, err)
+
+	assert.True(t, pageContent.IsInstalled)
+	assert.Equal(t, "newer", pageContent.Versions[0].Name)
+	assert.True(t, pageContent.Versions[0].CanInstall)
+	assert.Equal(t, "same", pageContent.Versions[1].Name)
+	assert.False(t, pageContent.Versions[1].CanInstall)
 }
 
 func TestBuildAppSsoPage_FiltersOfficialDatabaseApp_AndSortsByMaintainerThenAppName(t *testing.T) {
@@ -527,6 +563,7 @@ func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) 
 				{
 					Maintainer:                     "m1",
 					AppName:                        "a1",
+					LatestVersionId:                123,
 					LatestVersionName:              "1.2.3",
 					LatestVersionCreationTimestamp: creationTimestamp,
 				},
@@ -549,46 +586,64 @@ func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) 
 			assert.Equal(t, 1, len(pageContent.Apps))
 			assert.Equal(t, "m1", pageContent.Apps[0].Maintainer)
 			assert.Equal(t, "a1", pageContent.Apps[0].AppName)
+			assert.Equal(t, 123, pageContent.Apps[0].LatestVersionId)
 			assert.Equal(t, "1.2.3", pageContent.Apps[0].LatestVersionName)
 			assert.Equal(t, "2026-01-02 10:00:00", pageContent.Apps[0].LatestVersionCreationTimestamp)
-			assert.False(t, pageContent.Apps[0].IsInstalled)
+			assert.True(t, pageContent.Apps[0].CanInstall)
 		})
 	}
 }
 
-func TestBuildStorePage_WhenSearch_MarksInstalledApps(t *testing.T) {
+func TestBuildStorePage_WhenSearch_BuildsInstallButtonState(t *testing.T) {
 	testObjects := getTestObjects(t)
 	testObjects.Builder.GlobalConfig.ShowUnofficialAppsSearch = true
-	creationTimestamp := time.Date(2026, time.January, 2, 10, 0, 0, 0, time.UTC)
+	installedTimestamp := time.Date(2026, time.January, 2, 10, 0, 0, 0, time.UTC)
+	newerTimestamp := time.Date(2026, time.January, 3, 10, 0, 0, 0, time.UTC)
 
 	testObjects.AppStoreClient.EXPECT().
 		SearchForApps("", "app", true).
 		Return([]store.AppWithLatestVersion{
 			{
 				Maintainer:                     "m1",
-				AppName:                        "installed-app",
+				AppName:                        "not-installed-app",
 				LatestVersionName:              "1.2.3",
-				LatestVersionCreationTimestamp: creationTimestamp,
+				LatestVersionCreationTimestamp: installedTimestamp,
 			},
 			{
 				Maintainer:                     "m2",
-				AppName:                        "not-installed-app",
+				AppName:                        "same-maintainer-newer-app",
 				LatestVersionName:              "2.3.4",
-				LatestVersionCreationTimestamp: creationTimestamp,
+				LatestVersionCreationTimestamp: newerTimestamp,
+			},
+			{
+				Maintainer:                     "m3",
+				AppName:                        "same-maintainer-same-app",
+				LatestVersionName:              "3.4.5",
+				LatestVersionCreationTimestamp: installedTimestamp,
+			},
+			{
+				Maintainer:                     "m4",
+				AppName:                        "other-maintainer-app",
+				LatestVersionName:              "4.5.6",
+				LatestVersionCreationTimestamp: newerTimestamp,
 			},
 		}, nil)
 	testObjects.AppRepo.EXPECT().
 		ListApps().
 		Return([]apps_basic.RepoApp{
-			{AppName: "installed-app"},
+			{Maintainer: "m2", AppName: "same-maintainer-newer-app", VersionCreationTimestamp: installedTimestamp},
+			{Maintainer: "m3", AppName: "same-maintainer-same-app", VersionCreationTimestamp: installedTimestamp},
+			{Maintainer: "other-maintainer", AppName: "other-maintainer-app", VersionCreationTimestamp: installedTimestamp},
 		}, nil)
 
 	pageContent, err := testObjects.Builder.BuildStorePage("maintainer", "app", true, true)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 2, len(pageContent.Apps))
-	assert.True(t, pageContent.Apps[0].IsInstalled)
-	assert.False(t, pageContent.Apps[1].IsInstalled)
+	assert.Equal(t, 4, len(pageContent.Apps))
+	assert.True(t, pageContent.Apps[0].CanInstall)
+	assert.True(t, pageContent.Apps[1].CanInstall)
+	assert.False(t, pageContent.Apps[2].CanInstall)
+	assert.False(t, pageContent.Apps[3].CanInstall)
 }
 
 func TestBuildStorePage_WhenSearchFails_ReturnsError(t *testing.T) {

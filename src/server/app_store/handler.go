@@ -50,32 +50,17 @@ func (a *AppStoreHandler) SearchAppsHandler(w http.ResponseWriter, r *http.Reque
 	u.SendJsonResponse(w, apps)
 }
 
-var versionInstallationExpectedErrors = u.MapOf(AppAlreadyInstalledError, InvalidPackageSigningError)
-var versionDownloadExpectedErrors = u.MapOf(InvalidPackageSigningError)
+var storeVersionBrowserDownloadExpectedErrors = u.MapOf(InvalidPackageSigningError)
 
-func (a *AppStoreHandler) VersionInstallationHandler(w http.ResponseWriter, r *http.Request) {
-	versionTree, ok := validation.ReadBody[store.VersionTree](w, r)
+func (a *AppStoreHandler) DownloadStoreVersionForBrowserHandler(w http.ResponseWriter, r *http.Request) {
+	versionID, ok := validation.ReadBody[store.VersionID](w, r)
 	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	err := a.AppStoreService.DownloadAndInstallVersion(versionTree)
+	versionDownload, err := a.AppStoreService.GetStoreVersionDownloadForBrowser(versionID.VersionId)
 	if err != nil {
-		u.WriteResponseError(w, versionInstallationExpectedErrors, err)
-		return
-	}
-}
-
-func (a *AppStoreHandler) VersionDownloadHandler(w http.ResponseWriter, r *http.Request) {
-	versionTree, ok := validation.ReadBody[store.VersionTree](w, r)
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	versionDownload, err := a.AppStoreService.GetVersionDownload(versionTree)
-	if err != nil {
-		u.WriteResponseError(w, versionDownloadExpectedErrors, err)
+		u.WriteResponseError(w, storeVersionBrowserDownloadExpectedErrors, err)
 		return
 	}
 	u.SendJsonResponse(w, versionDownload)

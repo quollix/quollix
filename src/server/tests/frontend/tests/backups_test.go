@@ -3,13 +3,14 @@
 package frontend
 
 import (
+	"strings"
+	"testing"
+	"time"
+
 	"server/backup_server"
 	"server/tests/component"
 	"server/tests/frontend_pages"
 	"server/tools"
-	"strings"
-	"testing"
-	"time"
 
 	"github.com/quollix/common/assert"
 )
@@ -85,6 +86,7 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 
 	backupRow := backupRows[0]
 	assert.True(t, strings.HasPrefix(backupRow.VersionName, "2.0"))
+	assert.Equal(t, tools.SampleAppVersion2CreationTimestamp.Format(tools.PrettyFrontendTimeLayout), backupRow.VersionCreationDate)
 	assert.NotEqual(t, "", backupRow.BackupCreationDate)
 	_, err = time.Parse(tools.PrettyFrontendTimeLayoutWithDay, backupRow.BackupCreationDate)
 	assert.Nil(t, err)

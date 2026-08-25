@@ -221,7 +221,11 @@ func ListInstalledAppsForNonAdmin(t *testing.T, client *api_client.QuollixClient
 }
 
 func InstallSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AdminAppDto, error) {
-	if err := client.Apps.InstallFromStore(tools.SampleMaintainer, tools.SampleApp, version); err != nil {
+	storeVersion, err := FindVersion(t, client, tools.SampleMaintainer, tools.SampleApp, version)
+	if err != nil {
+		return nil, err
+	}
+	if err := client.Apps.InstallFromStoreVersion(storeVersion.VersionId); err != nil {
 		return nil, err
 	}
 	return GetInstalledSample(t, client), nil

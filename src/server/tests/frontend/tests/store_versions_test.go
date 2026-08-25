@@ -37,20 +37,27 @@ func TestStoreVersionsPage(t *testing.T) {
 		AssertVersionNames([]string{"0.0", "1.0", "1.5", "2.0"}).
 		AssertVersionsAndCreationDates(expectedVersions).
 		InstallVersion("1.0").
+		AssertVersionInstallButtonDisabled("0.0").
+		AssertVersionInstallButtonDisabled("1.0").
+		AssertVersionInstallButtonEnabled("1.5").
+		AssertVersionInstallButtonEnabled("2.0").
 		WaitUntilAppVersionInstalled(tools.SampleApp, "1.0").
-		Frame.Assert.SnackbarVisibleWithTextEventually("Installation successful")
+		Frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
 
 	sampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Equal(t, "1.0", sampleApp.VersionName)
-	assert.Nil(t, frame.Client.Apps.Delete(sampleApp.AppId))
+	assert.True(t, sampleApp.IsRunning)
 
 	versionsPage.
-		SetVersionFilter("0.0").
-		AssertVisibleVersionNames([]string{"0.0"}).
-		InstallFilteredVersion().
-		WaitUntilAppVersionInstalled(tools.SampleApp, "0.0")
-	frame.Assert.SnackbarVisibleWithTextEventually("Installation successful")
+		InstallVersion("2.0").
+		AssertVersionInstallButtonDisabled("0.0").
+		AssertVersionInstallButtonDisabled("1.0").
+		AssertVersionInstallButtonDisabled("1.5").
+		AssertVersionInstallButtonDisabled("2.0").
+		WaitUntilAppVersionInstalled(tools.SampleApp, "2.0")
+	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
 
 	sampleApp = component.GetInstalledSample(t, frame.Client)
-	assert.Equal(t, "0.0", sampleApp.VersionName)
+	assert.Equal(t, "2.0", sampleApp.VersionName)
+	assert.True(t, sampleApp.IsRunning)
 }

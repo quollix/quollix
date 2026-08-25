@@ -158,8 +158,8 @@ func (h *HandlerRegisterer) adminAdvancedAppRoutes() []users.Route {
 func (h *HandlerRegisterer) adminStoreRoutes() []users.Route {
 	return []users.Route{
 		{Path: api.Paths.BackendStoreSearch, HandlerFunc: h.AppStoreHandler.SearchAppsHandler, AccessLevel: tools.AdminLevel},
-		{Path: api.Paths.BackendStoreVersionsInstall, HandlerFunc: h.AppStoreHandler.VersionInstallationHandler, AccessLevel: tools.AdminLevel},
-		{Path: api.Paths.BackendStoreVersionsDownload, HandlerFunc: h.AppStoreHandler.VersionDownloadHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendStoreVersionsInstall, HandlerFunc: h.AppsAdvancedHandler.InstallOrUpdateAppFromStoreVersionHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendStoreVersionsDownload, HandlerFunc: h.AppStoreHandler.DownloadStoreVersionForBrowserHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendStoreVersionsList, HandlerFunc: h.AppStoreHandler.GetVersionsHandler, AccessLevel: tools.AdminLevel},
 	}
 }

@@ -1,6 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const searchForm = document.getElementById('search-form')
     const checkbox = document.getElementById('unofficial')
     const maintainerWrap = document.getElementById('maintainer-wrap')
+
+    searchForm.addEventListener('submit', event => {
+        if (isValidSearchTerm(document.getElementById('maintainer-input')?.value || '')) {
+            if (isValidSearchTerm(document.getElementById('app-input')?.value || '')) return
+            showInvalidSearchTermSnackbar('app_name')
+        } else {
+            showInvalidSearchTermSnackbar('maintainer_name')
+        }
+        event.preventDefault()
+    })
+
+    if (!checkbox || !maintainerWrap) return
+
     const maintainerLabel = maintainerWrap.querySelector('label')
     const maintainerInput = maintainerWrap.querySelector('input')
 
@@ -27,34 +41,31 @@ document.addEventListener('DOMContentLoaded', () => {
     applyVisibility()
 })
 
+function isValidSearchTerm(value) {
+    return /^[a-z0-9]{0,20}$/.test(value)
+}
+
+function showInvalidSearchTermSnackbar(fieldName) {
+    showSnackbar(`Invalid input. The content of the field ${fieldName} must be at most 20 characters long. Allowed symbols are: a-z0-9.`)
+}
+
 window.goToVersions = async (maintainer, app) => {
     const params = new URLSearchParams({ maintainer, app })
     window.location.href = `{{ $.Static.Paths.FrontendVersions }}?${params.toString()}`
 }
 
-window.installAppFromStore = async (maintainer, app, version) => {
-    const ok = await installApp(maintainer, app, version)
+window.installAppFromStore = async (maintainer, app, versionId) => {
+    const ok = await installApp(versionId)
     if (!ok) return
-    disableInstallButtonsForApp(app)
+    disableInstallButtonForApp(maintainer, app)
 }
 
-function disableInstallButtonsForApp(app) {
-    const rows = document.querySelectorAll(`#store-results-body tr.store-result-row[data-app="${CSS.escape(app)}"]`)
+function disableInstallButtonForApp(maintainer, app) {
+    const rows = document.querySelectorAll(`#store-results-body tr.store-result-row[data-maintainer="${CSS.escape(maintainer)}"][data-app="${CSS.escape(app)}"]`)
     for (const row of rows) {
         const installButton = row.querySelector("button.store-install-button")
         if (!installButton) continue
-        installButton.disabled = true
-        installButton.setAttribute("aria-disabled", "true")
-        installButton.setAttribute("title", "Already installed")
-        installButton.setAttribute("aria-label", "Already installed")
+        setButtonDisabled(installButton, true)
         installButton.removeAttribute("onclick")
     }
-}
-
-window.downloadVersionFromAppStore = async (maintainer, app, version) => {
-    await downloadFile('{{ $.Static.Paths.BackendStoreVersionsDownload }}', {
-        Maintainer: maintainer,
-        AppName: app,
-        VersionName: version
-    })
 }

@@ -54,10 +54,13 @@ func TestSampleAppUpdateViaGui(t *testing.T) {
 
 	sampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Equal(t, "1.0", sampleApp.VersionName)
+	assert.True(t, sampleApp.IsRunning)
+	assert.Nil(t, frame.Client.Apps.Stop(sampleApp.AppId))
 
 	frame.Pages.OpenInstalledAppsPage().UpdateAppViaOperations("sampleapp")
 	updatedSampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Equal(t, "2.0", updatedSampleApp.VersionName)
+	assert.True(t, updatedSampleApp.IsRunning)
 }
 
 func TestSampleAppDeleteViaGui(t *testing.T) {

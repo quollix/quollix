@@ -32,6 +32,13 @@ window.copyToClipboard = async (value, label) => {
     showSnackbar(`${label} copied to clipboard.`)
 }
 
+window.setButtonDisabled = function (button, disabled) {
+    if (!button) return
+
+    button.disabled = disabled
+    button.toggleAttribute('aria-disabled', disabled)
+}
+
 window.confirmDialog = async function (message) {
     const dlg = document.getElementById('confirm-dialog')
     const msg = document.getElementById('confirm-message')
@@ -124,14 +131,18 @@ window.loadAsyncPageData = function (buildUrl, renderData) {
     load()
 }
 
-window.installApp = async (maintainer, app, version) => {
-    const ok = await apiPost('{{ $.Static.Paths.BackendStoreVersionsInstall }}', {
-        Maintainer: maintainer,
-        AppName: app,
-        VersionName: version
+window.installApp = async (versionId) => {
+    const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendStoreVersionsInstall }}', {
+        version_id: versionId
     })
-    if (ok) showSnackbar('Installation successful')
+    if (ok) showSnackbar('Installation/update successful')
     return ok
+}
+
+window.downloadStoreVersionForBrowser = async (versionId) => {
+    await downloadFile('{{ $.Static.Paths.BackendStoreVersionsDownload }}', {
+        version_id: versionId
+    })
 }
 
 function base64ToBytes(base64String) {

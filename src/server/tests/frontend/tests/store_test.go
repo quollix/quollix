@@ -29,7 +29,7 @@ func TestStorePage(t *testing.T) {
 		AssertSearchResultCreatedAt("samplemaintainer", "sampleapp", tools.SampleAppVersion2CreationTimestamp.Format(tools.PrettyFrontendTimeLayout)).
 		AssertInstallButtonEnabled("samplemaintainer", "sampleapp").
 		InstallFromResult("samplemaintainer", "sampleapp")
-	frame.Assert.SnackbarVisibleWithTextEventually("Installation successful")
+	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
 	frame.Pages.StorePage.AssertInstallButtonDisabledAsInstalled("samplemaintainer", "sampleapp")
 
 	err := u.Eventually(func() error {
@@ -53,4 +53,43 @@ func TestStorePage(t *testing.T) {
 		Search().
 		AssertSearchRowCount(1).
 		AssertInstallButtonEnabled("samplemaintainer", "sampleapp")
+}
+
+func TestStorePageInvalidSearchInputShowsSnackbar(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+
+	frame.Pages.GoToStorePage().
+		SetSearchAppName("Forgejo").
+		SearchAndAssertInvalidInputSnackbar().
+		AssertNoSearchRows()
+}
+
+func TestStorePageUpdatesInstalledApp(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+
+	_, err := component.InstallSample(t, frame.Client, "1.0")
+	assert.Nil(t, err)
+
+	frame.Pages.GoToStorePage().
+		EnableUnofficialSearchAndConfirm().
+		SetMaintainerFilter("samplemaintainer").
+		SetSearchAppName("sampleapp").
+		Search().
+		AssertSearchRowCount(1).
+		AssertSearchContainsResult("samplemaintainer", "sampleapp", "2.0").
+		AssertInstallButtonEnabled("samplemaintainer", "sampleapp").
+		InstallFromResult("samplemaintainer", "sampleapp")
+	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
+	frame.Pages.StorePage.AssertInstallButtonDisabledAsInstalled("samplemaintainer", "sampleapp")
+
+	err = u.Eventually(func() error {
+		sampleApp := component.GetInstalledSample(t, frame.Client)
+		if sampleApp.VersionName == "2.0" && sampleApp.IsRunning {
+			return nil
+		}
+		return fmt.Errorf("sampleapp is not running on version 2.0 yet")
+	})
+	assert.Nil(t, err)
 }

@@ -24,6 +24,7 @@ type AppsServiceAdvanced interface {
 	UploadAppToApplication(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName) error
 	DownloadAppFromApplication(appId int) (*api.BinaryFile, error)
 	UpdateAppViaAppStore(appId int) error
+	UpdateAppToStoreVersion(appId int, downloadedRepoApp *apps_basic.RepoApp) error
 }
 
 type AppsServiceAdvancedImpl struct {
@@ -89,7 +90,14 @@ func (a *AppsServiceAdvancedImpl) UploadAppToApplication(versionFile *api.Binary
 		true,
 	)
 
-	return a.AppService.UpsertAppInDatabase(app)
+	if err = a.AppService.UpsertAppInDatabase(app); err != nil {
+		return err
+	}
+	installedApp, err := a.AppRepo.GetAppByName(app.AppName)
+	if err != nil {
+		return err
+	}
+	return a.AppService.StartApp(installedApp.AppId)
 }
 
 func (a *AppsServiceAdvancedImpl) updateAppFromUploadedVersion(versionFile *api.BinaryFile, composeArchive *apps_basic.ComposeArchiveName, port string) error {
@@ -107,7 +115,7 @@ func (a *AppsServiceAdvancedImpl) updateAppFromUploadedVersion(versionFile *api.
 	uploadedRepoApp.VersionCreationTimestamp = composeArchive.VersionCreationTimestamp
 	uploadedRepoApp.VersionContent = versionFile.Content
 	uploadedRepoApp.Port = port
-	return a.replaceInstalledAppVersion(appFromDatabase, &uploadedRepoApp)
+	return a.replaceInstalledAppVersion(appFromDatabase, &uploadedRepoApp, true)
 }
 
 func (a *AppsServiceAdvancedImpl) DownloadAppFromApplication(appId int) (*api.BinaryFile, error) {
@@ -153,7 +161,11 @@ func (b *AppsServiceAdvancedImpl) UpdateAppViaAppStore(appId int) error {
 	}
 	latestVersionInAppStore := getLatestVersion(versions)
 	if latestVersionInAppStore.CreationTimestamp.After(app.VersionCreationTimestamp) {
-		err = b.updateAppFromStoreVersion(app, latestVersionInAppStore.Name)
+		downloadedRepoApp, err := b.AppStoreService.DownloadVersionByID(latestVersionInAppStore.VersionId)
+		if err != nil {
+			return err
+		}
+		err = b.updateAppFromStoreVersion(app, downloadedRepoApp, true)
 		if err != nil {
 			return err
 		}
@@ -163,19 +175,30 @@ func (b *AppsServiceAdvancedImpl) UpdateAppViaAppStore(appId int) error {
 	return nil
 }
 
-func (b *AppsServiceAdvancedImpl) updateAppFromStoreVersion(app *apps_basic.RepoApp, versionName string) error {
-	downloadedRepoApp, err := b.AppStoreService.DownloadVersion(app.Maintainer, app.AppName, versionName)
+func (b *AppsServiceAdvancedImpl) UpdateAppToStoreVersion(appId int, downloadedRepoApp *apps_basic.RepoApp) error {
+	app, err := b.AppRepo.GetAppById(appId)
 	if err != nil {
 		return err
 	}
-	return b.replaceInstalledAppVersion(app, downloadedRepoApp)
+
+	if b.AppDetector.IsSystemApp(app.AppName) {
+		return u.Logger.NewError(apps_basic.OperationNotAllowedOnSystemAppError)
+	}
+
+	return b.updateAppFromStoreVersion(app, downloadedRepoApp, true)
 }
 
-func (b *AppsServiceAdvancedImpl) replaceInstalledAppVersion(app *apps_basic.RepoApp, newApp *apps_basic.RepoApp) error {
-	u.Logger.Info("updating app", tools.AppField, app.AppName)
-	shouldBeRunning := app.ShouldBeRunning
+func (b *AppsServiceAdvancedImpl) updateAppFromStoreVersion(app *apps_basic.RepoApp, downloadedRepoApp *apps_basic.RepoApp, shouldStartAfterUpdate bool) error {
+	if !downloadedRepoApp.VersionCreationTimestamp.After(app.VersionCreationTimestamp) {
+		return u.Logger.NewError(app_store.CanNotInstallOlderAppVersionOverNewerOrEqual)
+	}
+	return b.replaceInstalledAppVersion(app, downloadedRepoApp, shouldStartAfterUpdate)
+}
 
-	newApp.ShouldBeRunning = shouldBeRunning
+func (b *AppsServiceAdvancedImpl) replaceInstalledAppVersion(app *apps_basic.RepoApp, newApp *apps_basic.RepoApp, shouldStartAfterUpdate bool) error {
+	u.Logger.Info("updating app", tools.AppField, app.AppName)
+
+	newApp.ShouldBeRunning = shouldStartAfterUpdate
 	newApp.ClientId = app.ClientId
 	newApp.ClientSecret = app.ClientSecret
 	newApp.AppSecret = app.AppSecret
@@ -204,7 +227,7 @@ func (b *AppsServiceAdvancedImpl) replaceInstalledAppVersion(app *apps_basic.Rep
 		}
 	}
 
-	err = b.stopAppAndApplyInstalledAppVersionReplacement(app, newApp, oldComposeContent, newComposeContent, shouldBeRunning)
+	err = b.stopAppAndApplyInstalledAppVersionReplacement(app, newApp, oldComposeContent, newComposeContent, shouldStartAfterUpdate)
 	if err != nil {
 		return err
 	}

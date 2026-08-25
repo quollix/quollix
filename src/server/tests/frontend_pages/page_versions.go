@@ -73,35 +73,12 @@ func (v *VersionsPage) InstallVersion(version string) *VersionsPage {
 	return v
 }
 
-func (v *VersionsPage) SetVersionFilter(version string) *VersionsPage {
-	v.Frame.Page.MustElement("#version-filter").MustInput(version)
-	return v
+func (v *VersionsPage) AssertVersionInstallButtonEnabled(version string) *VersionsPage {
+	return v.assertVersionInstallButtonDisabled(version, false)
 }
 
-func (v *VersionsPage) AssertVisibleVersionNames(expected []string) *VersionsPage {
-	rows := v.Frame.Page.MustElements("#versions-results-body tr.version-row")
-	visible := make([]string, 0, len(rows))
-	for _, row := range rows {
-		styleAttr := row.MustAttribute("style")
-		if styleAttr != nil && strings.Contains(*styleAttr, "none") {
-			continue
-		}
-		versionAttr := row.MustAttribute("data-version-name")
-		assert.NotNil(v.Frame.T, versionAttr)
-		visible = append(visible, *versionAttr)
-	}
-	sort.Strings(visible)
-	sortedExpected := append([]string(nil), expected...)
-	sort.Strings(sortedExpected)
-	assert.Equal(v.Frame.T, sortedExpected, visible)
-	return v
-}
-
-func (v *VersionsPage) InstallFilteredVersion() *VersionsPage {
-	installButton, err := v.Frame.Page.Element("#version-filter-install-button")
-	assert.Nil(v.Frame.T, err)
-	installButton.MustClick()
-	return v
+func (v *VersionsPage) AssertVersionInstallButtonDisabled(version string) *VersionsPage {
+	return v.assertVersionInstallButtonDisabled(version, true)
 }
 
 func (v *VersionsPage) WaitUntilAppVersionInstalled(appName, expectedVersion string) *VersionsPage {
@@ -133,4 +110,22 @@ func (v *VersionsPage) findVersionRow(version string) *browsertest.Element {
 	}
 	assert.True(v.Frame.T, false)
 	return nil
+}
+
+func (v *VersionsPage) findVersionInstallButton(version string) *browsertest.Element {
+	row := v.findVersionRow(version)
+	installButton, err := row.Element("button.version-install-button")
+	assert.Nil(v.Frame.T, err)
+	return installButton
+}
+
+func (v *VersionsPage) assertVersionInstallButtonDisabled(version string, expectedDisabled bool) *VersionsPage {
+	v.assertButtonDisabled(v.findVersionInstallButton(version), expectedDisabled)
+	return v
+}
+
+func (v *VersionsPage) assertButtonDisabled(button *browsertest.Element, expectedDisabled bool) {
+	disabled, err := button.Property("disabled")
+	assert.Nil(v.Frame.T, err)
+	assert.Equal(v.Frame.T, expectedDisabled, disabled.Bool())
 }

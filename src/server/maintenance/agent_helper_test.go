@@ -91,14 +91,16 @@ func TestUpdateAllApps(t *testing.T) {
 
 	systemApp := apps_basic.RepoApp{AppId: 1, AppName: "system-app", AutomaticUpdatesEnabled: true}
 	updatesDisabledApp := apps_basic.RepoApp{AppId: 2, AppName: "app-no-updates", AutomaticUpdatesEnabled: false}
-	updatesEnabledApp := apps_basic.RepoApp{AppId: 3, AppName: "app-updates", AutomaticUpdatesEnabled: true}
+	stoppedUpdatesEnabledApp := apps_basic.RepoApp{AppId: 3, AppName: "app-stopped-updates", AutomaticUpdatesEnabled: true, ShouldBeRunning: false}
+	runningUpdatesEnabledApp := apps_basic.RepoApp{AppId: 4, AppName: "app-updates", AutomaticUpdatesEnabled: true, ShouldBeRunning: true}
 
-	testObjects.AppRepo.EXPECT().ListApps().Return([]apps_basic.RepoApp{systemApp, updatesDisabledApp, updatesEnabledApp}, nil)
+	testObjects.AppRepo.EXPECT().ListApps().Return([]apps_basic.RepoApp{systemApp, updatesDisabledApp, stoppedUpdatesEnabledApp, runningUpdatesEnabledApp}, nil)
 	testObjects.AppDetector.EXPECT().IsSystemApp(systemApp.AppName).Return(true)
 	testObjects.AppDetector.EXPECT().IsSystemApp(updatesDisabledApp.AppName).Return(false)
-	testObjects.AppDetector.EXPECT().IsSystemApp(updatesEnabledApp.AppName).Return(false)
+	testObjects.AppDetector.EXPECT().IsSystemApp(stoppedUpdatesEnabledApp.AppName).Return(false)
+	testObjects.AppDetector.EXPECT().IsSystemApp(runningUpdatesEnabledApp.AppName).Return(false)
 
-	testObjects.AppsServiceAdvanced.EXPECT().UpdateAppViaAppStore(updatesEnabledApp.AppId).Return(nil)
+	testObjects.AppsServiceAdvanced.EXPECT().UpdateAppViaAppStore(runningUpdatesEnabledApp.AppId).Return(nil)
 
 	testObjects.Helper.UpdateAllApps()
 }

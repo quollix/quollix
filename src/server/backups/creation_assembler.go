@@ -15,11 +15,12 @@ type BackupCreationAssembler interface {
 type BackupCreationAssemblerImpl struct{}
 
 func (a *BackupCreationAssemblerImpl) BuildBackupCreation(app *apps_basic.RepoApp, description string) (BackupCreationDto, []string, *MetaData) {
+	versionCreationTimestamp := app.VersionCreationTimestamp.UTC()
 	backupCreation := BackupCreationDto{
 		Maintainer:               app.Maintainer,
 		AppName:                  app.AppName,
 		VersionName:              app.VersionName,
-		VersionCreationTimestamp: app.VersionCreationTimestamp.Format(time.RFC3339Nano),
+		VersionCreationTimestamp: versionCreationTimestamp.Format(time.RFC3339Nano),
 		Description:              description,
 		VersionContent:           app.VersionContent,
 	}
@@ -28,6 +29,7 @@ func (a *BackupCreationAssemblerImpl) BuildBackupCreation(app *apps_basic.RepoAp
 		backup_server.MaintainerResticTag + "=" + backupCreation.Maintainer,
 		backup_server.AppResticTag + "=" + backupCreation.AppName,
 		backup_server.VersionResticTag + "=" + backupCreation.VersionName,
+		backup_server.VersionCreationTimestampTag + "=" + backupCreation.VersionCreationTimestamp,
 		backup_server.DescriptionResticTag + "=" + backupCreation.Description,
 		backup_server.ApplicationVersionResticTag + "=" + tools.ApplicationVersion,
 	}

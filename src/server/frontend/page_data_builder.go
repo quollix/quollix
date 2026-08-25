@@ -537,19 +537,27 @@ func (b *FrontendPageDataBuilderImpl) BuildStorePage(maintainerName string, appN
 			return nil, err
 		}
 
-		installedAppNames, err := b.installedAppNames()
+		installedAppsByName, err := b.installedAppsByName()
 		if err != nil {
 			return nil, err
 		}
 
 		appsToDisplay = make([]StoreAppDto, 0, len(foundApps))
 		for _, app := range foundApps {
+			installedApp, isInstalled := installedAppsByName[app.AppName]
+			canInstall := canInstallStoreVersion(
+				&installedApp,
+				isInstalled,
+				app.Maintainer,
+				app.LatestVersionCreationTimestamp,
+			)
 			appsToDisplay = append(appsToDisplay, StoreAppDto{
 				Maintainer:                     app.Maintainer,
 				AppName:                        app.AppName,
+				LatestVersionId:                app.LatestVersionId,
 				LatestVersionName:              app.LatestVersionName,
 				LatestVersionCreationTimestamp: app.LatestVersionCreationTimestamp.UTC().Format(tools.PrettyFrontendTimeLayout),
-				IsInstalled:                    installedAppNames[app.AppName],
+				CanInstall:                     canInstall,
 			})
 		}
 	}
@@ -563,21 +571,37 @@ func (b *FrontendPageDataBuilderImpl) BuildStorePage(maintainerName string, appN
 	}, nil
 }
 
-func (b *FrontendPageDataBuilderImpl) installedAppNames() (map[string]bool, error) {
+func canInstallStoreVersion(installedApp *apps_basic.RepoApp, isInstalled bool, maintainer string, versionCreationTimestamp time.Time) bool {
+	if !isInstalled {
+		return true
+	}
+
+	if installedApp.Maintainer != maintainer {
+		return false
+	}
+
+	return versionCreationTimestamp.After(installedApp.VersionCreationTimestamp)
+}
+
+func (b *FrontendPageDataBuilderImpl) installedAppsByName() (map[string]apps_basic.RepoApp, error) {
 	installedApps, err := b.AppRepo.ListApps()
 	if err != nil {
 		return nil, err
 	}
 
-	installedAppNames := make(map[string]bool, len(installedApps))
+	installedAppsByName := make(map[string]apps_basic.RepoApp, len(installedApps))
 	for _, app := range installedApps {
-		installedAppNames[app.AppName] = true
+		installedAppsByName[app.AppName] = app
 	}
-	return installedAppNames, nil
+	return installedAppsByName, nil
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildVersionsPage(maintainer string, app string) (*VersionsPageContent, error) {
 	versions, err := b.AppStoreClient.ListVersions(maintainer, app)
+	if err != nil {
+		return nil, err
+	}
+	installedApp, isInstalled, err := b.installedApp(app)
 	if err != nil {
 		return nil, err
 	}
@@ -586,11 +610,38 @@ func (b *FrontendPageDataBuilderImpl) BuildVersionsPage(maintainer string, app s
 		return versions[i].CreationTimestamp.After(versions[j].CreationTimestamp)
 	})
 
+	versionDtos := make([]VersionDto, 0, len(versions))
+	for _, version := range versions {
+		canInstall := canInstallStoreVersion(installedApp, isInstalled, maintainer, version.CreationTimestamp)
+		versionDtos = append(versionDtos, VersionDto{
+			VersionId:                  version.VersionId,
+			Name:                       version.Name,
+			CreationTimestampFormatted: version.CreationTimestamp.UTC().Format(tools.PrettyFrontendTimeLayout),
+			CanInstall:                 canInstall,
+		})
+	}
+
 	return &VersionsPageContent{
-		Maintainer: maintainer,
-		App:        app,
-		Versions:   versions,
+		Maintainer:  maintainer,
+		App:         app,
+		IsInstalled: isInstalled,
+		Versions:    versionDtos,
 	}, nil
+}
+
+func (b *FrontendPageDataBuilderImpl) installedApp(appName string) (*apps_basic.RepoApp, bool, error) {
+	doesAppExist, err := b.AppRepo.DoesAppExist(appName)
+	if err != nil {
+		return nil, false, err
+	}
+	if !doesAppExist {
+		return nil, false, nil
+	}
+	app, err := b.AppRepo.GetAppByName(appName)
+	if err != nil {
+		return nil, false, err
+	}
+	return app, true, nil
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildBackedUpAppsPage() (*BackedUpAppsPageContent, error) {

@@ -40,7 +40,7 @@ func TestReleaseLocalQuollixStoreIntegration(t *testing.T) {
 	assert.Nil(t, err)
 	app, err := findStoreApp(apps, expectedStoreApp)
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.InstallFromStore(app.Maintainer, app.AppName, app.LatestVersionName))
+	assert.Nil(t, client.Apps.InstallFromStoreVersion(app.LatestVersionId))
 }
 
 func findStoreApp(apps []commonStore.AppWithLatestVersion, expectedApp string) (*commonStore.AppWithLatestVersion, error) {

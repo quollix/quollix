@@ -60,7 +60,7 @@ func TestSidebarNavigationAsAdmin(t *testing.T) {
 	frame.Browser.ClickSidebarLink(sidebarGroupFederation, sidebarLinkClients)
 	frame.Assert.PagePath(api.Paths.FrontendClients)
 
-	frame.Browser.ClickSidebarLink(sidebarGroupSystem, sidebarLinkBackups)
+	frame.Browser.ClickSidebarLink(sidebarGroupApps, sidebarLinkBackups)
 	frame.Assert.PagePath(api.Paths.FrontendBackedUpApps)
 
 	frame.Browser.ClickSidebarLink(sidebarGroupSystem, sidebarLinkSettings)

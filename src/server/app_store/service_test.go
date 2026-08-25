@@ -12,6 +12,7 @@ import (
 )
 
 var testDownloadedVersion = &store.Version{
+	VersionId:                123,
 	Maintainer:               "samplemaintainer",
 	AppName:                  "sampleapp",
 	VersionName:              "1.0",
@@ -59,18 +60,18 @@ func setupAppStoreServiceTestDependencies(t *testing.T) appStoreServiceTestDepen
 	}
 }
 
-func TestDownloadVersion_ValidationFailsBeforeTrustedKeyVerification(t *testing.T) {
+func TestDownloadVersionByID_ValidationFailsBeforeTrustedKeyVerification(t *testing.T) {
 	testDependencies := setupAppStoreServiceTestDependencies(t)
 	validatorErr := errors.New("invalid downloaded version")
 
 	testDependencies.appStoreClient.EXPECT().
-		DownloadVersion(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, testDownloadedVersion.VersionName).
+		DownloadVersionByID(testDownloadedVersion.VersionId).
 		Return(testDownloadedVersion, nil)
 	testDependencies.versionValidator.EXPECT().
 		Validate(testDownloadedVersion.Content, testDownloadedVersion.Maintainer, testDownloadedVersion.AppName).
 		Return(validatorErr)
 
-	repoApp, err := testDependencies.service.DownloadVersion(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, testDownloadedVersion.VersionName)
+	repoApp, err := testDependencies.service.DownloadVersionByID(testDownloadedVersion.VersionId)
 
 	assert.Nil(t, repoApp)
 	assert.NotNil(t, err)
@@ -78,11 +79,11 @@ func TestDownloadVersion_ValidationFailsBeforeTrustedKeyVerification(t *testing.
 	assert.Equal(t, "version validation failed: invalid downloaded version", err.Error())
 }
 
-func TestDownloadVersion_CreatesRepoAppAfterValidation(t *testing.T) {
+func TestDownloadVersionByID_CreatesRepoAppAfterValidation(t *testing.T) {
 	testDependencies := setupAppStoreServiceTestDependencies(t)
 
 	testDependencies.appStoreClient.EXPECT().
-		DownloadVersion(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, testDownloadedVersion.VersionName).
+		DownloadVersionByID(testDownloadedVersion.VersionId).
 		Return(testDownloadedVersion, nil)
 	testDependencies.versionValidator.EXPECT().
 		Validate(testDownloadedVersion.Content, testDownloadedVersion.Maintainer, testDownloadedVersion.AppName).
@@ -92,7 +93,7 @@ func TestDownloadVersion_CreatesRepoAppAfterValidation(t *testing.T) {
 	testDependencies.appServiceHelper.EXPECT().GetPortFromComposeYaml(testDownloadedVersion.Content, testDownloadedVersion.AppName).Return("8080", nil)
 	testDependencies.versionVerifier.EXPECT().Verify(testDownloadedVersion).Return(nil)
 
-	repoApp, err := testDependencies.service.DownloadVersion(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, testDownloadedVersion.VersionName)
+	repoApp, err := testDependencies.service.DownloadVersionByID(testDownloadedVersion.VersionId)
 
 	assert.Nil(t, err)
 	assert.NotNil(t, repoApp)

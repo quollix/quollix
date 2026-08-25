@@ -639,6 +639,7 @@ func (t *TemplateHandlerImpl) MaintenancePageHandler(w http.ResponseWriter, r *h
 	pageRenderRequest := frontendpages.PageRenderRequest{
 		PageName:             "maintenance",
 		InfoIconRedirectPath: tools.Links.UsageDocs.Maintenance,
+		PageTitle:            "Maintenance policy",
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)

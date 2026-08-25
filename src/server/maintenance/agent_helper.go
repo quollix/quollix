@@ -45,6 +45,9 @@ func (m *AgentHelperImpl) UpdateAllApps() {
 		if !repoApp.AutomaticUpdatesEnabled {
 			continue
 		}
+		if !repoApp.ShouldBeRunning {
+			continue
+		}
 
 		handle, err := m.OperationRegistry.TryBlockAppOperation(repoApp.AppName, "running maintenance job - updating app: "+repoApp.AppName)
 		if err != nil {

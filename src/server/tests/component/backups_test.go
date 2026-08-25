@@ -44,6 +44,7 @@ func TestBackupLifecycle(t *testing.T) {
 		assert.Equal(t, tools.SampleMaintainer, backup.Maintainer)
 		assert.Equal(t, tools.SampleApp, backup.AppName)
 		assert.Equal(t, "2.0", backup.VersionName)
+		assert.Equal(t, tools.SampleAppVersion2CreationTimestamp, backup.VersionCreationTimestamp)
 		assert.Equal(t, tools.ManualBackupDescription, backup.Description)
 		assert.True(t, backup.BackupCreationTimestamp.Before(time.Now()))
 		assert.True(t, backup.BackupCreationTimestamp.After(time.Now().Add(-1*time.Minute)))

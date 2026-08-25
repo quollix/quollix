@@ -6,6 +6,8 @@ import (
 	"github.com/quollix/common/quollix/api"
 )
 
+const expectedTitle = "Install/update app"
+
 type StorePage struct {
 	Frame *FrameType
 }
@@ -20,7 +22,7 @@ func (l *StorePage) InstallSampleApp() *StorePage {
 		AssertSearchContainsResult("samplemaintainer", "sampleapp", "2.0").
 		InstallFromResult("samplemaintainer", "sampleapp")
 
-	l.Frame.Assert.SnackbarVisibleWithTextEventually("Installation successful")
+	l.Frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
 
 	return l
 }
@@ -34,6 +36,13 @@ func (l *StorePage) Search() *StorePage {
 	l.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
 		l.Frame.Page.MustElement("#search-button").MustClick()
 	})
+	return l
+}
+
+func (l *StorePage) SearchAndAssertInvalidInputSnackbar() *StorePage {
+	l.Frame.Page.MustElement("#search-button").MustClick()
+	l.Frame.Assert.SnackbarVisibleWithTextEventually("Invalid input.")
+	l.Frame.Assert.PagePath(api.Paths.FrontendStore)
 	return l
 }
 
@@ -95,7 +104,7 @@ func (l *StorePage) AssertInstallButtonEnabled(maintainer, appName string) *Stor
 	disabled, err := installButton.Property("disabled")
 	assert.Nil(l.Frame.T, err)
 	assert.False(l.Frame.T, disabled.Bool())
-	l.assertInstallButtonTitle(installButton, "Install app")
+	l.assertInstallButtonTitle(installButton)
 	return l
 }
 
@@ -104,7 +113,7 @@ func (l *StorePage) AssertInstallButtonDisabledAsInstalled(maintainer, appName s
 	disabled, err := installButton.Property("disabled")
 	assert.Nil(l.Frame.T, err)
 	assert.True(l.Frame.T, disabled.Bool())
-	l.assertInstallButtonTitle(installButton, "Already installed")
+	l.assertInstallButtonTitle(installButton)
 	return l
 }
 
@@ -152,7 +161,7 @@ func (l *StorePage) findInstallButton(maintainer, appName string) *browsertest.E
 	return installButton
 }
 
-func (l *StorePage) assertInstallButtonTitle(installButton *browsertest.Element, expectedTitle string) {
+func (l *StorePage) assertInstallButtonTitle(installButton *browsertest.Element) {
 	title := installButton.MustAttribute("title")
 	assert.NotNil(l.Frame.T, title)
 	assert.Equal(l.Frame.T, expectedTitle, *title)

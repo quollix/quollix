@@ -35,7 +35,7 @@ func TestPostgresMajorUpdateMigratesData(t *testing.T) {
 
 	appBeforeUpdate, err := installSamplePostgresApp(t, client, tools.SamplePostgresAppVersion17Name)
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.Start(appBeforeUpdate.AppId))
+	assertSamplePostgresReady(t)
 
 	db := openSamplePostgresDb(t, client)
 	writeSamplePostgresValue(t, db, samplePostgresValue)
@@ -48,6 +48,7 @@ func TestPostgresMajorUpdateMigratesData(t *testing.T) {
 	assert.Equal(t, tools.SamplePostgresAppVersion18Name, appAfterUpdate.VersionName)
 	assert.True(t, appAfterUpdate.IsRunning)
 	assertSamplePostgresContainerUsesImage(t, "postgres:18.0-alpine")
+	assertSamplePostgresReady(t)
 
 	db = openSamplePostgresDb(t, client)
 	defer db.Close()
@@ -58,9 +59,9 @@ func TestUploadedPostgresMajorUpdateMigratesData(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
-	appBeforeUpdate, err := uploadSamplePostgresApp(t, client, tools.SamplePostgresAppVersion17Name, tools.SamplePostgresAppVersion17CreationTimestamp, tools.SamplePostgresAppVersion17ComposeYAML)
+	_, err := uploadSamplePostgresApp(t, client, tools.SamplePostgresAppVersion17Name, tools.SamplePostgresAppVersion17CreationTimestamp, tools.SamplePostgresAppVersion17ComposeYAML)
 	assert.Nil(t, err)
-	assert.Nil(t, client.Apps.Start(appBeforeUpdate.AppId))
+	assertSamplePostgresReady(t)
 
 	db := openSamplePostgresDb(t, client)
 	writeSamplePostgresValue(t, db, samplePostgresValue)
@@ -74,6 +75,7 @@ func TestUploadedPostgresMajorUpdateMigratesData(t *testing.T) {
 	assert.Equal(t, tools.SamplePostgresAppVersion18Name, appAfterUpdate.VersionName)
 	assert.True(t, appAfterUpdate.IsRunning)
 	assertSamplePostgresContainerUsesImage(t, "postgres:18.0-alpine")
+	assertSamplePostgresReady(t)
 
 	db = openSamplePostgresDb(t, client)
 	defer db.Close()
@@ -125,7 +127,11 @@ func TestUploadedPostgresMajorUpdateWithInvalidPreflightIsRejected(t *testing.T)
 }
 
 func installSamplePostgresApp(t *testing.T, client *api_client.QuollixClient, version string) (*api.AdminAppDto, error) {
-	if err := client.Apps.InstallFromStore(tools.SampleMaintainer, tools.SamplePostgresApp, version); err != nil {
+	storeVersion, err := FindVersion(t, client, tools.SampleMaintainer, tools.SamplePostgresApp, version)
+	if err != nil {
+		return nil, err
+	}
+	if err := client.Apps.InstallFromStoreVersion(storeVersion.VersionId); err != nil {
 		return nil, err
 	}
 	return getInstalledSamplePostgresApp(t, client), nil
@@ -174,6 +180,22 @@ func openSamplePostgresDb(t *testing.T, client *api_client.QuollixClient) *sql.D
 			return db
 		}
 		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func assertSamplePostgresReady(t *testing.T) {
+	deadline := time.Now().Add(30 * time.Second)
+	for {
+		cmd := exec.Command("docker", "exec", tools.SamplePostgresAppContainerName, "pg_isready", "-U", samplePostgresUser) // #nosec G204 (CWE-78): component test checks a known fixture container
+		err := cmd.Run()
+		if err == nil {
+			return
+		}
+		if time.Now().After(deadline) {
+			assert.Nil(t, err)
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 

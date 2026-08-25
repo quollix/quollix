@@ -1,12 +1,12 @@
 package app_migrations
 
 import (
-	"os"
 	"path/filepath"
 
 	"server/tools"
 
 	u "github.com/quollix/common/utils"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -14,9 +14,19 @@ const (
 	PostgresUserChangedError       = "postgres user changed"
 )
 
+var ExpectedAppDatabaseMigrationErrors = []string{
+	InvalidPostgresEnvironmentError,
+	MissingPostgresDataVolumeError,
+	MultiplePostgresServicesError,
+	MultipleRabbitMQServicesError,
+	PostgresDataVolumeChangedError,
+	PostgresUserChangedError,
+}
+
 const (
 	postgresDumpFileName        = "dump.sql"
-	postgresDumpPathInContainer = "/tmp/quollix-postgres-dump.sql"
+	postgresDumpMountPath       = "/quollix-migration"
+	postgresDumpPathInContainer = postgresDumpMountPath + "/" + postgresDumpFileName
 )
 
 type AppDatabaseMigrator interface {
@@ -123,17 +133,17 @@ func (m *AppDatabaseMigratorImpl) migratePostgres(
 	oldComposeContent, newComposeContent []byte,
 	oldPostgres, newPostgres *PostgresService,
 ) error {
-	tempDir, err := os.MkdirTemp("", "postgres-migration-")
-	if err != nil {
-		return u.Logger.NewError(err.Error())
-	}
-	defer u.RemoveDir(tempDir)
-
-	oldComposePath, err := writeMigrationComposeFile(tempDir, "old-docker-compose.yml", oldComposeContent)
+	tempDir, err := m.OsWrapper.GetTempDir()
 	if err != nil {
 		return err
 	}
-	newComposePath, err := writeMigrationComposeFile(tempDir, "new-docker-compose.yml", newComposeContent)
+	defer m.removeMigrationTempDir(tempDir)
+
+	oldComposePath, err := m.writePostgresMigrationComposeFile(tempDir, "old-docker-compose.yml", oldComposeContent, oldPostgres.ServiceName)
+	if err != nil {
+		return err
+	}
+	newComposePath, err := m.writePostgresMigrationComposeFile(tempDir, "new-docker-compose.yml", newComposeContent, newPostgres.ServiceName)
 	if err != nil {
 		return err
 	}
@@ -146,13 +156,7 @@ func (m *AppDatabaseMigratorImpl) migratePostgres(
 		if err = m.CommandExecutor.WaitUntilPostgresReady(oldPostgres.ContainerName, oldPostgres.User); err != nil {
 			return err
 		}
-		if err = m.CommandExecutor.DumpPostgres(oldPostgres.ContainerName, oldPostgres.User, postgresDumpPathInContainer); err != nil {
-			return err
-		}
-		if err = m.CommandExecutor.CopyFromContainer(oldPostgres.ContainerName, postgresDumpPathInContainer, dumpFilePath); err != nil {
-			return err
-		}
-		return m.CommandExecutor.RemoveFileInContainer(oldPostgres.ContainerName, postgresDumpPathInContainer)
+		return m.CommandExecutor.DumpPostgres(oldPostgres.ContainerName, oldPostgres.User, postgresDumpPathInContainer)
 	}); err != nil {
 		return err
 	}
@@ -165,13 +169,7 @@ func (m *AppDatabaseMigratorImpl) migratePostgres(
 		if err = m.CommandExecutor.WaitUntilPostgresReady(newPostgres.ContainerName, newPostgres.User); err != nil {
 			return err
 		}
-		if err = m.CommandExecutor.CopyToContainer(dumpFilePath, newPostgres.ContainerName, postgresDumpPathInContainer); err != nil {
-			return err
-		}
 		if err = m.CommandExecutor.ImportDump(newPostgres.ContainerName, newPostgres.User, postgresDumpPathInContainer); err != nil {
-			return err
-		}
-		if err = m.CommandExecutor.RemoveFileInContainer(newPostgres.ContainerName, postgresDumpPathInContainer); err != nil {
 			return err
 		}
 		if err = m.OsWrapper.Remove(dumpFilePath); err != nil {
@@ -185,13 +183,13 @@ func (m *AppDatabaseMigratorImpl) migratePostgres(
 }
 
 func (m *AppDatabaseMigratorImpl) migrateRabbitMQ(maintainer, appName string, oldComposeContent []byte, rabbitMQ *RabbitMQService) error {
-	tempDir, err := os.MkdirTemp("", "rabbitmq-migration-")
+	tempDir, err := m.OsWrapper.GetTempDir()
 	if err != nil {
-		return u.Logger.NewError(err.Error())
+		return err
 	}
-	defer u.RemoveDir(tempDir)
+	defer m.removeMigrationTempDir(tempDir)
 
-	oldComposePath, err := writeMigrationComposeFile(tempDir, "old-docker-compose.yml", oldComposeContent)
+	oldComposePath, err := m.writeMigrationComposeFile(tempDir, "old-docker-compose.yml", oldComposeContent)
 	if err != nil {
 		return err
 	}
@@ -227,9 +225,55 @@ func (m *AppDatabaseMigratorImpl) runWithStartedMigrationService(maintainer, app
 	return nil
 }
 
-func writeMigrationComposeFile(tempDir, fileName string, content []byte) (string, error) {
+func (m *AppDatabaseMigratorImpl) removeMigrationTempDir(tempDir string) {
+	if err := m.OsWrapper.RemoveAll(tempDir); err != nil {
+		u.Logger.Error(err, "temp_dir", tempDir)
+	}
+}
+
+func (m *AppDatabaseMigratorImpl) writePostgresMigrationComposeFile(tempDir, fileName string, content []byte, postgresServiceName string) (string, error) {
+	contentWithDumpMount, err := addServiceVolumeMount(content, postgresServiceName, tempDir, postgresDumpMountPath)
+	if err != nil {
+		return "", err
+	}
+	return m.writeMigrationComposeFile(tempDir, fileName, contentWithDumpMount)
+}
+
+func addServiceVolumeMount(content []byte, serviceName, hostPath, containerPath string) ([]byte, error) {
+	var compose map[string]any
+	if err := yaml.Unmarshal(content, &compose); err != nil {
+		return nil, u.Logger.NewError(err.Error())
+	}
+
+	services, ok := compose["services"].(map[string]any)
+	if !ok {
+		return nil, u.Logger.NewError("invalid compose services")
+	}
+	service, ok := services[serviceName].(map[string]any)
+	if !ok {
+		return nil, u.Logger.NewError("missing compose service", "service_name", serviceName)
+	}
+
+	volumeMount := hostPath + ":" + containerPath
+	switch volumes := service["volumes"].(type) {
+	case nil:
+		service["volumes"] = []any{volumeMount}
+	case []any:
+		service["volumes"] = append(volumes, volumeMount)
+	default:
+		return nil, u.Logger.NewError("invalid compose service volumes", "service_name", serviceName)
+	}
+
+	marshaledCompose, err := yaml.Marshal(compose)
+	if err != nil {
+		return nil, u.Logger.NewError(err.Error())
+	}
+	return marshaledCompose, nil
+}
+
+func (m *AppDatabaseMigratorImpl) writeMigrationComposeFile(tempDir, fileName string, content []byte) (string, error) {
 	composePath := filepath.Join(tempDir, fileName)
-	if err := os.WriteFile(composePath, content, 0o600); err != nil {
+	if err := m.OsWrapper.WriteFile(composePath, content, 0o600); err != nil {
 		return "", u.Logger.NewError(err.Error())
 	}
 	return composePath, nil

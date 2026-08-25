@@ -222,6 +222,9 @@ func TestStartingAndStoppingApps(t *testing.T) {
 
 	sampleApp := GetInstalledSample(t, client)
 
+	assert.True(t, sampleApp.IsRunning)
+	assert.Nil(t, client.Apps.Stop(sampleApp.AppId))
+	sampleApp = GetInstalledSample(t, client)
 	assert.False(t, sampleApp.IsRunning)
 	assert.Nil(t, client.Apps.Start(sampleApp.AppId))
 	sampleApp = GetInstalledSample(t, client)
@@ -433,7 +436,7 @@ func TestSetUnknownAccessPolicy(t *testing.T) {
 	assert.Equal(t, api.Policies.AdminOnlyAccessPolicy, app.AccessPolicy)
 }
 
-func TestAppOperation(t *testing.T) {
+func TestManualBackupAppearsInCurrentOperations(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
@@ -445,11 +448,10 @@ func TestAppOperation(t *testing.T) {
 	app, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 	configureBackupRepo(t, client)
+
+	backupDone := make(chan error, 1)
 	go func() {
-		err := client.Backups.Create(app.AppId)
-		if err != nil {
-			t.Error(err)
-		}
+		backupDone <- client.Backups.Create(app.AppId)
 	}()
 
 	time.Sleep(100 * time.Millisecond)
@@ -458,19 +460,17 @@ func TestAppOperation(t *testing.T) {
 	assert.True(t, isOngoing)
 	assert.Equal(t, []string{"backing up 'sampleapp'"}, operations)
 
-	deadline := time.Now().Add(3 * time.Second)
-	for {
-		_, isOngoing, err = client.Apps.GetCurrentOperations()
+	select {
+	case err = <-backupDone:
 		assert.Nil(t, err)
-		if !isOngoing {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fail()
-			break
-		}
-		time.Sleep(100 * time.Millisecond)
+	case <-time.After(10 * time.Second):
+		t.Fatal("backup did not finish")
 	}
+
+	operations, isOngoing, err = client.Apps.GetCurrentOperations()
+	assert.Nil(t, err)
+	assert.False(t, isOngoing)
+	assert.Equal(t, []string{}, operations)
 }
 
 func TestUploadToAndDownloadFromApplication(t *testing.T) {
@@ -490,7 +490,7 @@ func TestUploadToAndDownloadFromApplication(t *testing.T) {
 	assert.Equal(t, tools.SampleMaintainer, sampleApp.Maintainer)
 	assert.Equal(t, tools.SampleApp, sampleApp.AppName)
 	assert.Equal(t, tools.SampleAppVersion2Name, sampleApp.VersionName)
-	assert.False(t, sampleApp.IsRunning)
+	assert.True(t, sampleApp.IsRunning)
 
 	assert.Equal(t, tools.SampleAppVersion2CreationTimestamp, sampleApp.VersionCreationTimestamp)
 

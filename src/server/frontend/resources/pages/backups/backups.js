@@ -76,7 +76,7 @@ function renderBackups(backups) {
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  for (const label of ['App Version', 'Description', 'Backup Creation Date', 'Quollix Version', 'Actions']) {
+  for (const label of ['App Version', 'Version Creation Date', 'Description', 'Backup Creation Date', 'Quollix Version', 'Actions']) {
     const th = document.createElement('th');
     th.textContent = label;
     headerRow.appendChild(th);
@@ -94,6 +94,11 @@ function renderBackups(backups) {
     versionCell.className = 'backup-version-name-cell';
     versionCell.textContent = backup.version_name;
     row.appendChild(versionCell);
+
+    const versionCreationDateCell = document.createElement('td');
+    versionCreationDateCell.className = 'backup-version-creation-date-cell';
+    versionCreationDateCell.textContent = backup.version_creation_date;
+    row.appendChild(versionCreationDateCell);
 
     const descriptionCell = document.createElement('td');
     descriptionCell.className = 'backup-description-cell';

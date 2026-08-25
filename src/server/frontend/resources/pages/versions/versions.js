@@ -1,20 +1,36 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const filterInput = document.getElementById('version-filter')
-    const rows = [...document.querySelectorAll('.version-row')]
+function setInstallButtonDisabled(row, disabled) {
+    row.dataset.canInstall = disabled ? 'false' : 'true'
 
-    filterInput.addEventListener('input', () => {
-        const q = filterInput.value.toLowerCase()
-        rows.forEach((row) => {
-            const name = row.dataset.versionName.toLowerCase()
-            row.style.display = name.includes(q) ? '' : 'none'
-        })
-    })
-})
+    const installButton = row.querySelector('button.version-install-button')
+    setButtonDisabled(installButton, disabled)
+}
 
-window.downloadVersion = async (maintainer, app, version) => {
-    await downloadFile('{{ $.Static.Paths.BackendStoreVersionsDownload }}', {
-        Maintainer: maintainer,
-        AppName: app,
-        VersionName: version
-    })
+function disableVersionAndOlderRows(row) {
+    const changedRows = []
+    let currentRow = row
+
+    while (currentRow) {
+        const wasInstallable = currentRow.dataset.canInstall === 'true'
+        changedRows.push({ row: currentRow, wasInstallable })
+        setInstallButtonDisabled(currentRow, true)
+        currentRow = currentRow.nextElementSibling
+    }
+
+    return () => {
+        for (const changedRow of changedRows) {
+            setInstallButtonDisabled(changedRow.row, !changedRow.wasInstallable)
+        }
+    }
+}
+
+window.installVersionFromVersionsPage = async (button, versionId) => {
+    const row = button.closest('.version-row')
+    const restore = row ? disableVersionAndOlderRows(row) : () => {}
+
+    const ok = await installApp(versionId)
+
+    if (!ok) {
+        restore()
+        return
+    }
 }
