@@ -55,17 +55,29 @@ window.goToVersions = async (maintainer, app) => {
 }
 
 window.installAppFromStore = async (maintainer, app, versionId) => {
+    const restore = disableInstallButtonForApp(maintainer, app)
     const ok = await installApp(versionId)
-    if (!ok) return
-    disableInstallButtonForApp(maintainer, app)
+    if (!ok) restore()
 }
 
 function disableInstallButtonForApp(maintainer, app) {
+    const changedButtons = []
     const rows = document.querySelectorAll(`#store-results-body tr.store-result-row[data-maintainer="${CSS.escape(maintainer)}"][data-app="${CSS.escape(app)}"]`)
     for (const row of rows) {
         const installButton = row.querySelector("button.store-install-button")
         if (!installButton) continue
+        changedButtons.push({
+            button: installButton,
+            wasDisabled: installButton.disabled,
+            onclick: installButton.getAttribute("onclick"),
+        })
         setButtonDisabled(installButton, true)
         installButton.removeAttribute("onclick")
+    }
+    return () => {
+        for (const changedButton of changedButtons) {
+            setButtonDisabled(changedButton.button, changedButton.wasDisabled)
+            if (changedButton.onclick) changedButton.button.setAttribute("onclick", changedButton.onclick)
+        }
     }
 }

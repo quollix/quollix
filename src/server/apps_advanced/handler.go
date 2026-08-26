@@ -140,6 +140,14 @@ func (a *AppsAdvancedHandler) InstallOrUpdateAppFromStoreVersionHandler(w http.R
 		return
 	}
 	if !doesAppExist {
+		operation := fmt.Sprintf("installing '%s'", downloadedRepoApp.AppName)
+		handle, err := a.OperationRegistry.TryBlockAppOperation(downloadedRepoApp.AppName, operation)
+		if err != nil {
+			apps_basic.WriteConcurrentOperationError(w, operation, err)
+			return
+		}
+		defer handle.Done()
+
 		err = a.AppStoreService.InstallDownloadedVersion(downloadedRepoApp)
 		if err != nil {
 			u.WriteResponseError(w, ExpectedAppMutationErrors, err)

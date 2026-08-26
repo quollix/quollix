@@ -67,6 +67,14 @@ packages:
           structname: SystemConfigMigrationsProviderMock
   server/apps_basic:
     interfaces:
+      OperationRegistry:
+        config:
+          filename: operation_registry_mock.go
+          structname: OperationRegistryMock
+      OperationHandle:
+        config:
+          filename: operation_handle_mock.go
+          structname: OperationHandleMock
       AppServiceHelper:
         config:
           filename: app_service_helper_mock.go
@@ -181,6 +189,10 @@ packages:
           structname: ResticServiceMock
   server/app_store:
     interfaces:
+      AppStoreService:
+        config:
+          filename: app_store_service_mock.go
+          structname: AppStoreServiceMock
       AppStoreClientLean:
         config:
           filename: app_store_client_lean_mock.go

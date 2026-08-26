@@ -29,7 +29,7 @@ func TestStorePage(t *testing.T) {
 		AssertSearchResultCreatedAt("samplemaintainer", "sampleapp", tools.SampleAppVersion2CreationTimestamp.Format(tools.PrettyFrontendTimeLayout)).
 		AssertInstallButtonEnabled("samplemaintainer", "sampleapp").
 		InstallFromResult("samplemaintainer", "sampleapp")
-	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
+	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update started")
 	frame.Pages.StorePage.AssertInstallButtonDisabledAsInstalled("samplemaintainer", "sampleapp")
 
 	err := u.Eventually(func() error {
@@ -81,7 +81,7 @@ func TestStorePageUpdatesInstalledApp(t *testing.T) {
 		AssertSearchContainsResult("samplemaintainer", "sampleapp", "2.0").
 		AssertInstallButtonEnabled("samplemaintainer", "sampleapp").
 		InstallFromResult("samplemaintainer", "sampleapp")
-	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
+	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update started")
 	frame.Pages.StorePage.AssertInstallButtonDisabledAsInstalled("samplemaintainer", "sampleapp")
 
 	err = u.Eventually(func() error {

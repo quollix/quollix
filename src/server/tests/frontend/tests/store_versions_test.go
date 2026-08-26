@@ -42,7 +42,7 @@ func TestStoreVersionsPage(t *testing.T) {
 		AssertVersionInstallButtonEnabled("1.5").
 		AssertVersionInstallButtonEnabled("2.0").
 		WaitUntilAppVersionInstalled(tools.SampleApp, "1.0").
-		Frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
+			Frame.Assert.SnackbarVisibleWithTextEventually("Installation/update started")
 
 	sampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Equal(t, "1.0", sampleApp.VersionName)
@@ -55,7 +55,7 @@ func TestStoreVersionsPage(t *testing.T) {
 		AssertVersionInstallButtonDisabled("1.5").
 		AssertVersionInstallButtonDisabled("2.0").
 		WaitUntilAppVersionInstalled(tools.SampleApp, "2.0")
-	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update successful")
+	frame.Assert.SnackbarVisibleWithTextEventually("Installation/update started")
 
 	sampleApp = component.GetInstalledSample(t, frame.Client)
 	assert.Equal(t, "2.0", sampleApp.VersionName)

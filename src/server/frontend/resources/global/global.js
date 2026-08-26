@@ -135,7 +135,7 @@ window.installApp = async (versionId) => {
     const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendStoreVersionsInstall }}', {
         version_id: versionId
     })
-    if (ok) showSnackbar('Installation/update successful')
+    if (ok) showSnackbar('Installation/update started')
     return ok
 }
 
