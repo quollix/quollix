@@ -19,11 +19,6 @@ const (
 	SampleTestRecipientEmail = "recipient@example.invalid"
 	SampleTestEmailSubject   = "Test email"
 	SampleTestEmailBody      = "This is a test message send by Quollix."
-	SampleSMTPHost           = "smtp.example.com"
-	SampleSMTPPort           = "587"
-	SampleFromEmailAddress   = "test@example.com"
-	SampleEmailUsername      = "user"
-	SampleEmailPassword      = "password"
 )
 
 var FrontendResourceFilesystem = os.DirFS(FrontendResourcesPath)

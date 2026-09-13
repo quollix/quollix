@@ -59,7 +59,6 @@ type GlobalConfig struct {
 	AppForwardedProto                     string
 	DatabaseHostName                      string
 	ExposeDevelopmentRoutes               bool
-	ShowUnofficialAppsSearch              bool
 	CreateDatabaseSnapshotOnStartup       bool
 	PruneDockerSystemDuringMaintenance    bool
 	UseDevelopmentLogger                  bool

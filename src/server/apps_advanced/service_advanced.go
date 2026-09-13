@@ -11,7 +11,6 @@ import (
 	"server/tools"
 
 	"github.com/quollix/common/quollix/api"
-	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 )
 
@@ -115,6 +114,7 @@ func (a *AppsServiceAdvancedImpl) updateAppFromUploadedVersion(versionFile *api.
 	uploadedRepoApp.VersionCreationTimestamp = composeArchive.VersionCreationTimestamp
 	uploadedRepoApp.VersionContent = versionFile.Content
 	uploadedRepoApp.Port = port
+	uploadedRepoApp.AutomaticUpdatesEnabled = false
 	return a.replaceInstalledAppVersion(appFromDatabase, &uploadedRepoApp, true)
 }
 
@@ -152,27 +152,14 @@ func (b *AppsServiceAdvancedImpl) UpdateAppViaAppStore(appId int) error {
 		return u.Logger.NewError(apps_basic.OperationNotAllowedOnSystemAppError)
 	}
 
-	versions, err := b.AppStoreService.GetVersions(app.Maintainer, app.AppName)
+	downloadedRepoApp, updateAvailable, err := b.AppStoreService.DownloadNextVersionForUpdate(app.Maintainer, app.AppName, app.VersionCreationTimestamp)
 	if err != nil {
 		return err
 	}
-	if len(versions) == 0 {
-		return u.Logger.NewError("no versions found for app")
-	}
-	latestVersionInAppStore := getLatestVersion(versions)
-	if latestVersionInAppStore.CreationTimestamp.After(app.VersionCreationTimestamp) {
-		downloadedRepoApp, err := b.AppStoreService.DownloadVersionByID(latestVersionInAppStore.VersionId)
-		if err != nil {
-			return err
-		}
-		err = b.updateAppFromStoreVersion(app, downloadedRepoApp, true)
-		if err != nil {
-			return err
-		}
-	} else {
+	if !updateAvailable {
 		return u.Logger.NewError(CantUpdateAppError)
 	}
-	return nil
+	return b.updateAppFromStoreVersion(app, downloadedRepoApp, true)
 }
 
 func (b *AppsServiceAdvancedImpl) UpdateAppToStoreVersion(appId int, downloadedRepoApp *apps_basic.RepoApp) error {
@@ -251,14 +238,4 @@ func (b *AppsServiceAdvancedImpl) stopAppAndApplyInstalledAppVersionReplacement(
 		return b.AppService.StartApp(app.AppId)
 	}
 	return nil
-}
-
-func getLatestVersion(versions []store.LeanVersionDto) store.LeanVersionDto {
-	latest := versions[0]
-	for _, version := range versions {
-		if version.CreationTimestamp.After(latest.CreationTimestamp) {
-			latest = version
-		}
-	}
-	return latest
 }

@@ -2,6 +2,8 @@ package app_store
 
 import (
 	"fmt"
+	"time"
+
 	"server/apps_basic"
 
 	"github.com/quollix/common/quollix/api"
@@ -12,6 +14,7 @@ import (
 
 type AppStoreService interface {
 	DownloadVersionByID(versionId int) (*apps_basic.RepoApp, error)
+	DownloadNextVersionForUpdate(userName, appName string, currentVersionCreationTimestamp time.Time) (*apps_basic.RepoApp, bool, error)
 	InstallDownloadedVersion(app *apps_basic.RepoApp) error
 	GetVersions(userName, appName string) ([]store.LeanVersionDto, error)
 	SearchForApps(sr *store.SearchRequest) ([]store.AppWithLatestVersion, error)
@@ -41,6 +44,25 @@ func (a *AppStoreServiceImpl) DownloadVersionByID(versionId int) (*apps_basic.Re
 	if err != nil {
 		return nil, err
 	}
+	return a.createRepoAppFromDownloadedVersion(fullTagInfo)
+}
+
+func (a *AppStoreServiceImpl) DownloadNextVersionForUpdate(userName, appName string, currentVersionCreationTimestamp time.Time) (*apps_basic.RepoApp, bool, error) {
+	response, err := a.AppStoreClientLean.DownloadNextVersionForUpdate(userName, appName, currentVersionCreationTimestamp)
+	if err != nil {
+		return nil, false, err
+	}
+	if !response.UpdateAvailable {
+		return nil, false, nil
+	}
+	repoApp, err := a.createRepoAppFromDownloadedVersion(response.Version)
+	if err != nil {
+		return nil, false, err
+	}
+	return repoApp, true, nil
+}
+
+func (a *AppStoreServiceImpl) createRepoAppFromDownloadedVersion(fullTagInfo *store.Version) (*apps_basic.RepoApp, error) {
 	if err := a.VersionValidator.Validate(fullTagInfo.Content, fullTagInfo.Maintainer, fullTagInfo.AppName); err != nil {
 		return nil, fmt.Errorf("version validation failed: %w", err)
 	}

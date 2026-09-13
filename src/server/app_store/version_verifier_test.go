@@ -16,60 +16,63 @@ var testVersionSigningService = &store.VersionSigningServiceImpl{
 	BytesSigner: &u.BytesSignerImpl{},
 }
 
-var testVersionVerifier = &VersionVerifierImpl{
-	TrustedAuthorizedKey: u.LocalTestingPublicKeyOpenSSHBytes,
-	VersionSigning:       testVersionSigningService,
+type versionVerifierTestDependencies struct {
+	verifier *VersionVerifierImpl
+	resolver *MaintainerKeyResolverMock
 }
 
-func TestVersionVerifierVerify_HappyPath(t *testing.T) {
-	version, err := newSignedTestingVersion()
-	assert.Nil(t, err)
-
-	err = testVersionVerifier.Verify(version)
-
-	assert.Nil(t, err)
+func setupVersionVerifierTestDependencies(t *testing.T) versionVerifierTestDependencies {
+	resolver := NewMaintainerKeyResolverMock(t)
+	return versionVerifierTestDependencies{
+		verifier: &VersionVerifierImpl{
+			MaintainerKeyResolver: resolver,
+			VersionSigning:        testVersionSigningService,
+		},
+		resolver: resolver,
+	}
 }
 
-func TestVersionVerifierVerify_PublicKeyMismatchReturnsSecurityError(t *testing.T) {
-	version, err := newSignedTestingVersion()
-	assert.Nil(t, err)
-	publicKey, _, keyErr := ed25519.GenerateKey(rand.Reader)
-	assert.Nil(t, keyErr)
-	version.MaintainerPublicKeyRaw = publicKey
+func TestVersionVerifierVerify_NilVersionReturnsSecurityError(t *testing.T) {
+	deps := setupVersionVerifierTestDependencies(t)
 
-	err = testVersionVerifier.Verify(version)
+	err := deps.verifier.Verify(nil)
 
 	assert.NotNil(t, err)
 	assert.Equal(t, InvalidPackageSigningError, u.ExtractError(err))
 }
 
-func TestVersionVerifierVerify_MalformedTrustedAuthorizedKeyReturnsSecurityError(t *testing.T) {
-	version, err := newSignedTestingVersion()
+func TestVersionVerifierVerify_OfficialPublicKeyMismatchReturnsSecurityErrorWithoutRefresh(t *testing.T) {
+	deps := setupVersionVerifierTestDependencies(t)
+	version, err := newSignedTestingVersion([]byte(u.LocalTestingPrivateKeyOpenSSH), []byte(u.LocalTestingPrivateKeyPassphrase))
 	assert.Nil(t, err)
-	verifier := &VersionVerifierImpl{
-		TrustedAuthorizedKey: []byte("not-a-valid-authorized-key"),
-		VersionSigning:       testVersionSigningService,
-	}
+	version.Maintainer = u.OfficialMaintainer
+	publicKey, _, keyErr := ed25519.GenerateKey(rand.Reader)
+	assert.Nil(t, keyErr)
+	version.MaintainerPublicKeyRaw = publicKey
+	deps.resolver.EXPECT().ResolveTrustedPublicKey(version.Maintainer).Return(ed25519.PublicKey(u.GetLocalTestingPublicKeyRaw()), nil)
 
-	err = verifier.Verify(version)
+	err = deps.verifier.Verify(version)
 
 	assert.NotNil(t, err)
 	assert.Equal(t, InvalidPackageSigningError, u.ExtractError(err))
 }
 
 func TestVersionVerifierVerify_TamperedSignatureReturnsSecurityError(t *testing.T) {
-	version, err := newSignedTestingVersion()
+	deps := setupVersionVerifierTestDependencies(t)
+	version, err := newSignedTestingVersion([]byte(u.LocalTestingPrivateKeyOpenSSH), []byte(u.LocalTestingPrivateKeyPassphrase))
 	assert.Nil(t, err)
 	version.Signature = []byte("tampered-signature")
+	version.Maintainer = u.OfficialMaintainer
+	deps.resolver.EXPECT().ResolveTrustedPublicKey(version.Maintainer).Return(ed25519.PublicKey(u.GetLocalTestingPublicKeyRaw()), nil)
 
-	err = testVersionVerifier.Verify(version)
+	err = deps.verifier.Verify(version)
 
 	assert.NotNil(t, err)
 	assert.Equal(t, InvalidPackageSigningError, u.ExtractError(err))
 }
 
-func newSignedTestingVersion() (*store.Version, error) {
-	privateKey, err := decodeTestingPrivateKeyForVerifierTests()
+func newSignedTestingVersion(privateKeyBytes []byte, passphrase []byte) (*store.Version, error) {
+	privateKey, err := u.DecodeEd25519PrivateKeyOpenSSH(privateKeyBytes, passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +90,4 @@ func newSignedTestingVersion() (*store.Version, error) {
 	}
 	version.Signature = signature
 	return version, nil
-}
-
-func decodeTestingPrivateKeyForVerifierTests() (ed25519.PrivateKey, error) {
-	return u.DecodeEd25519PrivateKeyOpenSSH(u.GetLocalTestingPrivateKeyBytes())
 }

@@ -1,29 +1,24 @@
 <h3>Search menu</h3>
 <form id="search-form" action="{{ $.Static.Paths.FrontendStore }}" method="get">
-  {{if $.Page.ShowUnofficialToggle}}
-  <!-- keep this hidden in production for now; re-enable it there as soon as the app store is open to account registrations for anyone. -->
   <div id="maintainer-wrap" class="field">
     <label for="maintainer-input">Maintainer</label>
-    <input id="maintainer-input" name="maintainer_name" type="text" placeholder="enter maintainer"
+    <input id="maintainer-input" name="{{$.Static.QueryParams.Store.MaintainerName}}" type="text" placeholder="enter maintainer"
       value="{{$.Page.MaintainerSearchTerm}}">
   </div>
-  {{end}}
 
   <div class="field">
     <label for="app-input">App Name</label>
-    <input id="app-input" name="app_name" type="text" placeholder="enter app name" value="{{$.Page.AppSearchTerm}}">
+    <input id="app-input" name="{{$.Static.QueryParams.Store.AppName}}" type="text" placeholder="enter app name" value="{{$.Page.AppSearchTerm}}">
   </div>
 
-  {{if $.Page.ShowUnofficialToggle}}
   <div class="checkbox-group">
-    <input id="unofficial" name="show_unofficial" type="checkbox" value="true" {{if
+    <input id="unofficial" name="{{$.Static.QueryParams.Store.ShowUnofficial}}" type="checkbox" value="true" {{if
       $.Page.ShowUnofficialApps}}checked{{end}}>
     <label for="unofficial">Search for unofficial apps</label>
   </div>
-  {{end}}
 
   <!-- The backend only runs a search when this button is used. The presence of `is_search=true` distinguishes an initial page visit from an explicit search request. -->
-  <button id="search-button" type="submit" name="is_search" value="true">Search</button>
+  <button id="search-button" type="submit" name="{{$.Static.QueryParams.Store.IsSearch}}" value="true">Search</button>
 </form>
 
 <h3>Search results</h3>

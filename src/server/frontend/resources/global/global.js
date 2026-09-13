@@ -198,7 +198,7 @@ window.selectAndUploadFile = async function (path) {
     }
 
     const base64Content = btoa(binaryString)
-    return await window.apiPost(path, {file_name: selectedFile.name, content: base64Content})
+    return await window.doNetworkChangedRequest(path, {file_name: selectedFile.name, content: base64Content})
 }
 
 // these two functions enable to show a snackbar after a page reload

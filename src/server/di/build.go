@@ -30,7 +30,6 @@ import (
 	"github.com/quollix/common/frontend"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
-	"github.com/quollix/common/validation"
 	"github.com/quollix/deepstack"
 )
 
@@ -74,16 +73,18 @@ type Repositories struct {
 	OidcAuthProviderRepo *oidc_client.OidcAuthProviderRepositoryImpl
 	UserAuthMethodRepo   *oidc_client.UserAuthMethodRepositoryImpl
 	OidcRelyingPartyRepo *oidc_provider.OidcRelyingPartyRepositoryImpl
+	MaintainerRepo       *app_store.MaintainerRepositoryImpl
 }
 
 var SharedSet = wire.NewSet(
 	NewAppStoreClient,
-	NewTrustedAuthorizedKey,
+	NewOfficialMaintainerPublicKey,
 	NewRouter,
 	NewGlobalConfig,
 	GetLogger,
 	NewWildcardCertificateService,
-	validation.NewVersionValidator,
+	NewVersionValidator,
+	app_store.NewMaintainerKeyResolver,
 	oidc_provider.NewOidcCache,
 	oidc_client.NewOidcLoginStateCache,
 	oidc_client.NewOidcProviderClient,
@@ -110,7 +111,9 @@ var SharedSet = wire.NewSet(
 	wire.Struct(new(certificates2.CertificateCacheImpl)),
 	wire.Struct(new(ingress.ServerListener), "*"),
 	wire.Struct(new(app_store.AppStoreHandler), "*"),
+	wire.Struct(new(app_store.MaintainerHandler), "*"),
 	wire.Struct(new(app_store.VersionVerifierImpl), "*"),
+	wire.Struct(new(app_store.MaintainerRepositoryImpl), "*"),
 	wire.Struct(new(configs.ConfigsRepositoryImpl), "*"),
 	wire.Struct(new(configs.ConfigsServiceImpl), "*"),
 	wire.Struct(new(configs.OidcEmailExposureServiceImpl), "*"),
@@ -219,6 +222,7 @@ var SharedSet = wire.NewSet(
 	wire.Bind(new(apps_advanced.AppsServiceAdvanced), new(*apps_advanced.AppsServiceAdvancedImpl)),
 	wire.Bind(new(app_store.AppStoreService), new(*app_store.AppStoreServiceImpl)),
 	wire.Bind(new(app_store.VersionVerifier), new(*app_store.VersionVerifierImpl)),
+	wire.Bind(new(app_store.MaintainerRepository), new(*app_store.MaintainerRepositoryImpl)),
 	wire.Bind(new(apps_basic.VersionFileNameEncoder), new(*apps_basic.VersionFileNameEncoderImpl)),
 	wire.Bind(new(tools.DatabaseConnector), new(*tools.DatabaseConnectorImpl)),
 	wire.Bind(new(tools.TimezoneProvider), new(*tools.TimezoneProviderImpl)),

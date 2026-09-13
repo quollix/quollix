@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+
 	"server/tools"
 
 	u "github.com/quollix/common/utils"
@@ -67,7 +68,6 @@ SELECT
 		&cfg.EmailAccountPassword,
 		&isEnabledString,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -107,12 +107,7 @@ func GetEmptyEmailConfig() *u.EmailConfig {
 }
 
 func GetSampleEmailConfig() *u.EmailConfig {
-	return &u.EmailConfig{
-		SMTPHost:             tools.SampleSMTPHost,
-		SMTPPort:             tools.SampleSMTPPort,
-		FromEmailAddress:     tools.SampleFromEmailAddress,
-		EmailAccountUsername: tools.SampleEmailUsername,
-		EmailAccountPassword: tools.SampleEmailPassword,
-		IsEnabled:            true,
-	}
+	config := u.SampleEmailConfig
+	config.IsEnabled = true
+	return &config
 }

@@ -22,7 +22,6 @@ func TestStoreVersionsPage(t *testing.T) {
 		"1.5": tools.SampleAppCreationTimestamp,
 		"2.0": tools.SampleAppVersion2CreationTimestamp,
 	}
-
 	versionsPage := frame.Pages.GoToStorePage().
 		EnableUnofficialSearchAndConfirm().
 		SetMaintainerFilter("samplemaintainer").
@@ -36,13 +35,15 @@ func TestStoreVersionsPage(t *testing.T) {
 		AssertVersionRowCount(4).
 		AssertVersionNames([]string{"0.0", "1.0", "1.5", "2.0"}).
 		AssertVersionsAndCreationDates(expectedVersions).
+		AssertMigrationCheckpointFlag("1.0", false).
+		AssertMigrationCheckpointFlag("2.0", true).
 		InstallVersion("1.0").
 		AssertVersionInstallButtonDisabled("0.0").
 		AssertVersionInstallButtonDisabled("1.0").
 		AssertVersionInstallButtonEnabled("1.5").
 		AssertVersionInstallButtonEnabled("2.0").
 		WaitUntilAppVersionInstalled(tools.SampleApp, "1.0").
-			Frame.Assert.SnackbarVisibleWithTextEventually("Installation/update started")
+		Frame.Assert.SnackbarVisibleWithTextEventually("Installation/update started")
 
 	sampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Equal(t, "1.0", sampleApp.VersionName)

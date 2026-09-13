@@ -13,9 +13,10 @@ func NewFrontendEngine() (frontend.EngineService, error) {
 		FrontendFolderPath: "frontend",
 		Version:            tools.ApplicationVersion,
 		Static: frontendpages.StaticTemplateGlobals{
-			Paths:    api.Paths,
-			Links:    tools.Links,
-			Policies: api.Policies,
+			Paths:       api.Paths,
+			Links:       tools.Links,
+			Policies:    api.Policies,
+			QueryParams: frontendpages.QueryParams,
 		},
 	})
 }

@@ -1,6 +1,6 @@
 module server
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/coreos/go-oidc/v3 v3.20.0
@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.12.3
 	github.com/moby/moby/client v0.5.1
-	github.com/quollix/common v1.3.0
+	github.com/quollix/common v1.3.16
 	github.com/quollix/deepstack v1.2.2
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.55.0

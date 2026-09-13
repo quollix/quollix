@@ -487,27 +487,46 @@ func TestUploadToAndDownloadFromApplication(t *testing.T) {
 	assert.Nil(t, client.Apps.UploadVersionFile(originalVersionFile))
 
 	sampleApp := GetInstalledSample(t, client)
-	assert.Equal(t, tools.SampleMaintainer, sampleApp.Maintainer)
-	assert.Equal(t, tools.SampleApp, sampleApp.AppName)
-	assert.Equal(t, tools.SampleAppVersion2Name, sampleApp.VersionName)
-	assert.True(t, sampleApp.IsRunning)
-
+	assertUploadedSampleApp(t, sampleApp, tools.SampleAppVersion2Name)
 	assert.Equal(t, tools.SampleAppVersion2CreationTimestamp, sampleApp.VersionCreationTimestamp)
-
 	assert.Equal(t, "3001", sampleApp.Port)
 	assert.Equal(t, 16, len(sampleApp.ClientId))
 	assert.Equal(t, 64, len(sampleApp.ClientSecret))
 	assert.Equal(t, 64, len(sampleApp.AppSecret))
-
-	assert.True(t, sampleApp.AutomaticBackupsEnabled)
-	assert.False(t, sampleApp.AutomaticUpdatesEnabled)
-
 	assert.Equal(t, api.Policies.AdminOnlyAccessPolicy, sampleApp.AccessPolicy)
 
 	downloadedVersionFile, err := client.Apps.DownloadVersionFile(sampleApp.AppId)
 	assert.Nil(t, err)
 	assert.Equal(t, originalVersionFile.FileName, downloadedVersionFile.FileName)
 	assert.Equal(t, originalVersionFile.Content, downloadedVersionFile.Content)
+}
+
+func TestUploadTestAppDefinitionToApplication(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	uploadStartedAt := time.Now().UTC()
+	uploadDeadline := uploadStartedAt.Add(5 * time.Minute)
+	versionFile := api.BinaryFile{
+		FileName: tools.SampleApp + ".yml",
+		Content:  getSampleAppContent(),
+	}
+
+	assert.Nil(t, client.Apps.UploadVersionFile(versionFile))
+
+	sampleApp := GetInstalledSample(t, client)
+	assertUploadedSampleApp(t, sampleApp, apps_basic.TestAppDefinitionVersion)
+	assert.True(t, uploadStartedAt.Before(sampleApp.VersionCreationTimestamp) || uploadStartedAt.Equal(sampleApp.VersionCreationTimestamp))
+	assert.True(t, uploadDeadline.After(sampleApp.VersionCreationTimestamp) || uploadDeadline.Equal(sampleApp.VersionCreationTimestamp))
+}
+
+func assertUploadedSampleApp(t *testing.T, sampleApp *api.AdminAppDto, expectedVersionName string) {
+	assert.Equal(t, tools.SampleMaintainer, sampleApp.Maintainer)
+	assert.Equal(t, tools.SampleApp, sampleApp.AppName)
+	assert.Equal(t, expectedVersionName, sampleApp.VersionName)
+	assert.True(t, sampleApp.IsRunning)
+	assert.False(t, sampleApp.AutomaticUpdatesEnabled)
+	assert.True(t, sampleApp.AutomaticBackupsEnabled)
 }
 
 func getSampleAppContent() []byte {
@@ -564,6 +583,8 @@ func TestUploadingAppAlreadyExistingUpdatesIt(t *testing.T) {
 	assert.Equal(t, tools.SampleAppVersion1Name, sampleAppOld.VersionName)
 	assert.Equal(t, tools.SampleAppVersion1CreationTimestamp, sampleAppOld.VersionCreationTimestamp)
 	assert.Equal(t, "3000", sampleAppOld.Port)
+	assert.True(t, sampleAppOld.AutomaticUpdatesEnabled)
+	assert.True(t, sampleAppOld.AutomaticBackupsEnabled)
 
 	originalVersionFile := api.BinaryFile{
 		FileName: getSampleFileNameForAppUpload(),
@@ -587,6 +608,8 @@ func TestUploadingAppAlreadyExistingUpdatesIt(t *testing.T) {
 	assert.Equal(t, tools.SampleAppVersion2CreationTimestamp, sampleAppNew.VersionCreationTimestamp)
 	assert.Equal(t, "3001", sampleAppNew.Port)
 	assert.Equal(t, originalVersionFile.Content, sampleAppNew.VersionContent)
+	assert.False(t, sampleAppNew.AutomaticUpdatesEnabled)
+	assert.True(t, sampleAppNew.AutomaticBackupsEnabled)
 }
 
 func TestUploadingAppAlreadyExistWithDifferentMaintainerIsRejected(t *testing.T) {

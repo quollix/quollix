@@ -143,7 +143,7 @@ window.reloadAppsIntoStoreMock = async () => {
 }
 
 window.uploadVersionFile = async () => {
-    const dialogWarning = 'Upload third-party app? Only continue if you trust the maintainer.'
+    const dialogWarning = 'Upload app definition? Only continue if you trust the source.'
     const confirmed = await confirmDialog(dialogWarning)
     if (!confirmed) {
         return

@@ -43,6 +43,7 @@ type HandlerRegisterer struct {
 	Router                    chi.Router
 	Config                    *tools.GlobalConfig
 	TestStateReset            *TestStateResetHandler
+	MaintainerHandler         *app_store.MaintainerHandler
 	TemplateHandler           *frontend.TemplateHandlerImpl
 	BackedUpAppsLoaderHandler *frontend.BackedUpAppsLoaderHandler
 	BackupsPageLoaderHandler  *frontend.BackupsPageLoaderHandler
@@ -161,6 +162,9 @@ func (h *HandlerRegisterer) adminStoreRoutes() []users.Route {
 		{Path: api.Paths.BackendStoreVersionsInstall, HandlerFunc: h.AppsAdvancedHandler.InstallOrUpdateAppFromStoreVersionHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendStoreVersionsDownload, HandlerFunc: h.AppStoreHandler.DownloadStoreVersionForBrowserHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendStoreVersionsList, HandlerFunc: h.AppStoreHandler.GetVersionsHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendAppMaintainersList, HandlerFunc: h.MaintainerHandler.ListMaintainersHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendAppMaintainersAdd, HandlerFunc: h.MaintainerHandler.AddMaintainerHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendAppMaintainersDelete, HandlerFunc: h.MaintainerHandler.DeleteMaintainerHandler, AccessLevel: tools.AdminLevel},
 	}
 }
 

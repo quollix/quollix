@@ -20,11 +20,8 @@ var (
 )
 
 const (
-	DefaultInitialAdminName           = "administrator"
-	GeneratedInitialAdminPasswordSize = 20
-	InitialAdminPasswordEnvVar        = "INITIAL_ADMIN_PASSWORD"
-	InitialAdminNameEnvVar            = "INITIAL_ADMIN_NAME"
-	legacyServerHostConfigKey         = "server_host"
+	DefaultInitialAdminName   = "administrator"
+	legacyServerHostConfigKey = "server_host"
 )
 
 type SystemConfigMigrationsProviderImpl struct {

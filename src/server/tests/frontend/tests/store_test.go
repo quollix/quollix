@@ -4,10 +4,11 @@ package frontend
 
 import (
 	"fmt"
+	"testing"
+
 	"server/tests/component"
 	"server/tests/frontend_pages"
 	"server/tools"
-	"testing"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
@@ -18,11 +19,18 @@ func TestStorePage(t *testing.T) {
 	defer frame.Client.Test.ResetTestState()
 
 	frame.Pages.GoToStorePage().
-		SetSearchAppName("sampleapp").
+		AssertMaintainerFilterVisible(false).
+		SetSearchAppName("doesnotexist").
 		Search().
 		AssertNoSearchRows().
+		SetSearchAppName("officialapp").
+		Search().
+		AssertSearchRowCount(1).
+		AssertSearchContainsResult("quollix", "officialapp", "1.0").
 		EnableUnofficialSearchAndConfirm().
+		AssertMaintainerFilterVisible(true).
 		SetMaintainerFilter("samplemaintainer").
+		SetSearchAppName("sampleapp").
 		Search().
 		AssertSearchRowCount(1).
 		AssertSearchContainsResult("samplemaintainer", "sampleapp", "2.0").

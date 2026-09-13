@@ -85,9 +85,9 @@ func getDockerEnvFlags(envVars []string) []string {
 }
 
 func getPublishedAppsMountVolumeFlag() string {
-	publishedAppsDir := filepath.Join(GetWorkspaceDir(), "store", "src", "client", "assets", "published-apps")
+	publishedAppsDir := filepath.Join(GetWorkspaceDir(), "apps", "official")
 	if _, err := os.Stat(publishedAppsDir); err != nil {
-		Tr.Log.Info("Warning: no published apps dir found in store project, starting DEV container without local store apps mount: %s", publishedAppsDir)
+		Tr.Log.Info("Warning: no workspace official apps dir found, starting DEV container without local apps mount: %s", publishedAppsDir)
 		return ""
 	}
 	return "-v " + publishedAppsDir + ":/opt/server/assets/docker/published-apps:ro"

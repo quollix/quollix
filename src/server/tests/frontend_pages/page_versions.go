@@ -65,6 +65,22 @@ func (v *VersionsPage) AssertVersionsAndCreationDates(expected map[string]time.T
 	return v
 }
 
+func (v *VersionsPage) AssertMigrationCheckpointFlag(version string, expected bool) *VersionsPage {
+	row := v.findVersionRow(version)
+	checkpointAttr := row.MustAttribute("data-is-migration-checkpoint")
+	assert.NotNil(v.Frame.T, checkpointAttr)
+	assert.Equal(v.Frame.T, expected, *checkpointAttr == "true")
+
+	checkpointCell, err := row.Element(".version-migration-checkpoint")
+	assert.Nil(v.Frame.T, err)
+	expectedText := "No"
+	if expected {
+		expectedText = "Yes"
+	}
+	assert.Equal(v.Frame.T, expectedText, strings.TrimSpace(checkpointCell.MustText()))
+	return v
+}
+
 func (v *VersionsPage) InstallVersion(version string) *VersionsPage {
 	row := v.findVersionRow(version)
 	installButton, err := row.Element("button.version-install-button")

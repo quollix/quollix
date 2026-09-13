@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"server/app_store"
 	"server/apps_basic"
 	"server/backup_server"
 	"server/configs"
@@ -35,6 +36,7 @@ var (
 	OidcAuthProviderRepo *oidc_client.OidcAuthProviderRepositoryImpl
 	UserAuthMethodRepo   *oidc_client.UserAuthMethodRepositoryImpl
 	OidcRelyingPartyRepo *oidc_provider.OidcRelyingPartyRepositoryImpl
+	MaintainerRepo       *app_store.MaintainerRepositoryImpl
 )
 
 func InitDeps() {
@@ -76,6 +78,7 @@ func InitDeps() {
 	OidcAuthProviderRepo = &oidc_client.OidcAuthProviderRepositoryImpl{DbConnector: DatabaseConnector}
 	UserAuthMethodRepo = &oidc_client.UserAuthMethodRepositoryImpl{DbConnector: DatabaseConnector}
 	OidcRelyingPartyRepo = &oidc_provider.OidcRelyingPartyRepositoryImpl{DbConnector: DatabaseConnector}
+	MaintainerRepo = &app_store.MaintainerRepositoryImpl{DbProvider: DatabaseConnector}
 	isInitialized = true
 }
 

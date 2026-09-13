@@ -3,12 +3,15 @@
 package component
 
 import (
-	"server/app_store"
-	"server/tools"
 	"testing"
 	"time"
 
+	"server/app_store"
+	"server/tools"
+
 	"github.com/quollix/common/assert"
+	api "github.com/quollix/common/quollix/api"
+	"github.com/quollix/common/quollix/api_client"
 	"github.com/quollix/common/store"
 	u "github.com/quollix/common/utils"
 )
@@ -29,10 +32,12 @@ func TestAppStoreContainsBothSampleVersions(t *testing.T) {
 	latestAppVersion, err := FindVersion(t, client, tools.SampleMaintainer, tools.SampleApp, "2.0")
 	assert.Nil(t, err)
 	assertLeanVersion(t, latestAppVersion, "2.0", tools.SampleAppVersion2CreationTimestamp, tools.SampleAppVersion2ComposeYAML)
+	assert.True(t, latestAppVersion.IsMigrationCheckpoint)
 
 	oldAppVersion, err := FindVersion(t, client, tools.SampleMaintainer, tools.SampleApp, "1.0")
 	assert.Nil(t, err)
 	assertLeanVersion(t, oldAppVersion, "1.0", tools.SampleAppVersion1CreationTimestamp, tools.SampleAppVersion1ComposeYAML)
+	assert.False(t, oldAppVersion.IsMigrationCheckpoint)
 }
 
 func assertLeanVersion(t *testing.T, actual *store.LeanVersionDto, expectedName string, expectedCreationTimestamp time.Time, expectedContent string) {
@@ -49,7 +54,63 @@ func TestInstallingAppFromStoreStartsApp(t *testing.T) {
 	assert.Nil(t, err)
 
 	sampleApp := GetInstalledSample(t, client)
+	assert.Equal(t, tools.SampleMaintainer, sampleApp.Maintainer)
 	assert.True(t, sampleApp.IsRunning)
+}
+
+func TestInstallingAppFromStoreDownloadsMaintainerKey(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	publicKey, exists := getMaintainerPublicKey(t, client, tools.SampleMaintainer)
+	assert.False(t, exists)
+	assert.Nil(t, publicKey)
+
+	_, err := InstallSample(t, client, "2.0")
+	assert.Nil(t, err)
+
+	publicKey, exists = getMaintainerPublicKey(t, client, tools.SampleMaintainer)
+	assert.True(t, exists)
+	assert.Equal(t, tools.SampleMaintainer, publicKey.Name)
+	assert.Equal(t, u.OtherLocalTestingPublicKeyOpenSSH, publicKey.PublicKey)
+	assert.Equal(t, u.OtherLocalTestingPublicKeyFingerprintSHA256, publicKey.Fingerprint)
+	assert.False(t, publicKey.LastUpdatedAt.IsZero())
+}
+
+func TestInstallingAppFromStoreRefreshesMaintainerKeyAfterMismatch(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	assert.Nil(t, client.AppMaintainers.Add(tools.SampleMaintainer, u.LocalTestingPublicKeyOpenSSH))
+
+	publicKey, exists := getMaintainerPublicKey(t, client, tools.SampleMaintainer)
+	assert.True(t, exists)
+	assert.Equal(t, u.LocalTestingPublicKeyOpenSSH, publicKey.PublicKey)
+	assert.Equal(t, u.LocalTestingPublicKeyFingerprintSHA256, publicKey.Fingerprint)
+
+	_, err := InstallSample(t, client, "2.0")
+	assert.Nil(t, err)
+
+	publicKey, exists = getMaintainerPublicKey(t, client, tools.SampleMaintainer)
+	assert.True(t, exists)
+	assert.Equal(t, u.OtherLocalTestingPublicKeyOpenSSH, publicKey.PublicKey)
+	assert.Equal(t, u.OtherLocalTestingPublicKeyFingerprintSHA256, publicKey.Fingerprint)
+}
+
+func TestMaintainerPublicKeyCanBeAddedListedAndDeleted(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	assert.Nil(t, client.AppMaintainers.Add(tools.SampleMaintainer, u.LocalTestingPublicKeyOpenSSH))
+	publicKey, exists := getMaintainerPublicKey(t, client, tools.SampleMaintainer)
+	assert.True(t, exists)
+	assert.Equal(t, tools.SampleMaintainer, publicKey.Name)
+	assert.Equal(t, u.LocalTestingPublicKeyOpenSSH, publicKey.PublicKey)
+	assert.Equal(t, u.LocalTestingPublicKeyFingerprintSHA256, publicKey.Fingerprint)
+	assert.False(t, publicKey.LastUpdatedAt.IsZero())
+
+	assert.Nil(t, client.AppMaintainers.Delete(tools.SampleMaintainer))
+	publicKey, exists = getMaintainerPublicKey(t, client, tools.SampleMaintainer)
+	assert.False(t, exists)
+	assert.Nil(t, publicKey)
 }
 
 func TestInstallingSameOrOlderAppVersionFromStoreShouldFail(t *testing.T) {
@@ -133,4 +194,16 @@ func TestDownloadShouldRejectVersionWithInvalidPackageSigning(t *testing.T) {
 	_, err = client.Apps.DownloadStoreVersion(storeVersion.VersionId)
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, app_store.InvalidPackageSigningError)
+}
+
+func getMaintainerPublicKey(t *testing.T, client *api_client.QuollixClient, maintainer string) (*api.MaintainerPublicKeyDto, bool) {
+	publicKeys, err := client.AppMaintainers.List()
+	assert.Nil(t, err)
+	for index := range publicKeys {
+		publicKey := &publicKeys[index]
+		if publicKey.Name == maintainer {
+			return publicKey, true
+		}
+	}
+	return nil, false
 }

@@ -287,21 +287,16 @@ func (t *TemplateHandlerImpl) UsersHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (t *TemplateHandlerImpl) StoreHandler(w http.ResponseWriter, r *http.Request) {
-	maintainerName := r.URL.Query().Get("maintainer_name")
-	appName := r.URL.Query().Get("app_name")
-	isSearch := r.URL.Query().Get("is_search") == "true"
+	maintainerName, appName, showUnofficial, isSearch := parseStorePageQuery(r.URL.Query())
 
-	if err := validation.Validate("maintainer_name", validation.FieldSearchTerm, maintainerName); err != nil {
+	if err := validation.Validate(frontendpages.QueryParams.Store.MaintainerName, validation.FieldSearchTerm, maintainerName); err != nil {
 		t.pageCreationFailed(w, err)
 		return
 	}
-	if err := validation.Validate("app_name", validation.FieldSearchTerm, appName); err != nil {
+	if err := validation.Validate(frontendpages.QueryParams.Store.AppName, validation.FieldSearchTerm, appName); err != nil {
 		t.pageCreationFailed(w, err)
 		return
 	}
-
-	showUnofficialString := r.URL.Query().Get("show_unofficial")
-	showUnofficial := showUnofficialString == "true"
 
 	content, err := t.PageDataBuilder.BuildStorePage(maintainerName, appName, showUnofficial, isSearch)
 	if err != nil {
@@ -315,6 +310,16 @@ func (t *TemplateHandlerImpl) StoreHandler(w http.ResponseWriter, r *http.Reques
 		Content:              content,
 	}
 	t.renderPage(w, r, pageRenderRequest)
+}
+
+func parseStorePageQuery(query url.Values) (string, string, bool, bool) {
+	maintainerName := query.Get(frontendpages.QueryParams.Store.MaintainerName)
+	appName := query.Get(frontendpages.QueryParams.Store.AppName)
+	showUnofficial := query.Get(frontendpages.QueryParams.Store.ShowUnofficial) == "true"
+	if !showUnofficial {
+		maintainerName = ""
+	}
+	return maintainerName, appName, showUnofficial, query.Get(frontendpages.QueryParams.Store.IsSearch) == "true"
 }
 
 func (t *TemplateHandlerImpl) VersionsHandler(w http.ResponseWriter, r *http.Request) {

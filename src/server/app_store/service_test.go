@@ -2,10 +2,11 @@ package app_store
 
 import (
 	"errors"
-	"server/apps_basic"
-	"server/tools"
 	"testing"
 	"time"
+
+	"server/apps_basic"
+	"server/tools"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/store"
@@ -104,5 +105,46 @@ func TestDownloadVersionByID_CreatesRepoAppAfterValidation(t *testing.T) {
 	assert.Equal(t, "client-id", repoApp.ClientId)
 	assert.Equal(t, "client-secret", repoApp.ClientSecret)
 	assert.Equal(t, "app-secret", repoApp.AppSecret)
+	assert.Equal(t, testDownloadedVersion.Content, repoApp.VersionContent)
+}
+
+func TestDownloadNextVersionForUpdate_ReturnsNoUpdate(t *testing.T) {
+	testDependencies := setupAppStoreServiceTestDependencies(t)
+	currentTimestamp := testDownloadedVersion.VersionCreationTimestamp
+
+	testDependencies.appStoreClient.EXPECT().
+		DownloadNextVersionForUpdate(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, currentTimestamp).
+		Return(&store.NextVersionForUpdateResponse{UpdateAvailable: false}, nil)
+
+	repoApp, updateAvailable, err := testDependencies.service.DownloadNextVersionForUpdate(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, currentTimestamp)
+
+	assert.Nil(t, err)
+	assert.False(t, updateAvailable)
+	assert.Nil(t, repoApp)
+}
+
+func TestDownloadNextVersionForUpdate_CreatesRepoAppAfterValidation(t *testing.T) {
+	testDependencies := setupAppStoreServiceTestDependencies(t)
+	currentTimestamp := testDownloadedVersion.VersionCreationTimestamp.Add(-time.Hour)
+
+	testDependencies.appStoreClient.EXPECT().
+		DownloadNextVersionForUpdate(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, currentTimestamp).
+		Return(&store.NextVersionForUpdateResponse{UpdateAvailable: true, Version: testDownloadedVersion}, nil)
+	testDependencies.versionValidator.EXPECT().
+		Validate(testDownloadedVersion.Content, testDownloadedVersion.Maintainer, testDownloadedVersion.AppName).
+		Return(nil)
+	testDependencies.clientCredentialsGenerator.EXPECT().Generate().Return("client-id", "client-secret", nil)
+	testDependencies.authHelper.EXPECT().GenerateSecret().Return("app-secret", nil)
+	testDependencies.appServiceHelper.EXPECT().GetPortFromComposeYaml(testDownloadedVersion.Content, testDownloadedVersion.AppName).Return("8080", nil)
+	testDependencies.versionVerifier.EXPECT().Verify(testDownloadedVersion).Return(nil)
+
+	repoApp, updateAvailable, err := testDependencies.service.DownloadNextVersionForUpdate(testDownloadedVersion.Maintainer, testDownloadedVersion.AppName, currentTimestamp)
+
+	assert.Nil(t, err)
+	assert.True(t, updateAvailable)
+	assert.NotNil(t, repoApp)
+	assert.Equal(t, testDownloadedVersion.Maintainer, repoApp.Maintainer)
+	assert.Equal(t, testDownloadedVersion.AppName, repoApp.AppName)
+	assert.Equal(t, testDownloadedVersion.VersionName, repoApp.VersionName)
 	assert.Equal(t, testDownloadedVersion.Content, repoApp.VersionContent)
 }

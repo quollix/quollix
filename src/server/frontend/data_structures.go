@@ -123,6 +123,7 @@ type VersionDto struct {
 	VersionId                  int
 	Name                       string
 	CreationTimestampFormatted string
+	IsMigrationCheckpoint      bool
 	CanInstall                 bool
 }
 
@@ -130,7 +131,6 @@ type StorePageContent struct {
 	MaintainerSearchTerm string
 	AppSearchTerm        string
 	ShowUnofficialApps   bool
-	ShowUnofficialToggle bool
 	Apps                 []StoreAppDto
 }
 

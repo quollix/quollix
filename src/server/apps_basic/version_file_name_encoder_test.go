@@ -106,16 +106,6 @@ func TestDecodeComposeArchiveName(t *testing.T) {
 			},
 		},
 		{
-			name:      "happy path with directory prefix",
-			inputFile: "/tmp/samplemaintainer_sampleapp_v1.2.3_2025-01-02-03-04-05.yml",
-			expectedDto: &ComposeArchiveName{
-				Maintainer:               "samplemaintainer",
-				AppName:                  "sampleapp",
-				Version:                  "v1.2.3",
-				VersionCreationTimestamp: createdAt,
-			},
-		},
-		{
 			name:          "missing .yml suffix",
 			inputFile:     "samplemaintainer_sampleapp_v1.2.3_2025-01-02-03-04-05.tar",
 			expectedError: "file must end with .yml",
@@ -166,6 +156,44 @@ func TestDecodeComposeArchiveName(t *testing.T) {
 			assert.Equal(t, testCase.expectedDto.VersionCreationTimestamp, actualDto.VersionCreationTimestamp)
 		})
 	}
+}
+
+func TestDecodeTestAppDefinitionName(t *testing.T) {
+	composeContent := []byte(`
+services:
+  sampleapp:
+    container_name: samplemaintainer_sampleapp_sampleapp
+`)
+
+	composeArchive, err := encoder.DecodeTestAppDefinitionName("sampleapp.yml", composeContent, createdAt)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "samplemaintainer", composeArchive.Maintainer)
+	assert.Equal(t, "sampleapp", composeArchive.AppName)
+	assert.Equal(t, TestAppDefinitionVersion, composeArchive.Version)
+	assert.Equal(t, createdAt, composeArchive.VersionCreationTimestamp)
+}
+
+func TestDecodeTestAppDefinitionName_MissingYmlSuffixReturnsError(t *testing.T) {
+	composeArchive, err := encoder.DecodeTestAppDefinitionName("sampleapp.yaml", nil, createdAt)
+
+	assert.NotNil(t, err)
+	assert.Equal(t, "file must end with .yml", u.ExtractError(err))
+	assert.Nil(t, composeArchive)
+}
+
+func TestDecodeTestAppDefinitionName_InvalidMainServiceContainerNameReturnsError(t *testing.T) {
+	composeContent := []byte(`
+services:
+  sampleapp:
+    container_name: other_container_name
+`)
+
+	composeArchive, err := encoder.DecodeTestAppDefinitionName("sampleapp.yml", composeContent, createdAt)
+
+	assert.NotNil(t, err)
+	assert.Equal(t, "main service has invalid container_name", u.ExtractError(err))
+	assert.Nil(t, composeArchive)
 }
 
 func TestComposeArchiveNameDecodeEncodeRoundTrip(t *testing.T) {

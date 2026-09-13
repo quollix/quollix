@@ -6,7 +6,7 @@ WORKDIR /opt/server
 COPY assets /opt/server/assets
 COPY frontend/resources /opt/server/frontend/resources
 
-FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.6-alpine AS builder
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download

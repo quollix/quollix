@@ -14,9 +14,9 @@ import (
 	"server/tools"
 	"server/users"
 
+	"github.com/quollix/common/bootstrap"
 	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
-	"github.com/quollix/common/validation"
 )
 
 func (s *SystemConfigMigrationsProviderImpl) runInitialBootstrapMigration() error {
@@ -221,12 +221,7 @@ func (s *SystemConfigMigrationsProviderImpl) createAdminUserIfNotExist() error {
 }
 
 func (s *SystemConfigMigrationsProviderImpl) createAdminsUser() error {
-	adminName, err := s.getInitialAdminName()
-	if err != nil {
-		return err
-	}
-
-	adminPassword, err := s.getInitialAdminPassword(adminName)
+	adminName, adminPassword, err := bootstrap.GetInitialAdminCredentials(DefaultInitialAdminName)
 	if err != nil {
 		return err
 	}
@@ -253,46 +248,6 @@ func (s *SystemConfigMigrationsProviderImpl) createAdminsUser() error {
 	}
 	u.Logger.Info("Initial admin user created")
 	return nil
-}
-
-func (s *SystemConfigMigrationsProviderImpl) getInitialAdminName() (string, error) {
-	adminName := os.Getenv(InitialAdminNameEnvVar)
-	if adminName == "" {
-		adminName = DefaultInitialAdminName
-	}
-
-	err := validation.Validate("adminName", validation.FieldUsername, adminName)
-	if err != nil {
-		return "", u.Logger.NewError("env variable is not valid", "env_variable", InitialAdminNameEnvVar)
-	}
-	return adminName, nil
-}
-
-func (s *SystemConfigMigrationsProviderImpl) getInitialAdminPassword(adminName string) (string, error) {
-	adminPassword := os.Getenv(InitialAdminPasswordEnvVar)
-	isGeneratedPassword := adminPassword == ""
-	if isGeneratedPassword {
-		var err error
-		adminPassword, err = s.AuthHelper.GenerateSecret()
-		if err != nil {
-			return "", err
-		}
-		if len(adminPassword) > GeneratedInitialAdminPasswordSize {
-			adminPassword = adminPassword[:GeneratedInitialAdminPasswordSize]
-		}
-	}
-
-	err := validation.Validate("adminPassword", validation.FieldPassword, adminPassword)
-	if err != nil {
-		return "", u.Logger.NewError("env variable is not valid", "env_variable", InitialAdminPasswordEnvVar)
-	}
-
-	if isGeneratedPassword {
-		u.Logger.Info("INITIAL_ADMIN_PASSWORD environment variable is not set, generated random initial admin password", "username", adminName, "password", adminPassword)
-	} else {
-		u.Logger.Info("Creating initial admin user from environment configuration", "username", adminName)
-	}
-	return adminPassword, nil
 }
 
 func initialAdminEmail(adminName string) string {

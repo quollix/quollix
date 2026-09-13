@@ -46,9 +46,10 @@ type PageGlobals struct {
 }
 
 type StaticTemplateGlobals struct {
-	Paths    api.PathsType
-	Links    tools.LinksType
-	Policies any
+	Paths       api.PathsType
+	Links       tools.LinksType
+	Policies    any
+	QueryParams QueryParamsType
 }
 
 func (p *PageRendererImpl) PageCreationFailed(w http.ResponseWriter, err error) {

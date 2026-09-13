@@ -1,6 +1,7 @@
 package di
 
 import (
+	"crypto/ed25519"
 	"log/slog"
 
 	"server/app_store"
@@ -57,17 +58,23 @@ func NewAppStoreClient(
 			Parent: u.ComponentClient{
 				RootUrl: "https://store.quollix.org",
 			},
-			Validator: validator,
 		},
 	}
 	return &appStoreClient
 }
 
-func NewTrustedAuthorizedKey(config *tools.GlobalConfig) []byte {
+func NewVersionValidator() validation.VersionValidator {
+	return validation.NewVersionValidator(false)
+}
+
+func NewOfficialMaintainerPublicKey(config *tools.GlobalConfig) (ed25519.PublicKey, error) {
+	var publicKeyBytes []byte
 	if config.UseLocalTestingAuthorizedKey {
-		return u.LocalTestingPublicKeyOpenSSHBytes
+		publicKeyBytes = u.LocalTestingPublicKeyOpenSSHBytes
+	} else {
+		publicKeyBytes = []byte(store.AppStoreOfficialMaintainerPublicKeyOpenSSH)
 	}
-	return []byte(store.AppStoreOfficialMaintainerPublicKeyOpenSSH)
+	return u.DecodeAuthorizedEd25519PublicKey(publicKeyBytes)
 }
 
 func NewEmailClient(config *tools.GlobalConfig) u.EmailClient {

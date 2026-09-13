@@ -8,15 +8,17 @@
     <tr>
         <th>Version</th>
         <th>Upload Date</th>
+        <th>Migration Checkpoint</th>
         <th>Actions</th>
     </tr>
     </thead>
     <tbody id="versions-results-body">
     {{range $.Page.Versions}}
     {{$version := .}}
-    <tr class="version-row" data-version-id="{{$version.VersionId}}" data-version-name="{{$version.Name}}" data-created-at-pretty="{{$version.CreationTimestampFormatted}}" data-can-install="{{$version.CanInstall}}">
+    <tr class="version-row" data-version-id="{{$version.VersionId}}" data-version-name="{{$version.Name}}" data-created-at-pretty="{{$version.CreationTimestampFormatted}}" data-is-migration-checkpoint="{{$version.IsMigrationCheckpoint}}" data-can-install="{{$version.CanInstall}}">
         <td class="version-name">{{$version.Name}}</td>
         <td class="version-upload-date version-created-at">{{$version.CreationTimestampFormatted}}</td>
+        <td class="version-migration-checkpoint">{{if $version.IsMigrationCheckpoint}}Yes{{else}}No{{end}}</td>
         <td class="version-actions">
             <div class="actions-row">
                 <button type="button" class="lean icon-btn version-install-button"

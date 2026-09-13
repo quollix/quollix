@@ -6,10 +6,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"server/apps_basic"
-	"server/tools"
 	"strings"
 	"time"
+
+	"server/apps_basic"
+	"server/tools"
 
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
@@ -23,6 +24,8 @@ type AppStoreClientLean interface {
 	SearchForApps(maintainerSearchTerm, appSearchTerm string, searchForUnofficialApps bool) ([]store.AppWithLatestVersion, error)
 	ListVersions(userName, appName string) ([]store.LeanVersionDto, error)
 	DownloadVersionByID(versionId int) (*store.Version, error)
+	DownloadNextVersionForUpdate(userName, appName string, currentVersionCreationTimestamp time.Time) (*store.NextVersionForUpdateResponse, error)
+	GetMaintainerPublicKeyRecord(maintainer string) (*store.MaintainerPublicKeyRecord, error)
 }
 
 type AppStoreClientImpl struct {
@@ -40,6 +43,7 @@ func (h *AppStoreClientImpl) ReloadLocalApps() error {
 type AppStoreClientMock struct {
 	Apps                       []store.AppWithLatestVersion
 	Versions                   []store.Version
+	MaintainerPublicKeyRecords []store.MaintainerPublicKeyRecord
 	DirectoryProvider          tools.DirectoryProvider
 	Config                     *tools.GlobalConfig
 	VersionValidator           validation.VersionValidator
@@ -56,9 +60,17 @@ type publishedAppDefinition struct {
 	Content []byte
 }
 
+const (
+	officialTestAppName    = "officialapp"
+	officialTestAppVersion = "1.0"
+)
+
+var officialTestAppCreationTimestamp = time.Date(2021, 1, 4, 0, 0, 0, 0, time.UTC)
+
 func (h *AppStoreClientMock) InitializeOnStartup() error {
 	h.Apps = h.Apps[:0]
 	h.Versions = h.Versions[:0]
+	h.MaintainerPublicKeyRecords = h.MaintainerPublicKeyRecords[:0]
 	return h.InitializeSampleApp()
 }
 
@@ -69,6 +81,7 @@ func (h *AppStoreClientMock) ReloadLocalApps() error {
 func (h *AppStoreClientMock) InitializeApps() error {
 	h.Apps = h.Apps[:0]
 	h.Versions = h.Versions[:0]
+	h.MaintainerPublicKeyRecords = h.MaintainerPublicKeyRecords[:0]
 	if err := h.InitializeSampleApp(); err != nil {
 		return err
 	}
@@ -79,6 +92,9 @@ func (h *AppStoreClientMock) InitializeApps() error {
 }
 
 func (h *AppStoreClientMock) InitializeSampleApp() error {
+	if err := h.addMaintainerPublicKeyRecord(tools.SampleMaintainer, u.GetOtherLocalTestingPublicKeyRaw()); err != nil {
+		return err
+	}
 	appVersion0Content := []byte(tools.SampleAppVersion0ComposeYAML)
 	if _, err := h.addVersion(tools.SampleApp, tools.SampleAppVersion0Name, appVersion0Content, tools.SampleAppVersion0CreationTimestamp); err != nil {
 		return err
@@ -94,6 +110,7 @@ func (h *AppStoreClientMock) InitializeSampleApp() error {
 	if err != nil {
 		return err
 	}
+	h.Versions[len(h.Versions)-1].IsMigrationCheckpoint = true
 	if _, err := h.addInvalidSignedVersion(tools.SampleMaintainer, tools.SampleApp, "1.5", appVersion2Content, tools.SampleAppCreationTimestamp); err != nil {
 		return err
 	}
@@ -140,6 +157,25 @@ func (h *AppStoreClientMock) InitializeSampleApp() error {
 		LatestVersionId:                rabbitMQVersion312.VersionId,
 		LatestVersionName:              tools.SampleRabbitMQAppVersion312Name,
 		LatestVersionCreationTimestamp: tools.SampleRabbitMQAppVersion312CreationTimestamp,
+	})
+
+	officialAppContent := []byte(`services:
+  officialapp:
+    image: officialapp:local
+    container_name: quollix_officialapp_officialapp
+    labels:
+      quollix.port: 8080
+`)
+	officialAppVersion, err := h.addOfficialVersion(officialTestAppName, officialTestAppVersion, officialAppContent, officialTestAppCreationTimestamp)
+	if err != nil {
+		return err
+	}
+	h.Apps = append(h.Apps, store.AppWithLatestVersion{
+		Maintainer:                     u.OfficialMaintainer,
+		AppName:                        officialTestAppName,
+		LatestVersionId:                officialAppVersion.VersionId,
+		LatestVersionName:              officialTestAppVersion,
+		LatestVersionCreationTimestamp: officialTestAppCreationTimestamp,
 	})
 
 	return nil
@@ -274,10 +310,11 @@ func (h *AppStoreClientMock) ListVersions(userName, appName string) ([]store.Lea
 			continue
 		}
 		versions = append(versions, store.LeanVersionDto{
-			VersionId:         version.VersionId,
-			Name:              version.VersionName,
-			CreationTimestamp: version.VersionCreationTimestamp,
-			SizeInBytes:       int64(len(version.Content)),
+			VersionId:             version.VersionId,
+			Name:                  version.VersionName,
+			CreationTimestamp:     version.VersionCreationTimestamp,
+			SizeInBytes:           int64(len(version.Content)),
+			IsMigrationCheckpoint: version.IsMigrationCheckpoint,
 		})
 	}
 	return versions, nil
@@ -293,14 +330,52 @@ func (h *AppStoreClientMock) DownloadVersionByID(versionId int) (*store.Version,
 	return nil, u.Logger.NewError("version not found", tools.VersionIdField, versionId)
 }
 
+func (h *AppStoreClientMock) DownloadNextVersionForUpdate(userName, appName string, currentVersionCreationTimestamp time.Time) (*store.NextVersionForUpdateResponse, error) {
+	var latest *store.Version
+	for index := range h.Versions {
+		version := &h.Versions[index]
+		if version.Maintainer != userName || version.AppName != appName {
+			continue
+		}
+		if !version.VersionCreationTimestamp.After(currentVersionCreationTimestamp) {
+			continue
+		}
+		if latest == nil || version.VersionCreationTimestamp.After(latest.VersionCreationTimestamp) {
+			latest = version
+		}
+	}
+	if latest == nil {
+		return &store.NextVersionForUpdateResponse{UpdateAvailable: false}, nil
+	}
+	return &store.NextVersionForUpdateResponse{UpdateAvailable: true, Version: latest}, nil
+}
+
+func (h *AppStoreClientMock) GetMaintainerPublicKeyRecord(maintainer string) (*store.MaintainerPublicKeyRecord, error) {
+	for index := range h.MaintainerPublicKeyRecords {
+		record := &h.MaintainerPublicKeyRecords[index]
+		if record.Maintainer == maintainer {
+			return record, nil
+		}
+	}
+	return nil, u.Logger.NewError("maintainer not found", tools.MaintainerField, maintainer)
+}
+
 func (h *AppStoreClientMock) addVersion(appName, versionName string, content []byte, versionCreationTimestamp time.Time) (*store.Version, error) {
-	privateKey, err := decodeTestingPrivateKey()
+	return h.addVersionForMaintainer(tools.SampleMaintainer, []byte(u.OtherLocalTestingPrivateKeyOpenSSH), []byte(u.OtherLocalTestingPrivateKeyPassphrase), appName, versionName, content, versionCreationTimestamp)
+}
+
+func (h *AppStoreClientMock) addOfficialVersion(appName, versionName string, content []byte, versionCreationTimestamp time.Time) (*store.Version, error) {
+	return h.addVersionForMaintainer(u.OfficialMaintainer, []byte(u.LocalTestingPrivateKeyOpenSSH), []byte(u.LocalTestingPrivateKeyPassphrase), appName, versionName, content, versionCreationTimestamp)
+}
+
+func (h *AppStoreClientMock) addVersionForMaintainer(maintainer string, privateKeyOpenSSH, privateKeyPassphrase []byte, appName, versionName string, content []byte, versionCreationTimestamp time.Time) (*store.Version, error) {
+	privateKey, err := u.DecodeEd25519PrivateKeyOpenSSH(privateKeyOpenSSH, privateKeyPassphrase)
 	if err != nil {
 		return nil, err
 	}
 	version := &store.Version{
 		VersionId:                h.nextVersionID(),
-		Maintainer:               tools.SampleMaintainer,
+		Maintainer:               maintainer,
 		AppName:                  appName,
 		VersionName:              versionName,
 		Content:                  content,
@@ -343,6 +418,23 @@ func (h *AppStoreClientMock) addInvalidSignedVersion(maintainer, appName, versio
 	return version, nil
 }
 
+func (h *AppStoreClientMock) addMaintainerPublicKeyRecord(maintainer string, publicKeyRaw []byte) error {
+	officialPrivateKey, err := decodeTestingPrivateKey()
+	if err != nil {
+		return err
+	}
+	publicKeySignature, err := store.SignMaintainerPublicKey(officialPrivateKey, maintainer, publicKeyRaw)
+	if err != nil {
+		return err
+	}
+	h.MaintainerPublicKeyRecords = append(h.MaintainerPublicKeyRecords, store.MaintainerPublicKeyRecord{
+		Maintainer:         maintainer,
+		PublicKeyRaw:       publicKeyRaw,
+		PublicKeySignature: publicKeySignature,
+	})
+	return nil
+}
+
 func (h *AppStoreClientMock) SearchForApps(maintainerSearchTerm string, appSearchTerm string, showUnofficialApps bool) ([]store.AppWithLatestVersion, error) {
 	results := make([]store.AppWithLatestVersion, 0)
 	for _, app := range h.Apps {
@@ -366,5 +458,5 @@ func (h *AppStoreClientMock) nextVersionID() int {
 }
 
 func decodeTestingPrivateKey() (ed25519.PrivateKey, error) {
-	return u.DecodeEd25519PrivateKeyOpenSSH(u.GetLocalTestingPrivateKeyBytes())
+	return u.DecodeEd25519PrivateKeyOpenSSH([]byte(u.LocalTestingPrivateKeyOpenSSH), []byte(u.LocalTestingPrivateKeyPassphrase))
 }

@@ -1,9 +1,13 @@
 package frontend_pages
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
 	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 )
 
 const expectedTitle = "Install/update app"
@@ -52,6 +56,30 @@ func (l *StorePage) EnableUnofficialSearchAndConfirm() *StorePage {
 	checked, _, hasErr := l.Frame.Page.Has("#unofficial:checked")
 	assert.Nil(l.Frame.T, hasErr)
 	assert.True(l.Frame.T, checked)
+	return l
+}
+
+func (l *StorePage) AssertMaintainerFilterVisible(expectedVisible bool) *StorePage {
+	err := u.Eventually(func() error {
+		input := l.Frame.Page.MustElement("#maintainer-input")
+		style, err := input.Attribute("style")
+		if err != nil {
+			return err
+		}
+		isVisible := style == nil || !strings.Contains(strings.ToLower(strings.TrimSpace(*style)), "visibility: hidden")
+		if isVisible != expectedVisible {
+			return fmt.Errorf("expected maintainer filter visible=%t, got %t", expectedVisible, isVisible)
+		}
+		disabled, err := input.Property("disabled")
+		if err != nil {
+			return err
+		}
+		if disabled.Bool() != !expectedVisible {
+			return fmt.Errorf("expected maintainer filter disabled=%t, got %t", !expectedVisible, disabled.Bool())
+		}
+		return nil
+	})
+	assert.Nil(l.Frame.T, err)
 	return l
 }
 

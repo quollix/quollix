@@ -2,13 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchForm = document.getElementById('search-form')
     const checkbox = document.getElementById('unofficial')
     const maintainerWrap = document.getElementById('maintainer-wrap')
+    const maintainerInput = document.querySelector('[name="{{ $.Static.QueryParams.Store.MaintainerName }}"]')
+    const appInput = document.querySelector('[name="{{ $.Static.QueryParams.Store.AppName }}"]')
 
     searchForm.addEventListener('submit', event => {
-        if (isValidSearchTerm(document.getElementById('maintainer-input')?.value || '')) {
-            if (isValidSearchTerm(document.getElementById('app-input')?.value || '')) return
-            showInvalidSearchTermSnackbar('app_name')
+        if (isValidSearchTerm(maintainerInput?.value || '')) {
+            if (isValidSearchTerm(appInput?.value || '')) return
+            showInvalidSearchTermSnackbar('{{ $.Static.QueryParams.Store.AppName }}')
         } else {
-            showInvalidSearchTermSnackbar('maintainer_name')
+            showInvalidSearchTermSnackbar('{{ $.Static.QueryParams.Store.MaintainerName }}')
         }
         event.preventDefault()
     })
@@ -16,12 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!checkbox || !maintainerWrap) return
 
     const maintainerLabel = maintainerWrap.querySelector('label')
-    const maintainerInput = maintainerWrap.querySelector('input')
 
     function applyVisibility() {
         const show = checkbox.checked
         maintainerLabel.style.visibility = show ? 'visible' : 'hidden'
         maintainerInput.style.visibility = show ? 'visible' : 'hidden'
+        maintainerInput.disabled = !show
     }
 
     async function onUnofficialChange() {

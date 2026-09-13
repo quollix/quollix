@@ -7,6 +7,8 @@ import (
 	"server/app_store"
 	"server/apps_basic"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
@@ -50,7 +52,7 @@ func (a *AppsAdvancedHandler) UploadVersionFileToApplicationHandler(w http.Respo
 		return
 	}
 
-	composeArchive, err := a.VersionFileNameEncoder.DecodeComposeArchiveName(versionFile.FileName)
+	composeArchive, err := a.decodeUploadedComposeArchive(versionFile)
 	if err != nil {
 		u.WriteResponseErrorAlways(w, err)
 		return
@@ -66,6 +68,13 @@ func (a *AppsAdvancedHandler) UploadVersionFileToApplicationHandler(w http.Respo
 		u.WriteResponseError(w, ExpectedAppMutationErrors, err)
 		return
 	}
+}
+
+func (a *AppsAdvancedHandler) decodeUploadedComposeArchive(versionFile *api.BinaryFile) (*apps_basic.ComposeArchiveName, error) {
+	if strings.Contains(versionFile.FileName, "_") {
+		return a.VersionFileNameEncoder.DecodeComposeArchiveName(versionFile.FileName)
+	}
+	return a.VersionFileNameEncoder.DecodeTestAppDefinitionName(versionFile.FileName, versionFile.Content, time.Now())
 }
 
 func (a *AppsAdvancedHandler) DownloadVersionFileFromApplicationHandler(w http.ResponseWriter, r *http.Request) {

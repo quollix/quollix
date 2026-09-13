@@ -44,9 +44,9 @@ func TestUnit() {
 
 func BuildAllGoModules() {
 	Tr.Log.TaskDescription("Building all Go modules")
-	u.BuildWholeGoProject(Tr, ServerDir)
-	u.BuildWholeGoProject(Tr, ciRunnerDir)
-	u.BuildWholeGoProject(Tr, sampleAppDir)
+	u.BuildWholeGoProjectByBuildTag(Tr, ServerDir)
+	u.BuildWholeGoProjectByBuildTag(Tr, ciRunnerDir)
+	u.BuildWholeGoProjectByBuildTag(Tr, sampleAppDir)
 }
 
 func TestCIRunnerUnit() {

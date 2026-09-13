@@ -324,8 +324,8 @@ func TestBuildVersionsPage_SortsByCreationTimestampDesc(t *testing.T) {
 	testObjects.AppStoreClient.EXPECT().
 		ListVersions("maintainer", "app").
 		Return([]store.LeanVersionDto{
-			{VersionId: 1, Name: "older", CreationTimestamp: olderTimestamp},
-			{VersionId: 2, Name: "newer", CreationTimestamp: newerTimestamp},
+			{VersionId: 1, Name: "older", CreationTimestamp: olderTimestamp, IsMigrationCheckpoint: false},
+			{VersionId: 2, Name: "newer", CreationTimestamp: newerTimestamp, IsMigrationCheckpoint: true},
 		}, nil)
 	testObjects.AppRepo.EXPECT().DoesAppExist("app").Return(false, nil)
 
@@ -341,6 +341,8 @@ func TestBuildVersionsPage_SortsByCreationTimestampDesc(t *testing.T) {
 	assert.Equal(t, 1, pageContent.Versions[1].VersionId)
 	assert.Equal(t, "2026-01-02 10:00:00", pageContent.Versions[0].CreationTimestampFormatted)
 	assert.Equal(t, "2026-01-01 10:00:00", pageContent.Versions[1].CreationTimestampFormatted)
+	assert.True(t, pageContent.Versions[0].IsMigrationCheckpoint)
+	assert.False(t, pageContent.Versions[1].IsMigrationCheckpoint)
 	assert.True(t, pageContent.Versions[0].CanInstall)
 	assert.True(t, pageContent.Versions[1].CanInstall)
 }
@@ -523,7 +525,6 @@ func TestBuildOidcClientsPage_ReturnsClients(t *testing.T) {
 
 func TestBuildStorePage_WhenNotSearch_ReturnsEmptyAppsAndEchoesInputs(t *testing.T) {
 	testObjects := getTestObjects(t)
-	testObjects.Builder.GlobalConfig.ShowUnofficialAppsSearch = true
 
 	pageContent, err := testObjects.Builder.BuildStorePage("maintainer", "app", false, false)
 	assert.Nil(t, err)
@@ -531,32 +532,27 @@ func TestBuildStorePage_WhenNotSearch_ReturnsEmptyAppsAndEchoesInputs(t *testing
 	assert.Equal(t, "maintainer", pageContent.MaintainerSearchTerm)
 	assert.Equal(t, "app", pageContent.AppSearchTerm)
 	assert.False(t, pageContent.ShowUnofficialApps)
-	assert.True(t, pageContent.ShowUnofficialToggle)
 	assert.Equal(t, 0, len(pageContent.Apps))
 }
 
-func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) {
+func TestBuildStorePage_WhenSearch_ForwardsMaintainerForSearch(t *testing.T) {
 	testCases := []struct {
-		name                    string
-		showUnofficialApps      bool
-		expectedMaintainerQuery string
+		name               string
+		showUnofficialApps bool
 	}{
 		{
-			name:                    "showUnofficialApps=true uses empty maintainer for search",
-			showUnofficialApps:      true,
-			expectedMaintainerQuery: "",
+			name:               "showUnofficialApps=true",
+			showUnofficialApps: true,
 		},
 		{
-			name:                    "showUnofficialApps=false uses provided maintainer for search",
-			showUnofficialApps:      false,
-			expectedMaintainerQuery: "maintainer",
+			name:               "showUnofficialApps=false",
+			showUnofficialApps: false,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			testObjects := getTestObjects(t)
-			testObjects.Builder.GlobalConfig.ShowUnofficialAppsSearch = true
 
 			creationTimestamp := time.Date(2026, time.January, 2, 10, 0, 0, 0, time.UTC)
 			appsToDisplay := []store.AppWithLatestVersion{
@@ -570,7 +566,7 @@ func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) 
 			}
 
 			testObjects.AppStoreClient.EXPECT().
-				SearchForApps(testCase.expectedMaintainerQuery, "app", testCase.showUnofficialApps).
+				SearchForApps("maintainer", "app", testCase.showUnofficialApps).
 				Return(appsToDisplay, nil)
 			testObjects.AppRepo.EXPECT().
 				ListApps().
@@ -582,7 +578,6 @@ func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) 
 			assert.Equal(t, "maintainer", pageContent.MaintainerSearchTerm)
 			assert.Equal(t, "app", pageContent.AppSearchTerm)
 			assert.Equal(t, testCase.showUnofficialApps, pageContent.ShowUnofficialApps)
-			assert.True(t, pageContent.ShowUnofficialToggle)
 			assert.Equal(t, 1, len(pageContent.Apps))
 			assert.Equal(t, "m1", pageContent.Apps[0].Maintainer)
 			assert.Equal(t, "a1", pageContent.Apps[0].AppName)
@@ -596,12 +591,11 @@ func TestBuildStorePage_WhenSearch_UsesCorrectMaintainerForSearch(t *testing.T) 
 
 func TestBuildStorePage_WhenSearch_BuildsInstallButtonState(t *testing.T) {
 	testObjects := getTestObjects(t)
-	testObjects.Builder.GlobalConfig.ShowUnofficialAppsSearch = true
 	installedTimestamp := time.Date(2026, time.January, 2, 10, 0, 0, 0, time.UTC)
 	newerTimestamp := time.Date(2026, time.January, 3, 10, 0, 0, 0, time.UTC)
 
 	testObjects.AppStoreClient.EXPECT().
-		SearchForApps("", "app", true).
+		SearchForApps("maintainer", "app", true).
 		Return([]store.AppWithLatestVersion{
 			{
 				Maintainer:                     "m1",
@@ -657,15 +651,6 @@ func TestBuildStorePage_WhenSearchFails_ReturnsError(t *testing.T) {
 	pageContent, err := testObjects.Builder.BuildStorePage("maintainer", "app", false, true)
 	assert.Equal(t, expectedErr, err)
 	assert.Nil(t, pageContent)
-}
-
-func TestBuildStorePage_EchoesProfileToggleForUnofficialAppsSearch(t *testing.T) {
-	testObjects := getTestObjects(t)
-	testObjects.Builder.GlobalConfig.ShowUnofficialAppsSearch = false
-
-	pageContent, err := testObjects.Builder.BuildStorePage("maintainer", "app", false, false)
-	assert.Nil(t, err)
-	assert.False(t, pageContent.ShowUnofficialToggle)
 }
 
 func TestBuildSetPasswordPage_ReturnsUsername(t *testing.T) {

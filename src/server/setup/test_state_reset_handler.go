@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"server/app_store"
 	"server/configs"
 	"server/tools"
 	"sync"
@@ -15,6 +16,7 @@ type TestStateResetHandler struct {
 	DirectoryProvider          tools.DirectoryProvider
 	DatabaseSnapshotRepository u.DatabaseSnapshotRepository
 	ConfigsService             configs.ConfigsService
+	MaintainerRepository       *app_store.MaintainerRepositoryImpl
 }
 
 func (d *TestStateResetHandler) ResetTestStateHandler(w http.ResponseWriter, r *http.Request) {

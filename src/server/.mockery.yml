@@ -201,6 +201,14 @@ packages:
         config:
           filename: version_verifier_mock.go
           structname: VersionVerifierMock
+      MaintainerKeyResolver:
+        config:
+          filename: maintainer_key_resolver_mock.go
+          structname: MaintainerKeyResolverMock
+      MaintainerRepository:
+        config:
+          filename: maintainer_repository_mock.go
+          structname: MaintainerRepositoryMock
   server/app_migrations:
     interfaces:
       ComposeDatabaseExtractor:

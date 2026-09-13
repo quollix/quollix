@@ -523,16 +523,9 @@ func filterFrontendApps(appNames []string) []string {
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildStorePage(maintainerName string, appName string, showUnofficial bool, isSearch bool) (*StorePageContent, error) {
-	var searchedMaintainer string
-	if showUnofficial {
-		searchedMaintainer = ""
-	} else {
-		searchedMaintainer = maintainerName
-	}
-
 	appsToDisplay := []StoreAppDto{}
 	if isSearch {
-		foundApps, err := b.AppStoreClient.SearchForApps(searchedMaintainer, appName, showUnofficial)
+		foundApps, err := b.AppStoreClient.SearchForApps(maintainerName, appName, showUnofficial)
 		if err != nil {
 			return nil, err
 		}
@@ -566,7 +559,6 @@ func (b *FrontendPageDataBuilderImpl) BuildStorePage(maintainerName string, appN
 		MaintainerSearchTerm: maintainerName,
 		AppSearchTerm:        appName,
 		ShowUnofficialApps:   showUnofficial,
-		ShowUnofficialToggle: b.GlobalConfig.ShowUnofficialAppsSearch,
 		Apps:                 appsToDisplay,
 	}, nil
 }
@@ -617,6 +609,7 @@ func (b *FrontendPageDataBuilderImpl) BuildVersionsPage(maintainer string, app s
 			VersionId:                  version.VersionId,
 			Name:                       version.Name,
 			CreationTimestampFormatted: version.CreationTimestamp.UTC().Format(tools.PrettyFrontendTimeLayout),
+			IsMigrationCheckpoint:      version.IsMigrationCheckpoint,
 			CanInstall:                 canInstall,
 		})
 	}

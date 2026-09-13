@@ -8,7 +8,10 @@ import (
 	u "github.com/quollix/common/utils"
 )
 
-const databaseReadyAttempts = 30
+const (
+	databaseReadyAttempts     = 30
+	postgresMaintenanceDbName = "postgres"
+)
 
 type AppMigrationCommandExecutor interface {
 	StartService(maintainer, appName, composePath, serviceName string) error
@@ -39,7 +42,8 @@ func (e *AppMigrationCommandExecutorImpl) StopCompose(maintainer, appName, compo
 func (e *AppMigrationCommandExecutorImpl) WaitUntilPostgresReady(containerName, postgresUser string) error {
 	var lastErr error
 	for range databaseReadyAttempts {
-		_, err := e.CommandRunner.RunCommand("docker", "exec", containerName, "pg_isready", "-U", postgresUser)
+		// Verify the same maintenance database connection that pg_dumpall restore uses.
+		_, err := e.CommandRunner.RunCommand("docker", "exec", containerName, "psql", "-U", postgresUser, "-d", postgresMaintenanceDbName, "-c", "SELECT 1")
 		if err == nil {
 			return nil
 		}
@@ -55,7 +59,8 @@ func (e *AppMigrationCommandExecutorImpl) DumpPostgres(containerName, postgresUs
 }
 
 func (e *AppMigrationCommandExecutorImpl) ImportDump(containerName, postgresUser, dumpPathInContainer string) error {
-	_, err := e.CommandRunner.RunCommand("docker", "exec", containerName, "psql", "-U", postgresUser, "-f", dumpPathInContainer)
+	// pg_dumpall restores should connect to a maintenance DB, not the app DB being recreated.
+	_, err := e.CommandRunner.RunCommand("docker", "exec", containerName, "psql", "-U", postgresUser, "-d", postgresMaintenanceDbName, "-f", dumpPathInContainer)
 	return err
 }
 
