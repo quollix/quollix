@@ -7,6 +7,8 @@ import (
 	u "github.com/quollix/common/utils"
 )
 
+const appAccessSecretLifetime = 10 * time.Second
+
 var SecretDoesNotExistError = "secret does not exist"
 
 type SecretAndCookieStorage interface {
@@ -45,8 +47,8 @@ func (s *SecretAndCookieStorageImpl) GenerateSecretForCookie(cookieValue string,
 		CookieValue: cookieValue,
 		AppName:     appName,
 	})
-	time.AfterFunc(3*time.Second, func() {
-		// Secrets should be consumed almost immediately by users, so storage is only temporary.
+	time.AfterFunc(appAccessSecretLifetime, func() {
+		// Keep the fallback lifetime short; successful use consumes the secret immediately.
 		s.Secrets.Delete(secret)
 	})
 	return secret, nil

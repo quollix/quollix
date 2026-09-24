@@ -23,6 +23,11 @@ func TestIsDockerImageUnsupportedPlatformError(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "NoMatchingManifestAmd64Variant",
+			output:   "no matching manifest for linux/amd64/v4 in the manifest list entries: no match for platform in manifest: not found",
+			expected: true,
+		},
+		{
 			name:     "NoMatchForPlatform",
 			output:   "failed to solve: no match for platform in manifest: not found",
 			expected: true,

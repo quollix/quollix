@@ -11,7 +11,7 @@ import (
 
 const (
 	DockerHubRateLimitReachedErrorMessage      = "Docker Hub rate limit reached. Please try again later, consider using a Docker Hub account to increase your rate limit, or buy a Docker Hub subscription to remove rate limits."
-	DockerImageUnsupportedPlatformErrorMessage = "This app cannot be started on this device because one of its Docker images does not support this CPU architecture. Ask the app maintainer for an ARM64-compatible image."
+	DockerImageUnsupportedPlatformErrorMessage = "This app cannot be started because one of its Docker images does not support this device's platform."
 )
 
 type DockerService interface {

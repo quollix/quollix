@@ -18,7 +18,6 @@ import (
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
-	"github.com/quollix/deepstack"
 )
 
 func TestPruningApp(t *testing.T) {
@@ -548,11 +547,7 @@ func TestUploadWithBadContent(t *testing.T) {
 	}
 	err := client.Apps.UploadVersionFile(originalVersionFile)
 	assert.NotNil(t, err)
-	deepStackError, ok := err.(*deepstack.DeepStackError)
-	assert.True(t, ok)
-	errorMessageAny, ok := deepStackError.Context["response_body"]
-	assert.True(t, ok)
-	errorMessage, ok := errorMessageAny.(string)
+	errorMessage, ok := u.ExtractResponseErrorMessage(err)
 	assert.True(t, ok)
 	assert.True(t, strings.Contains(errorMessage, "service has invalid container_name"))
 }
