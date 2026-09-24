@@ -51,8 +51,10 @@ func TestPostgresMajorUpdateMigratesData(t *testing.T) {
 	assertSamplePostgresReady(t)
 
 	db = openSamplePostgresDb(t, client)
-	defer db.Close()
 	assert.Equal(t, samplePostgresValue, readSamplePostgresValue(t, db))
+	assert.Nil(t, db.Close())
+
+	assertSamplePostgresValueSurvivesRestart(t, client, appAfterUpdate.AppId)
 }
 
 func TestUploadedPostgresMajorUpdateMigratesData(t *testing.T) {
@@ -78,6 +80,18 @@ func TestUploadedPostgresMajorUpdateMigratesData(t *testing.T) {
 	assertSamplePostgresReady(t)
 
 	db = openSamplePostgresDb(t, client)
+	assert.Equal(t, samplePostgresValue, readSamplePostgresValue(t, db))
+	assert.Nil(t, db.Close())
+
+	assertSamplePostgresValueSurvivesRestart(t, client, appAfterUpdate.AppId)
+}
+
+func assertSamplePostgresValueSurvivesRestart(t *testing.T, client *api_client.QuollixClient, appId string) {
+	assert.Nil(t, client.Apps.Stop(appId))
+	assert.Nil(t, client.Apps.Start(appId))
+	assertSamplePostgresReady(t)
+
+	db := openSamplePostgresDb(t, client)
 	defer db.Close()
 	assert.Equal(t, samplePostgresValue, readSamplePostgresValue(t, db))
 }

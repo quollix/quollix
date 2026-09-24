@@ -16,7 +16,9 @@ const (
 
 var ExpectedAppDatabaseMigrationErrors = []string{
 	InvalidPostgresEnvironmentError,
+	InvalidPostgresDataVolumeError,
 	MissingPostgresDataVolumeError,
+	MultiplePostgresDataVolumesError,
 	MultiplePostgresServicesError,
 	MultipleRabbitMQServicesError,
 	PostgresDataVolumeChangedError,

@@ -166,7 +166,7 @@ func (b *BackupsPage) waitForSingleBackupRow() *browsertest.Element {
 }
 
 func (b *BackupsPage) waitUntilBackupsLoaded() {
-	err := u.Eventually(func() error {
+	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		isLoading, _, err := b.Frame.Page.Has("#backups-loading-message")
 		if err != nil {
 			return err

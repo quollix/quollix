@@ -74,8 +74,8 @@ var (
 		VolumeDeclaration: sampleAppVolumeDeclaration,
 	})
 
-	SamplePostgresAppVersion17ComposeYAML  = buildSamplePostgresAppComposeYAML("17.0-alpine")
-	SamplePostgresAppVersion18ComposeYAML  = buildSamplePostgresAppComposeYAML("18.0-alpine")
+	SamplePostgresAppVersion17ComposeYAML  = buildSamplePostgresAppComposeYAML("17.0-alpine", "/var/lib/postgresql/data")
+	SamplePostgresAppVersion18ComposeYAML  = buildSamplePostgresAppComposeYAML("18.0-alpine", "/var/lib/postgresql")
 	SampleRabbitMQAppVersion311ComposeYAML = buildSampleRabbitMQAppComposeYAML("3.11.18-management-alpine", sampleRabbitMQLegacyFeatureFlagsEnvironment)
 	SampleRabbitMQAppVersion312ComposeYAML = buildSampleRabbitMQAppComposeYAML("3.12.14-management-alpine", "")
 )
@@ -121,7 +121,7 @@ func buildSampleAppComposeYAML(options sampleAppComposeOptions) string {
 %s`, options.Version, options.VersionSecretName, options.VersionSecretName, options.ExtraEnvironment, options.Port, options.VolumeMapping, options.Port, options.VolumeDeclaration)
 }
 
-func buildSamplePostgresAppComposeYAML(postgresTag string) string {
+func buildSamplePostgresAppComposeYAML(postgresTag, postgresDataPath string) string {
 	return fmt.Sprintf(`services:
   postgresapp:
     image: postgres:%s
@@ -133,13 +133,13 @@ func buildSamplePostgresAppComposeYAML(postgresTag string) string {
     ports:
       - 127.0.0.1:5433:5432
     volumes:
-      - samplemaintainer_postgresapp_data:/var/lib/postgresql/data
+      - samplemaintainer_postgresapp_data:%s
     labels:
       quollix.port: 5432
 
 volumes:
   samplemaintainer_postgresapp_data:
-`, postgresTag)
+`, postgresTag, postgresDataPath)
 }
 
 func buildSampleRabbitMQAppComposeYAML(rabbitMQTag string, extraEnvironment string) string {

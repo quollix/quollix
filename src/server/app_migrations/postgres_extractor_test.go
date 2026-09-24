@@ -113,12 +113,13 @@ services:
       - POSTGRES_USER=sample
       - POSTGRES_DB=sample
     volumes:
-      - quollix_sample_postgres:/var/lib/postgresql/data
+      - quollix_sample_postgres:/var/lib/postgresql
 `))
 
 	assert.Nil(t, err)
 	assert.True(t, exists)
 	assert.Equal(t, "sample", service.User)
+	assert.Equal(t, "quollix_sample_postgres", service.DataVolume)
 }
 
 func TestExtractPostgresService_DefaultsUserToPostgres(t *testing.T) {
@@ -162,11 +163,40 @@ services:
   postgres:
     image: postgres:17.5-alpine
     container_name: quollix_sample_postgres
-    volumes:
-      - quollix_sample_uploads:/uploads
 `))
 
 	assert.Equal(t, MissingPostgresDataVolumeError, u.ExtractError(err))
+	assert.False(t, exists)
+	assert.Nil(t, service)
+}
+
+func TestExtractPostgresService_MultipleDataVolumesReturnsError(t *testing.T) {
+	service, exists, err := composeDatabaseExtractor.ExtractPostgresService([]byte(`
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    container_name: quollix_sample_postgres
+    volumes:
+      - quollix_sample_postgres:/var/lib/postgresql/data
+      - quollix_sample_uploads:/uploads
+`))
+
+	assert.Equal(t, MultiplePostgresDataVolumesError, u.ExtractError(err))
+	assert.False(t, exists)
+	assert.Nil(t, service)
+}
+
+func TestExtractPostgresService_InvalidDataVolumeReturnsError(t *testing.T) {
+	service, exists, err := composeDatabaseExtractor.ExtractPostgresService([]byte(`
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    container_name: quollix_sample_postgres
+    volumes:
+      - quollix_sample_postgres
+`))
+
+	assert.Equal(t, InvalidPostgresDataVolumeError, u.ExtractError(err))
 	assert.False(t, exists)
 	assert.Nil(t, service)
 }

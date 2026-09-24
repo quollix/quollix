@@ -78,6 +78,7 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 
 	backupsPage := backedUpAppsPage.OpenListBackupsPage(tools.SampleMaintainer, tools.SampleApp)
 	backupsPage.AssertMaintainerAndApp(tools.SampleMaintainer, tools.SampleApp)
+	assert.Equal(t, 1, len(backupsPage.ListBackups()))
 	backupsPage.ClickBack()
 
 	backupsPage = frame.Pages.BackedUpAppsPage.OpenListBackupsPage(tools.SampleMaintainer, tools.SampleApp)

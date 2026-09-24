@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	databaseReadyAttempts     = 30
+	databaseReadyTimeout      = 30 * time.Second
+	databaseReadyInterval     = time.Second
 	postgresMaintenanceDbName = "postgres"
 )
 
@@ -40,17 +41,16 @@ func (e *AppMigrationCommandExecutorImpl) StopCompose(maintainer, appName, compo
 }
 
 func (e *AppMigrationCommandExecutorImpl) WaitUntilPostgresReady(containerName, postgresUser string) error {
-	var lastErr error
-	for range databaseReadyAttempts {
-		// Verify the same maintenance database connection that pg_dumpall restore uses.
-		_, err := e.CommandRunner.RunCommand("docker", "exec", containerName, "psql", "-U", postgresUser, "-d", postgresMaintenanceDbName, "-c", "SELECT 1")
-		if err == nil {
-			return nil
+	return u.EventuallyWithTimeout(databaseReadyTimeout, databaseReadyInterval, func() error {
+		// The image entrypoint starts a temporary server while initializing an empty volume, so wait for it to replace PID 1 with the final postgres process.
+		_, err := e.CommandRunner.RunCommand("docker", "exec", containerName, "sh", "-c", `test "$(cat /proc/1/comm)" = postgres`)
+		if err != nil {
+			return err
 		}
-		lastErr = err
-		time.Sleep(time.Second)
-	}
-	return lastErr
+		// Verify the same maintenance database connection that pg_dumpall restore uses.
+		_, err = e.CommandRunner.RunCommand("docker", "exec", containerName, "psql", "-U", postgresUser, "-d", postgresMaintenanceDbName, "-c", "SELECT 1")
+		return err
+	})
 }
 
 func (e *AppMigrationCommandExecutorImpl) DumpPostgres(containerName, postgresUser, dumpPathInContainer string) error {
@@ -73,16 +73,10 @@ func (e *AppMigrationCommandExecutorImpl) RecreateVolume(volume string) error {
 }
 
 func (e *AppMigrationCommandExecutorImpl) WaitUntilRabbitMQReady(containerName string) error {
-	var lastErr error
-	for range databaseReadyAttempts {
+	return u.EventuallyWithTimeout(databaseReadyTimeout, databaseReadyInterval, func() error {
 		_, err := e.CommandRunner.RunCommand("docker", "exec", containerName, "rabbitmq-diagnostics", "-q", "check_running")
-		if err == nil {
-			return nil
-		}
-		lastErr = err
-		time.Sleep(time.Second)
-	}
-	return lastErr
+		return err
+	})
 }
 
 func (e *AppMigrationCommandExecutorImpl) EnableRabbitMQFeatureFlags(containerName string) error {

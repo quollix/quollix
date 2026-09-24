@@ -9,16 +9,15 @@ import (
 )
 
 const (
-	MultiplePostgresServicesError   = "multiple postgres services found"
-	MissingPostgresDataVolumeError  = "missing postgres data volume"
-	InvalidPostgresEnvironmentError = "invalid postgres environment"
-	MultipleRabbitMQServicesError   = "multiple rabbitmq services found"
+	MultiplePostgresServicesError    = "multiple postgres services found"
+	MissingPostgresDataVolumeError   = "missing postgres data volume"
+	MultiplePostgresDataVolumesError = "multiple postgres data volumes found"
+	InvalidPostgresDataVolumeError   = "invalid postgres data volume"
+	InvalidPostgresEnvironmentError  = "invalid postgres environment"
+	MultipleRabbitMQServicesError    = "multiple rabbitmq services found"
 )
 
-const (
-	postgresDataPath    = "/var/lib/postgresql/data"
-	defaultPostgresUser = "postgres"
-)
+const defaultPostgresUser = "postgres"
 
 type PostgresService struct {
 	ServiceName   string
@@ -67,9 +66,9 @@ func (e *ComposeDatabaseExtractorImpl) ExtractPostgresService(composeContent []b
 	}
 
 	imageMajor, _ := parsePostgresImageMajor(service.Image)
-	dataVolume := extractPostgresDataVolume(service.Volumes)
-	if dataVolume == "" {
-		return nil, false, u.Logger.NewError(MissingPostgresDataVolumeError, "service_name", service.ServiceName)
+	dataVolume, err := extractPostgresDataVolume(service.Volumes)
+	if err != nil {
+		return nil, false, err
 	}
 
 	env, err := extractEnvironment(service.Environment)
@@ -178,17 +177,19 @@ func extractImageTag(image string) string {
 	return tag
 }
 
-func extractPostgresDataVolume(volumes []string) string {
-	for _, volume := range volumes {
-		parts := strings.Split(volume, ":")
-		if len(parts) < 2 {
-			continue
-		}
-		if parts[1] == postgresDataPath {
-			return parts[0]
-		}
+func extractPostgresDataVolume(volumes []string) (string, error) {
+	if len(volumes) == 0 {
+		return "", u.Logger.NewError(MissingPostgresDataVolumeError)
 	}
-	return ""
+	if len(volumes) > 1 {
+		return "", u.Logger.NewError(MultiplePostgresDataVolumesError)
+	}
+
+	source, target, ok := strings.Cut(volumes[0], ":")
+	if !ok || source == "" || target == "" {
+		return "", u.Logger.NewError(InvalidPostgresDataVolumeError)
+	}
+	return source, nil
 }
 
 func extractEnvironment(environment any) (map[string]string, error) {
