@@ -1,4 +1,4 @@
-FROM alpine:3.24.1
+FROM alpine:3.24.2
 RUN adduser -D sample
 COPY ./sampleapp /sampleapp
 RUN chmod +x /sampleapp && mkdir -p /data && chown sample:sample /sampleapp /data

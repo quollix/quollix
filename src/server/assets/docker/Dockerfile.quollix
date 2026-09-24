@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM alpine:3.24.1 AS runtime
+FROM alpine:3.24.2 AS runtime
 RUN apk add --no-cache docker-cli docker-compose tzdata
 WORKDIR /opt/server
 COPY assets /opt/server/assets
