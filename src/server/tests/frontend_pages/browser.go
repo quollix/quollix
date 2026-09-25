@@ -1,6 +1,7 @@
 package frontend_pages
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -12,7 +13,8 @@ import (
 const browserTimeout = 10 * time.Second
 
 func newBrowser(t *testing.T) *browsertest.Browser {
-	browser, err := browsertest.NewBrowser(false)
+	headful := os.Getenv("HEADFUL") == "true"
+	browser, err := browsertest.NewBrowser(headful)
 	assert.Nil(t, err)
 	return browser
 }

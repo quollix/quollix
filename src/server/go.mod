@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.12.3
 	github.com/moby/moby/client v0.6.0
-	github.com/quollix/common v1.3.20
+	github.com/quollix/common v1.3.21
 	github.com/quollix/deepstack v1.2.3
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.57.0

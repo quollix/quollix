@@ -22,8 +22,8 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	defer frontend_pages.CloseBrowser()
 	code := m.Run()
+	frontend_pages.CloseBrowser()
 	os.Exit(code)
 }
 
