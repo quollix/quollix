@@ -9,6 +9,10 @@ import (
 )
 
 func CompleteAppComposeYaml(app *RepoApp, baseDomain, ianaTimeZone string) ([]byte, map[string]string, error) {
+	if validation.IsWgEasyApp(app.Maintainer, app.AppName) {
+		return app.VersionContent, map[string]string{}, nil
+	}
+
 	completedEnvVars := map[string]string{
 		tools.ComposeEnvVars.BaseDomain:       baseDomain,
 		tools.ComposeEnvVars.LegacyServerHost: baseDomain,

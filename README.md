@@ -18,8 +18,8 @@ Please read the [Community](https://quollix.org/docs/project/community/) article
 
 ### License
 
-This project is licensed under the [MIT License](LICENSE).
+This project's source code is licensed under the [MIT License](LICENSE).
 
-Quollix branding is not part of that license. See [TRADEMARKS.md](TRADEMARKS.md).
+Brand assets covered by the [Quollix Brand Policy](BRAND_POLICY.md) are excluded from this license unless expressly stated otherwise.
 
 Third-party assets are distributed under their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
