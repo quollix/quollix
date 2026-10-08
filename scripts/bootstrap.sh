@@ -15,7 +15,7 @@ curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
 
 echo "Installing ARM64 Docker build emulation"
-# Needed by maintainers who build arm64 Docker images on amd64 hosts.
+# Needed to build arm64 Docker images on amd64 hosts.
 sudo docker run --privileged --rm tonistiigi/binfmt --install arm64
 
 echo "Installing go"

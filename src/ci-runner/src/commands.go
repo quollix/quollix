@@ -26,6 +26,9 @@ var ReleaseCmd = &cobra.Command{
 var TestCmd = &cobra.Command{
 	Use:   "test",
 	Short: "test commands",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		BuildLocalSampleAppDockerImageIfNotPresent()
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		u.ShowHelpCommand(cmd)
 	},
@@ -148,6 +151,9 @@ func ConfigureTestCmd() {
 var DeployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "deploy commands",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		BuildLocalSampleAppDockerImageIfNotPresent()
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		u.ShowHelpCommand(cmd)
 	},

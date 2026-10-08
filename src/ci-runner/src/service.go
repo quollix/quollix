@@ -111,7 +111,6 @@ func TestAll() {
 
 func TestFrontend(keepSetup bool, testFilter string, headful bool) {
 	Tr.Log.TaskDescription("Running frontend tests")
-	BuildLocalSampleAppDockerImageIfNotPresent()
 	if keepSetup {
 		Tr.Config.CleanupFunc = nil
 		Tr.Log.Info("Keep-setup enabled, reusing frontend environment when possible")
@@ -155,7 +154,6 @@ func isContainerRunning(containerName string) bool {
 func TestComponentWithProdProfile() {
 	Tr.Log.TaskDescription("Running component tests against the PROD container")
 	defer Tr.Cleanup()
-	BuildLocalSampleAppDockerImageIfNotPresent()
 	DeployLocalContainer(false, containerEnv(false, false))
 	runServerTests(ProdProfileBuildTag)
 }
@@ -163,7 +161,6 @@ func TestComponentWithProdProfile() {
 func TestComponentWithDevProfile() {
 	Tr.Log.TaskDescription("Running component tests against the dev container")
 	defer Tr.Cleanup()
-	BuildLocalSampleAppDockerImageIfNotPresent()
 	DeployLocalContainer(false, containerEnv(true, false))
 	runServerTests(ComponentBuildTag)
 }
@@ -171,7 +168,6 @@ func TestComponentWithDevProfile() {
 func TestBehindProxyHttpMode() {
 	Tr.Log.TaskDescription("Running behind-proxy HTTP mode component tests")
 	defer Tr.Cleanup()
-	BuildLocalSampleAppDockerImageIfNotPresent()
 	DeployLocalContainer(false, containerEnv(true, false,
 		"REDIRECT_HTTP_TO_HTTPS=false",
 		"APP_FORWARDED_PROTO=http",
@@ -182,7 +178,6 @@ func TestBehindProxyHttpMode() {
 func TestSpecialPasswords() {
 	Tr.Log.TaskDescription("Running special-password component tests")
 	defer Tr.Cleanup()
-	BuildLocalSampleAppDockerImageIfNotPresent()
 	deployLocalContainer(false, containerEnv(true, false), specialPolicyPassword)
 	runServerTests(SpecialPasswordsTag)
 }
