@@ -36,7 +36,7 @@ func (a *FrameAssertions) PathEventually(expectedPath string) *FrameType {
 			return err
 		}
 		if currentUrl.Path != expectedPath {
-			return fmt.Errorf("expected path %s, got %s", expectedPath, currentUrl.Path)
+			return fmt.Errorf("expected path %s, got URL %s", expectedPath, currentUrl.String())
 		}
 		return nil
 	})

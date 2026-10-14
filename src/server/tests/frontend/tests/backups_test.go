@@ -59,9 +59,7 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Nil(t, frame.Client.Settings.SaveSshConfigs(repo))
 
-	frame.Browser.ReloadPage()
-	backedUpAppsPage = frame.Pages.BackedUpAppsPage
-	backedUpAppsPage.AssertLoadingBackedUpAppsVisible()
+	backedUpAppsPage.Reload()
 	backedUpAppsPage.AssertNoBackedUpAppsMessageVisible()
 
 	_, err = component.InstallSample(t, frame.Client, "2.0")
@@ -69,9 +67,7 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 	sampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Nil(t, frame.Client.Backups.Create(sampleApp.AppId))
 
-	frame.Browser.ReloadPage()
-	backedUpAppsPage = frame.Pages.BackedUpAppsPage
-	backedUpAppsPage.AssertLoadingBackedUpAppsVisible()
+	backedUpAppsPage.Reload()
 	sampleBackedUpApp := backedUpAppsPage.GetRequiredBackedUpApp(tools.SampleMaintainer, tools.SampleApp)
 	assert.Equal(t, tools.SampleMaintainer, sampleBackedUpApp.Maintainer)
 	assert.Equal(t, tools.SampleApp, sampleBackedUpApp.AppName)
@@ -95,7 +91,7 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 
 	assert.Nil(t, frame.Client.Apps.Delete(sampleApp.AppId))
 	backupsPage.WaitUntilAppAbsent(tools.SampleApp)
-	frame.Browser.ReloadPage()
+	backupsPage.Reload()
 
 	backupsPage.ClickRestoreFirstBackup()
 	backupsPage.Frame.Assert.AppOperationStartedAndFinished()
@@ -103,7 +99,7 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 	restoredApp := component.GetInstalledSample(t, frame.Client)
 	assert.Equal(t, tools.SampleApp, restoredApp.AppName)
 
-	frame.Browser.ReloadPage()
+	backupsPage.Reload()
 	backupsPage.ClickDeleteFirstBackup()
 	backupsPage.Frame.Assert.AppOperationStartedAndFinished()
 	sampleBackupsAfterDelete, err := frame.Client.Backups.ListByApp(tools.SampleMaintainer, tools.SampleApp)

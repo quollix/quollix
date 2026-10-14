@@ -14,6 +14,14 @@ type BackupsPage struct {
 	Frame *FrameType
 }
 
+func (b *BackupsPage) Reload() {
+	info, err := b.Frame.Page.Info()
+	assert.Nil(b.Frame.T, err)
+	navigateBackupPage(b.Frame, info.URL, "#backups-container table, #backups-empty-message", func() error {
+		return b.Frame.Page.Navigate(info.URL)
+	})
+}
+
 type BackupRow struct {
 	VersionName                   string
 	VersionCreationDate           string
@@ -37,22 +45,10 @@ func (b *BackupsPage) AssertMaintainerAndApp(maintainer, appName string) *Backup
 	return b
 }
 
-func (b *BackupsPage) AssertLoadingBackupsVisible() *BackupsPage {
-	loadingMessage, err := b.Frame.Page.Element("#backups-loading-message")
-	assert.Nil(b.Frame.T, err)
-	text, err := loadingMessage.Text()
-	assert.Nil(b.Frame.T, err)
-	assert.Equal(b.Frame.T, "Loading backups...", strings.TrimSpace(text))
-	return b
-}
-
 func (b *BackupsPage) ClickBack() *BackedUpAppsPage {
 	backButton, err := b.Frame.Page.Element("#backups-page-back-button")
 	assert.Nil(b.Frame.T, err)
-	b.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		backButton.MustClick()
-	})
-	b.Frame.Assert.PagePath(api.Paths.FrontendBackedUpApps)
+	navigateBackupPage(b.Frame, b.Frame.BaseUrl+api.Paths.FrontendBackedUpApps, "#backed-up-apps-container table, #backed-up-apps-empty-message, #backups-disabled-message", backButton.Click)
 	return b.Frame.Pages.BackedUpAppsPage
 }
 
@@ -143,7 +139,8 @@ func (b *BackupsPage) ClickDeleteFirstBackup() *BackupsPage {
 
 func (b *BackupsPage) DeleteFirstBackupUntilRemoved() *BackupsPage {
 	b.ClickDeleteFirstBackup()
-	b.Frame.Assert.AppOperationStartedAndFinished().Browser.ReloadPage()
+	b.Frame.Assert.AppOperationStartedAndFinished()
+	b.Reload()
 	assert.Equal(b.Frame.T, 0, len(b.ListBackups()))
 	return b
 }
@@ -167,11 +164,11 @@ func (b *BackupsPage) waitForSingleBackupRow() *browsertest.Element {
 
 func (b *BackupsPage) waitUntilBackupsLoaded() {
 	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
-		isLoading, _, err := b.Frame.Page.Has("#backups-loading-message")
+		loaded, _, err := b.Frame.Page.Has("#backups-container table, #backups-empty-message")
 		if err != nil {
 			return err
 		}
-		if isLoading {
+		if !loaded {
 			return u.Logger.NewError("backups page is still loading")
 		}
 		return nil

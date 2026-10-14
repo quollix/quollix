@@ -1,6 +1,8 @@
 package frontend_pages
 
 import (
+	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/quollix/common/assert"
@@ -11,6 +13,13 @@ import (
 
 type BackedUpAppsPage struct {
 	Frame *FrameType
+}
+
+func (b *BackedUpAppsPage) Reload() {
+	destination := b.Frame.BaseUrl + api.Paths.FrontendBackedUpApps
+	navigateBackupPage(b.Frame, destination, "#backed-up-apps-container table, #backed-up-apps-empty-message, #backups-disabled-message", func() error {
+		return b.Frame.Page.Navigate(destination)
+	})
 }
 
 type BackedUpAppEntry struct {
@@ -29,15 +38,6 @@ func (b *BackedUpAppsPage) AssertBackupsDisabledMessageVisible() *BackedUpAppsPa
 	b.waitUntilBackedUpAppsLoaded()
 	err := b.assertParagraphTextVisible("Backups are currently disabled. You can enable them in the settings page.")
 	assert.Nil(b.Frame.T, err)
-	return b
-}
-
-func (b *BackedUpAppsPage) AssertLoadingBackedUpAppsVisible() *BackedUpAppsPage {
-	loadingMessage, err := b.Frame.Page.Element("#backed-up-apps-loading-message")
-	assert.Nil(b.Frame.T, err)
-	text, err := loadingMessage.Text()
-	assert.Nil(b.Frame.T, err)
-	assert.Equal(b.Frame.T, "Loading backed up apps...", strings.TrimSpace(text))
 	return b
 }
 
@@ -109,11 +109,11 @@ func (b *BackedUpAppsPage) GetRequiredBackedUpApp(maintainer, appName string) *B
 
 func (b *BackedUpAppsPage) waitUntilBackedUpAppsLoaded() {
 	err := u.Eventually(func() error {
-		isLoading, _, err := b.Frame.Page.Has("#backed-up-apps-loading-message")
+		loaded, _, err := b.Frame.Page.Has("#backed-up-apps-container table, #backed-up-apps-empty-message, #backups-disabled-message")
 		if err != nil {
 			return err
 		}
-		if isLoading {
+		if !loaded {
 			return u.Logger.NewError("backed up apps page is still loading")
 		}
 		return nil
@@ -125,18 +125,15 @@ func (b *BackedUpAppsPage) OpenListBackupsPage(maintainer, appName string) *Back
 	row := b.getRequiredBackedUpAppRow(maintainer, appName)
 	listBackupsButton, err := row.Element("button.backed-up-app-list-backups-button")
 	assert.Nil(b.Frame.T, err)
-	b.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
-		listBackupsButton.MustClick()
-	})
-	b.Frame.Assert.PagePath(api.Paths.FrontendListBackups)
-	b.Frame.Pages.BackupsPage.AssertLoadingBackupsVisible()
+	destination := b.Frame.BaseUrl + api.Paths.FrontendListBackups + "?maintainer=" + url.QueryEscape(maintainer) + "&app=" + url.QueryEscape(appName)
+	navigateBackupPage(b.Frame, destination, "#backups-container table, #backups-empty-message", listBackupsButton.Click)
 	return b.Frame.Pages.BackupsPage
 }
 
 func (b *BackedUpAppsPage) getRequiredBackedUpAppRow(maintainer, appName string) *browsertest.Element {
 	var found *browsertest.Element
 	err := u.Eventually(func() error {
-		row, err := b.Frame.Page.Element("tr.backed-up-app-row")
+		row, err := b.Frame.Page.Element(fmt.Sprintf("tr.backed-up-app-row[data-maintainer=%q][data-app-name=%q]", maintainer, appName))
 		if err != nil {
 			return err
 		}

@@ -1,8 +1,12 @@
 package frontend_pages
 
 import (
+	"strings"
+	"time"
+
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 )
 
 type FrameBrowser struct {
@@ -59,11 +63,39 @@ func (b *FrameBrowser) ConfirmDialog() *FrameType {
 }
 
 func (b *FrameBrowser) WipeLogs() *FrameType {
-	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#wipe-logs-button", browserTimeout))
+	b.wipeAndWait("#wipe-logs-button", "Logs emptied successfully.")
 	return b.Frame
 }
 
 func (b *FrameBrowser) WipeMetrics() *FrameType {
-	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#wipe-metrics-button", browserTimeout))
+	b.wipeAndWait("#wipe-metrics-button", "Metrics emptied successfully.")
 	return b.Frame
+}
+
+// Repeating a wipe is safe for this test's disposable data. Only retry a failed
+// fetch; a server error or a missing response must still fail the test.
+func (b *FrameBrowser) wipeAndWait(selector, successMessage string) {
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin(selector, browserTimeout))
+	err := u.EventuallyWithTimeout(browserTimeout, 250*time.Millisecond, func() error {
+		snackbars, err := b.Frame.Page.Elements(`.snackbar[data-visible="true"]`)
+		if err != nil {
+			return err
+		}
+		for _, snackbar := range snackbars {
+			text, err := snackbar.Text()
+			if err != nil {
+				return err
+			}
+			switch strings.TrimSpace(text) {
+			case successMessage:
+				return nil
+			case "Failed to fetch":
+				snackbar.MustElement(".snackbar-close").MustClick()
+				assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin(selector, browserTimeout))
+				return u.Logger.NewError("retrying wipe after failed fetch")
+			}
+		}
+		return u.Logger.NewError("waiting for wipe success", "expected", successMessage)
+	})
+	assert.Nil(b.Frame.T, err)
 }

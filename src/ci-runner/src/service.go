@@ -112,6 +112,7 @@ func deployLocalContainer(keepDb bool, envVars []string, sshPassword string) {
 func TestAll() {
 	Tr.Log.Info("Running all CI tests")
 	TestUnit()
+	TestFrontend(false, "", false)
 	TestIntegration()
 	TestComponentWithDevProfile()
 	TestComponentWithProdProfile()
@@ -119,7 +120,6 @@ func TestAll() {
 	TestBehindProxyHttpMode()
 	TestOidc(false, false)
 	TestSpecialPasswords()
-	TestFrontend(false, "", false)
 }
 
 func TestFrontend(keepSetup bool, testFilter string, headful bool) {

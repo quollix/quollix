@@ -112,6 +112,6 @@ func TestFrameWipeLogsAndMetrics(t *testing.T) {
 	component.InstallGrafana(t, frame.Client)
 
 	frame.Pages.OpenInstalledAppsPage()
-	frame.Browser.WipeLogs().Assert.SnackbarVisibleWithTextEventually("Logs emptied successfully.")
-	frame.Browser.WipeMetrics().Assert.SnackbarVisibleWithTextEventually("Metrics emptied successfully.")
+	frame.Browser.WipeLogs()
+	frame.Browser.WipeMetrics()
 }
