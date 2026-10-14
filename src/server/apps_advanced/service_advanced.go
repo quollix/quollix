@@ -191,11 +191,11 @@ func (b *AppsServiceAdvancedImpl) replaceInstalledAppVersion(app *apps_basic.Rep
 	newApp.AppSecret = app.AppSecret
 	newApp.Secrets = maps.Clone(app.Secrets)
 
-	oldComposeContent, _, err := apps_basic.CompleteAppComposeYaml(app, "", "")
+	oldComposeContent, err := apps_basic.CompleteAppComposeYaml(app, "", "", &api.ObservabilitySettings{})
 	if err != nil {
 		return err
 	}
-	newComposeContent, _, err := apps_basic.CompleteAppComposeYaml(newApp, "", "")
+	newComposeContent, err := apps_basic.CompleteAppComposeYaml(newApp, "", "", &api.ObservabilitySettings{})
 	if err != nil {
 		return err
 	}

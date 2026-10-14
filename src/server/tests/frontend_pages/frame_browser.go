@@ -9,6 +9,16 @@ type FrameBrowser struct {
 	Frame *FrameType
 }
 
+func (b *FrameBrowser) FlushLogs() *FrameType {
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#flush-logs-button", browserTimeout))
+	return b.Frame
+}
+
+func (b *FrameBrowser) CollectMetrics() *FrameType {
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#collect-metrics-button", browserTimeout))
+	return b.Frame
+}
+
 func (b *FrameBrowser) DoAndWaitDOMContentLoaded(action func()) {
 	assert.Nil(b.Frame.T, b.Frame.Page.DoAndWaitLoad(func() error {
 		action()
@@ -45,5 +55,15 @@ func (b *FrameBrowser) ClickSidebarTopLevelLink(itemID string) {
 
 func (b *FrameBrowser) ConfirmDialog() *FrameType {
 	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#confirm-dialog[open] #confirm-button", browserTimeout))
+	return b.Frame
+}
+
+func (b *FrameBrowser) WipeLogs() *FrameType {
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#wipe-logs-button", browserTimeout))
+	return b.Frame
+}
+
+func (b *FrameBrowser) WipeMetrics() *FrameType {
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#wipe-metrics-button", browserTimeout))
 	return b.Frame
 }

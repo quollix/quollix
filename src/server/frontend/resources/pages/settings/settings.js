@@ -310,3 +310,15 @@ window.purgeBackupServer = async function(
     const ok = await window.apiPost('{{ $.Static.Paths.BackendBackupsPurgeBackupServer }}', backupServer)
     if (ok) window.showSnackbar('Backup server has been purged.')
 }
+
+window.saveObservabilitySettings = async function(form) {
+    const ok = await apiPost('{{ $.Static.Paths.BackendSettingsObservabilitySave }}', {
+        logs_retention_days: form.elements.logs_retention_days.value,
+        logs_max_disk_space_gb: form.elements.logs_max_disk_space_gb.value,
+        metrics_retention_days: form.elements.metrics_retention_days.value,
+        host_metrics_interval_seconds: form.elements.host_metrics_interval_seconds.value,
+        container_metrics_interval_seconds: form.elements.container_metrics_interval_seconds.value,
+        volume_metrics_interval_seconds: form.elements.volume_metrics_interval_seconds.value,
+    })
+    if (ok) showSnackbar('Observability settings saved.')
+}

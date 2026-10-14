@@ -1,7 +1,13 @@
 package configs
 
 var ConfigKeys = struct {
-	BaseDomain string
+	BaseDomain                      string
+	LogsRetentionDays               string
+	LogsMaxDiskSpaceGB              string
+	MetricsRetentionDays            string
+	HostMetricsIntervalSeconds      string
+	ContainerMetricsIntervalSeconds string
+	VolumeMetricsIntervalSeconds    string
 
 	OidcPrivateKey             string
 	ExposeRealEmailInOidcToken string
@@ -43,7 +49,13 @@ var ConfigKeys = struct {
 	AcmeAccountPrivateKey string
 	AcmeAccountRegistered string
 }{
-	BaseDomain: "base_domain",
+	BaseDomain:                      "base_domain",
+	LogsRetentionDays:               "logs_retention_days",
+	LogsMaxDiskSpaceGB:              "logs_max_disk_space_gb",
+	MetricsRetentionDays:            "metrics_retention_days",
+	HostMetricsIntervalSeconds:      "host_metrics_interval_seconds",
+	ContainerMetricsIntervalSeconds: "container_metrics_interval_seconds",
+	VolumeMetricsIntervalSeconds:    "volume_metrics_interval_seconds",
 
 	OidcPrivateKey:             "oidc_private_key",
 	ExposeRealEmailInOidcToken: "expose_real_email_in_oidc_token",

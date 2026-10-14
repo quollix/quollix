@@ -25,7 +25,7 @@ func testInitialAdminPassword() error {
 	if err != nil {
 		return u.Logger.NewError("could not read generated initial admin password from container logs", "error", err.Error())
 	}
-	if password == "password" {
+	if password == defaultAdminPassword {
 		return u.Logger.NewError("generated password should not be 'password', but random generated", "actual", password)
 	}
 

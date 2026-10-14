@@ -1,6 +1,8 @@
 package system_config_migrations
 
 import (
+	"time"
+
 	"server/apps_basic"
 	"server/backup_server"
 	"server/certificates"
@@ -9,7 +11,6 @@ import (
 	"server/maintenance/retention"
 	"server/tools"
 	"server/users"
-	"time"
 
 	u "github.com/quollix/common/utils"
 )
@@ -48,5 +49,6 @@ func (s *SystemConfigMigrationsProviderImpl) List() []func() error {
 	return []func() error{
 		s.runInitialBootstrapMigration,
 		s.renameServerHostConfigToBaseDomain,
+		s.createObservabilitySettings,
 	}
 }

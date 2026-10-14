@@ -21,6 +21,7 @@ import (
 )
 
 type frontendBuilderTestObjects struct {
+	ObservabilityRepo          *configs.ObservabilityRepositoryMock
 	Builder                    *FrontendPageDataBuilderImpl
 	AppService                 *apps_basic.AppServiceMock
 	AppRepo                    *apps_basic.AppRepositoryMock
@@ -51,6 +52,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 	appStoreClient := app_store.NewAppStoreClientLeanMock(t)
 	sshRepo := backup_server.NewSshRepositoryMock(t)
 	maintenanceRepo := configs.NewMaintenanceRepositoryMock(t)
+	observabilityRepo := configs.NewObservabilityRepositoryMock(t)
 	retentionRepo := retention.NewRetentionPolicyRepositoryMock(t)
 	osWrapper := tools.NewCommonOsWrapperMock(t)
 	timezoneProvider := tools.NewTimezoneProviderMock(t)
@@ -60,6 +62,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 	oidcEmailService := &configs.OidcEmailExposureServiceImpl{ConfigsRepo: configsRepo}
 
 	builder := &FrontendPageDataBuilderImpl{
+		ObservabilityRepository:    observabilityRepo,
 		AppService:                 appService,
 		AppRepo:                    appRepo,
 		ComposeSecretExtractor:     composeSecretExtractor,
@@ -81,6 +84,7 @@ func getTestObjects(t *testing.T) frontendBuilderTestObjects {
 	}
 
 	return frontendBuilderTestObjects{
+		ObservabilityRepo:          observabilityRepo,
 		Builder:                    builder,
 		AppService:                 appService,
 		AppRepo:                    appRepo,
@@ -291,6 +295,7 @@ func TestBuildSettingsPage(t *testing.T) {
 		NextMaintenanceAt:          time.Date(2026, time.January, 15, 12, 30, 0, 0, time.UTC),
 	}
 	expectedRetentionPolicy := &api.RetentionPolicy{}
+	testObjects.ObservabilityRepo.EXPECT().Read().Return(&api.ObservabilitySettings{}, nil)
 	expectedIanaTimezones := []string{"UTC", "Europe/Berlin"}
 
 	testObjects.SshRepositoryConfigService.EXPECT().GetRemoteBackupRepository().Return(expectedRemoteRepository, nil)

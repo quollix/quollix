@@ -4,10 +4,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/quollix/common/quollix/api_client"
 	u "github.com/quollix/common/utils"
 )
 
 const (
+	defaultAdminName     = "administrator"
+	defaultAdminPassword = "password"
+
 	ComponentBuildTag   = "component"
 	ProdProfileBuildTag = "prod_profile"
 	BehindProxyBuildTag = "behind_proxy"
@@ -20,6 +24,7 @@ const (
 	specialPolicyPassword = "Aa09!@#$%^&*()_-+=.,:;/?[]{}|~<>"
 
 	KeepDbFlagName                  = "keep-db"
+	TestDomainFlagName              = "test-domain"
 	DisableInitialAdminEnvFlagName  = "disable-initial-admin-env"
 	DisableInitialAdminEnvFlagShort = "a"
 	FrontendKeepSetupFlagName       = "keep-setup"
@@ -80,6 +85,14 @@ func DeployLocalDatabase() {
 
 func DeployLocalContainer(keepDb bool, envVars []string) {
 	deployLocalContainer(keepDb, envVars, "")
+}
+
+func ConfigureDevTestDomain() error {
+	client := api_client.NewQuollixClient()
+	if err := client.Auth.SignIn(defaultAdminName, defaultAdminPassword); err != nil {
+		return err
+	}
+	return client.Settings.SetBaseDomainValue("test.quollix.org")
 }
 
 func deployLocalContainer(keepDb bool, envVars []string, sshPassword string) {
@@ -190,7 +203,7 @@ func containerEnv(useDevProfile bool, disableInitialAdminEnv bool, extraEnv ...s
 	}
 
 	if !disableInitialAdminEnv {
-		envVars = append(envVars, "INITIAL_ADMIN_NAME=admin", "INITIAL_ADMIN_PASSWORD=password")
+		envVars = append(envVars, "INITIAL_ADMIN_NAME="+defaultAdminName, "INITIAL_ADMIN_PASSWORD="+defaultAdminPassword)
 	}
 
 	return append(envVars, extraEnv...)

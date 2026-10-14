@@ -50,6 +50,7 @@ type FrontendPageDataBuilder interface {
 }
 
 type FrontendPageDataBuilderImpl struct {
+	ObservabilityRepository    configs.ObservabilityRepository
 	AppService                 apps_basic.AppService
 	AppRepo                    apps_basic.AppRepository
 	ComposeSecretExtractor     apps_basic.ComposeSecretExtractor
@@ -111,7 +112,12 @@ func (b *FrontendPageDataBuilderImpl) BuildSettingsPage() (*SettingsPageContent,
 
 	nextMaintenanceAtString := maintenanceConfig.NextMaintenanceAt.In(location).Format("Mon, 02 Jan 2006 15:04")
 
+	observabilitySettings, err := b.ObservabilityRepository.Read()
+	if err != nil {
+		return nil, err
+	}
 	return &SettingsPageContent{
+		ObservabilitySettings:    observabilitySettings,
 		BackupServer:             sshConfigs,
 		MaintenanceConfig:        maintenanceConfig,
 		RetentionPolicy:          retentionPolicy,

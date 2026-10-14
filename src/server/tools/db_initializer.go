@@ -49,7 +49,7 @@ func (d *DatabaseConnectorImpl) StartDatabaseAndConnect() error {
 	// since database it not reachable thorugh the Quollix proxy, we can set any host as value here
 	d.DockerService.AttachBrandAppToNetwork(u.OfficialMaintainer, u.OfficialDatabaseAppName, "localhost")
 	composeFilePath := filepath.Join(d.DirectoryProvider.GetOfficialDatabaseDockerDir(), "docker-compose.yml")
-	if err := d.DockerService.StartAppContainer(u.OfficialMaintainer, u.OfficialDatabaseAppName, composeFilePath, nil); err != nil {
+	if err := d.DockerService.StartAppContainer(u.OfficialMaintainer, u.OfficialDatabaseAppName, composeFilePath); err != nil {
 		return err
 	}
 

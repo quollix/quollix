@@ -16,7 +16,7 @@ import (
 
 var (
 	InvalidAccessPolicyError      = "invalid access policy"
-	ExpectedAppStartErrors        = u.MapOf(tools.DockerHubRateLimitReachedErrorMessage, tools.DockerImageUnsupportedPlatformErrorMessage)
+	ExpectedAppStartErrors        = u.MapOf(tools.DockerHubRateLimitReachedErrorMessage, tools.DockerImageUnsupportedPlatformErrorMessage, tools.DockerImageDownloadErrorMessage)
 	AppSecretEditExpectedErrors   = u.MapOf(AppSecretNotFoundError)
 	AppSecretDeleteExpectedErrors = u.MapOf(AppSecretNotFoundError, AppSecretInUseError)
 )

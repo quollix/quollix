@@ -29,8 +29,10 @@ func main() {
 
 func buildSubCommands() {
 	src.DeployDevCmd.Flags().BoolP(src.KeepDbFlagName, "k", false, "keep the existing database container and volume")
+	src.DeployDevCmd.Flags().BoolP(src.TestDomainFlagName, "t", false, "set the base domain to test.quollix.org after deployment")
 	src.DeployProdCmd.Flags().BoolP(src.KeepDbFlagName, "k", false, "keep the existing database container and volume")
 	src.DeployDevCmd.Flags().BoolP(src.DisableInitialAdminEnvFlagName, src.DisableInitialAdminEnvFlagShort, false, "do not inject INITIAL_ADMIN_NAME and INITIAL_ADMIN_PASSWORD")
+	src.DeployDevCmd.MarkFlagsMutuallyExclusive(src.TestDomainFlagName, src.DisableInitialAdminEnvFlagName)
 	src.DeployProdCmd.Flags().BoolP(src.DisableInitialAdminEnvFlagName, src.DisableInitialAdminEnvFlagShort, false, "do not inject INITIAL_ADMIN_NAME and INITIAL_ADMIN_PASSWORD")
 	src.DeployCmd.AddCommand(
 		src.DeployDevCmd,

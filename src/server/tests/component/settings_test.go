@@ -4,8 +4,10 @@ package component
 
 import (
 	"reflect"
-	"server/backup_server"
 	"testing"
+
+	"server/backup_server"
+	"server/configs"
 
 	"github.com/quollix/common/assert"
 )
@@ -52,4 +54,17 @@ func TestSshConfigsSetting(t *testing.T) {
 	configs, err := client.Settings.ReadSshConfigs()
 	assert.Nil(t, err)
 	reflect.DeepEqual(configs, backup_server.GetSampleRemoteRepo())
+}
+
+func TestObservabilitySettings(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	settings, err := client.Settings.ReadObservabilitySettings()
+	assert.Nil(t, err)
+	assert.Equal(t, configs.NewObservabilitySettings(30, 5, 30, 300, 300, 3600), settings)
+	expected := configs.NewObservabilitySettings(14, 10, 60, 420, 660, 5400)
+	assert.Nil(t, client.Settings.SaveObservabilitySettings(expected))
+	settings, err = client.Settings.ReadObservabilitySettings()
+	assert.Nil(t, err)
+	assert.Equal(t, expected, settings)
 }

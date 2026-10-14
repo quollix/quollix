@@ -12,9 +12,17 @@ var projectCleanupContainers = []string{
 	"quollix_provider_server",
 	"quollix_client_server",
 	OidcProxyContainerName,
+	"quollix_grafana_victoriametrics",
+	"quollix_grafana_victorialogs",
+	"quollix_grafana_grafana",
+	"quollix_grafana_vector",
 }
 
 var projectCleanupVolumes = []string{
+	"quollix_grafana_vector",
+	"quollix_grafana_grafana",
+	"quollix_grafana_victorialogs",
+	"quollix_grafana_victoriametrics",
 	OfficialDatabaseVolumeName,
 	SampleAppVolumeName,
 	"quollix_provider_data",
@@ -24,6 +32,7 @@ var projectCleanupVolumes = []string{
 }
 
 var projectCleanupNetworks = []string{
+	"quollix_grafana",
 	OfficialDatabaseNetworkName,
 	"quollix_oidc",
 }

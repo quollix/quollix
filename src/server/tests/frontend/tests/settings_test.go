@@ -7,6 +7,7 @@ import (
 
 	"server/backup_server"
 	"server/certificates"
+	"server/configs"
 	"server/tests/component"
 	"server/tests/frontend_pages"
 
@@ -209,4 +210,16 @@ func TestSettingsRetentionPolicyFlow(t *testing.T) {
 
 	frame.Browser.ReloadPage()
 	frame.Pages.SettingsPage.AssertRetentionPolicyValues(expected)
+}
+
+func TestSettingsObservability(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+	expected := configs.NewObservabilitySettings(14, 10, 60, 420, 660, 5400)
+	frame.Pages.GoToSettingsPage().
+		AssertObservabilitySettings(configs.NewObservabilitySettings(30, 5, 30, 300, 300, 3600)).
+		EnterObservabilitySettings(expected).
+		SaveObservabilitySettingsAndAssertSuccessSnackbar()
+	frame.Browser.ReloadPage()
+	frame.Pages.SettingsPage.AssertObservabilitySettings(expected)
 }

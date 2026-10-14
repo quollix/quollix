@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -218,6 +219,24 @@ func ListInstalledAppsForNonAdmin(t *testing.T, client *api_client.QuollixClient
 	apps, err := client.Apps.ListInstalledForNonAdmin()
 	assert.Nil(t, err)
 	return apps
+}
+
+func InstallGrafana(t *testing.T, client *api_client.QuollixClient) *api.AdminAppDto {
+	workspaceDir, err := u.FindDir("workspace")
+	assert.Nil(t, err)
+	root, err := os.OpenRoot(workspaceDir)
+	assert.Nil(t, err)
+	defer u.Close(root)
+	content, err := root.ReadFile("apps/official/grafana.yml")
+	assert.Nil(t, err)
+	assert.Nil(t, client.Apps.UploadVersionFile(api.BinaryFile{FileName: "grafana.yml", Content: content}))
+	for _, app := range ListInstalledApps(t, client) {
+		if app.Maintainer == u.OfficialMaintainer && app.AppName == tools.GrafanaAppName {
+			return &app
+		}
+	}
+	assert.Nil(t, u.Logger.NewError("grafana app not found"))
+	return nil
 }
 
 func InstallSample(t *testing.T, client *api_client.QuollixClient, version string) (*api.AdminAppDto, error) {

@@ -4,15 +4,39 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sync"
+
 	"server/app_store"
+	"server/apps_basic"
 	"server/configs"
 	"server/tools"
-	"sync"
 
 	u "github.com/quollix/common/utils"
 )
 
+var (
+	testContainersToRemove = []string{
+		tools.SampleAppContainerName,
+		tools.SamplePostgresAppContainerName,
+		tools.SampleRabbitMQAppContainerName,
+		"quollix_grafana_grafana",
+		"quollix_grafana_victorialogs",
+		"quollix_grafana_victoriametrics",
+	}
+	testVolumesToRemove = []string{
+		tools.SampleAppDockerVolume,
+		tools.SamplePostgresAppDockerVolume,
+		tools.SampleRabbitMQAppDockerVolume,
+		"quollix_grafana_grafana",
+		"quollix_grafana_victorialogs",
+		"quollix_grafana_victoriametrics",
+	}
+)
+
 type TestStateResetHandler struct {
+	ContainerMetricsMonitor    apps_basic.ContainerMetricsMonitor
+	VolumeMetricsMonitor       apps_basic.VolumeMetricsMonitor
+	ContainerLogMonitor        apps_basic.ContainerLogMonitor
 	DirectoryProvider          tools.DirectoryProvider
 	DatabaseSnapshotRepository u.DatabaseSnapshotRepository
 	ConfigsService             configs.ConfigsService
@@ -24,6 +48,10 @@ func (d *TestStateResetHandler) ResetTestStateHandler(w http.ResponseWriter, r *
 }
 
 func (d *TestStateResetHandler) resetTestState() {
+	d.ContainerMetricsMonitor.StopMonitoring()
+	d.VolumeMetricsMonitor.StopMonitoring()
+	d.ContainerLogMonitor.StopMonitoring()
+
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(3)
 
@@ -45,11 +73,11 @@ func (d *TestStateResetHandler) resetTestState() {
 
 	go func() {
 		defer waitGroup.Done()
-		err := runDockerCmd(".", "rm", "-f", tools.SampleAppContainerName, tools.SamplePostgresAppContainerName, tools.SampleRabbitMQAppContainerName)
+		err := runDockerCmd(".", append([]string{"rm", "-f"}, testContainersToRemove...)...)
 		if err != nil {
 			u.Logger.Error(err.Error())
 		}
-		err = runDockerCmd(".", "volume", "rm", "-f", tools.SampleAppDockerVolume, tools.SamplePostgresAppDockerVolume, tools.SampleRabbitMQAppDockerVolume)
+		err = runDockerCmd(".", append([]string{"volume", "rm", "-f"}, testVolumesToRemove...)...)
 		if err != nil {
 			u.Logger.Error(err.Error())
 		}

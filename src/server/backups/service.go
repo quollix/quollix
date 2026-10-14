@@ -60,7 +60,7 @@ func (b *BackupServiceImpl) CreateBackup(appId int, description string) error {
 		return err
 	}
 
-	if err = b.DatabaseIndependentRuntime.StopApp(spec.App); err != nil {
+	if err = b.DatabaseIndependentRuntime.StopApp(spec); err != nil {
 		return err
 	}
 

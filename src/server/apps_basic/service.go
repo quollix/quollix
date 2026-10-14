@@ -2,6 +2,7 @@ package apps_basic
 
 import (
 	"maps"
+	"sort"
 
 	"server/tools"
 
@@ -142,12 +143,12 @@ func (a *AppServiceImpl) StopApp(appId int) error {
 	if err != nil {
 		return err
 	}
-	app, err := a.AppRepo.GetAppById(appId)
+	spec, err := a.DatabaseIndependentRuntime.CollectAppSpec(appId)
 	if err != nil {
 		return err
 	}
 
-	return a.DatabaseIndependentRuntime.StopApp(app)
+	return a.DatabaseIndependentRuntime.StopApp(spec)
 }
 
 func (a *AppServiceImpl) SetAppShouldBeRunning(appId int, shouldBeRunning bool) error {
@@ -168,6 +169,11 @@ func (a *AppServiceImpl) StartAppsThatShouldBeRunning() {
 	if err != nil {
 		u.Logger.Error(err)
 	}
+
+	// Grafana app should start first so that its databases can immediately receive collected logs and metrics of other apps
+	sort.SliceStable(apps, func(i, j int) bool {
+		return isOfficialGrafanaApp(&apps[i]) && !isOfficialGrafanaApp(&apps[j])
+	})
 
 	var idsOfRunningApps []int
 	for _, app := range apps {

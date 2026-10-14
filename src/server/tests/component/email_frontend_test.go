@@ -9,15 +9,13 @@ import (
 	"testing"
 
 	"github.com/quollix/common/quollix/api"
-	"github.com/quollix/common/quollix/api_client"
 
 	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
 )
 
 func TestEmailFrontendEndpointIsAvailable(t *testing.T) {
-	client := api_client.NewQuollixClient()
-	assert.Nil(t, client.Auth.SignIn("admin", "password"))
+	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
 
 	req, err := http.NewRequest(http.MethodGet, client.Parent.RootUrl+api.Paths.FrontendEmail, nil)

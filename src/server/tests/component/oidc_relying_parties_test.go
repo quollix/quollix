@@ -8,6 +8,7 @@ import (
 
 	"server/oidc_provider"
 	test_tools "server/tests/test_tools"
+	"server/tools"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
@@ -110,10 +111,10 @@ func TestOidcRelyingParty_OidcFlowWithGenericClient(t *testing.T) {
 	tokens := ctx.ExchangeCodeForTokensWithRedirectURI(authRes.Code, verifier, redirectURI, createdClient.ClientId, createdClient.ClientSecret, ClientAuthMethodBasic)
 	publicKey := FetchPublicKeyFromJWKS(t, ctx)
 	claims := VerifyIDToken(t, tokens.IDToken, publicKey, ctx.Config.Issuer, createdClient.ClientId)
-	assert.Equal(t, adminUsername, claims.PreferredUsername)
+	assert.Equal(t, tools.DefaultAdminName, claims.PreferredUsername)
 
 	userinfo := ctx.FetchUserinfo(tokens.AccessToken)
-	assert.Equal(t, adminUsername, userinfo.PreferredUsername)
+	assert.Equal(t, tools.DefaultAdminName, userinfo.PreferredUsername)
 }
 
 func TestOidcRelyingParty_OidcFlowAllowsAnyCallbackPathOnConfiguredOrigin(t *testing.T) {

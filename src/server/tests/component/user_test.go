@@ -4,10 +4,11 @@ package component
 
 import (
 	"fmt"
-	"server/tools"
-	"server/users"
 	"testing"
 	"time"
+
+	"server/tools"
+	"server/users"
 
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
@@ -23,7 +24,7 @@ func TestUsers(t *testing.T) {
 	userList := ListUsers(t, client)
 	assert.Equal(t, 1, len(userList))
 	adminUser := userList[0]
-	assert.Equal(t, "admin", adminUser.Username)
+	assert.Equal(t, tools.DefaultAdminName, adminUser.Username)
 	assert.True(t, adminUser.IsAdmin)
 	assert.True(t, adminUser.IsEnabled)
 	assert.Equal(t, tools.DefaultAdminEmail, adminUser.Email)
@@ -44,7 +45,7 @@ func TestUsers(t *testing.T) {
 	userList = ListUsers(t, client)
 	assert.Equal(t, 1, len(userList))
 	adminUser = userList[0]
-	assert.Equal(t, "admin", adminUser.Username)
+	assert.Equal(t, tools.DefaultAdminName, adminUser.Username)
 	assert.True(t, adminUser.IsAdmin)
 }
 
@@ -98,7 +99,7 @@ func TestGetCurrentUser_ReturnsLoggedInUser(t *testing.T) {
 	defer client.Test.ResetTestState()
 	user, err := client.Auth.GetCurrentUser()
 	assert.Nil(t, err)
-	assert.Equal(t, "admin", user.Username)
+	assert.Equal(t, tools.DefaultAdminName, user.Username)
 	assert.True(t, user.IsAdmin)
 
 	InviteUserAndSetPassword(t, client, SampleUsername, "userpassword", SampleUserEmail)

@@ -1,7 +1,6 @@
 package apps_basic
 
 import (
-	"server/tools"
 	"testing"
 
 	"github.com/quollix/common/assert"
@@ -23,6 +22,5 @@ func TestAppDetectorImpl_IsOfficialDatabaseApp(t *testing.T) {
 func TestAppDetectorImpl_IsSystemApp(t *testing.T) {
 	assert.True(t, detector.IsSystemApp(u.OfficialDatabaseAppName))
 	assert.True(t, detector.IsSystemApp(u.OfficialBrandAppName))
-	assert.True(t, detector.IsSystemApp(tools.QuollogAppName))
 	assert.False(t, detector.IsSystemApp("sampleapp"))
 }

@@ -23,7 +23,7 @@ var (
 	sampleContainerName = fmt.Sprintf("%s_%s_%s", sampleMaintainer, sampleApp, sampleApp)
 	sampleImageTag      = "quollix-test-image:latest"
 
-	dockerService = &tools.DockerServiceImpl{}
+	dockerService = &tools.DockerServiceImpl{CommandRunner: &tools.CommandRunnerImpl{Config: &tools.GlobalConfig{}}}
 )
 
 func cleanupDockerServiceTestResources() {
@@ -128,7 +128,7 @@ services:
 	assert.Nil(t, err)
 	err = exec.Command("docker", "rm", "-f", sampleContainerName).Run()
 	assert.Nil(t, err)
-	assert.Nil(t, dockerService.StartAppContainer(sampleMaintainer, sampleApp, composeFilePath, nil))
+	assert.Nil(t, dockerService.StartAppContainer(sampleMaintainer, sampleApp, composeFilePath))
 	assert.True(t, dockerContainerExists(sampleContainerName))
 	dockerService.StopAppContainer(sampleMaintainer, sampleApp, composeFilePath)
 	assert.False(t, dockerContainerExists(sampleContainerName))

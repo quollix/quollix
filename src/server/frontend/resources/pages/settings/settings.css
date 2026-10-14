@@ -80,3 +80,12 @@ input[list]:focus::-webkit-calendar-picker-indicator {
 #certificate-operation-spinner {
     animation: spin 1s linear infinite;
 }
+
+#observability-settings-form label {
+    width: 250px;
+    max-width: 100%;
+}
+
+#observability-settings-save-button {
+    width: auto;
+}

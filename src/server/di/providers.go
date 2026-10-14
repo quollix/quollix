@@ -3,12 +3,16 @@ package di
 import (
 	"crypto/ed25519"
 	"log/slog"
+	"net/http"
+	"time"
 
 	"server/app_store"
 	"server/apps_basic"
 	certificates2 "server/certificates"
 	"server/configs"
 	"server/email"
+	"server/logging"
+	"server/metrics"
 	"server/tools"
 
 	"github.com/quollix/common/store"
@@ -16,6 +20,12 @@ import (
 	"github.com/quollix/common/validation"
 	"github.com/quollix/deepstack"
 )
+
+const maximumLogBatchSize = 10_000
+
+func NewLogSink(client logging.VictoriaLogsClient) logging.LogSink {
+	return logging.NewAsyncLogSink(client, maximumLogBatchSize)
+}
 
 func NewGlobalConfig() *tools.GlobalConfig {
 	return tools.NewGlobalConfigFromEnv()
@@ -116,4 +126,24 @@ func NewDatabaseSnapshotRepo(
 	databaseUtils u.DatabaseUtils,
 ) u.DatabaseSnapshotRepository {
 	return u.NewDatabaseSnapshotRepository(globalConfig.DatabaseHostName, dbProvider, databaseUtils)
+}
+
+func NewVictoriaLogsClient(repository apps_basic.AppRepository) logging.VictoriaLogsClient {
+	return &logging.VictoriaLogsClientImpl{
+		Client:        &http.Client{Timeout: 10 * time.Second},
+		BaseURL:       "http://quollix_grafana_victorialogs:9428",
+		AppRepository: repository,
+	}
+}
+
+func NewVictoriaMetricsClient(repository apps_basic.AppRepository) metrics.VictoriaMetricsClient {
+	return metrics.NewVictoriaMetricsClient("http://quollix_grafana_victoriametrics:8428", repository)
+}
+
+func NewContainerMetricsMonitor(service metrics.MetricsCollectionService, config *tools.GlobalConfig, repository configs.ConfigsRepository) apps_basic.ContainerMetricsMonitor {
+	return metrics.NewMetricsMonitor(service, repository, configs.ConfigKeys.ContainerMetricsIntervalSeconds, config.CollectMetricsAutomatically)
+}
+
+func NewVolumeMetricsMonitor(service metrics.VolumeMetricsCollectionService, config *tools.GlobalConfig, repository configs.ConfigsRepository) apps_basic.VolumeMetricsMonitor {
+	return metrics.NewMetricsMonitor(service, repository, configs.ConfigKeys.VolumeMetricsIntervalSeconds, config.CollectMetricsAutomatically)
 }

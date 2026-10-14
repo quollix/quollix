@@ -2,17 +2,26 @@ package tools
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	u "github.com/quollix/common/utils"
 )
 
+var containerNamePattern = regexp.MustCompile(`^[a-z]{3,20}_[a-z]{3,20}_[a-z]{3,20}$`)
+
 const (
 	DockerHubRateLimitReachedErrorMessage      = "Docker Hub rate limit reached. Please try again later, consider using a Docker Hub account to increase your rate limit, or buy a Docker Hub subscription to remove rate limits."
 	DockerImageUnsupportedPlatformErrorMessage = "This app cannot be started because one of its Docker images does not support this device's platform."
+	DockerImageDownloadErrorMessage            = "A Docker image could not be downloaded because the container registry connection was interrupted. Please try again later and check the server's internet connection."
 )
+
+type ContainerIdentity struct {
+	Maintainer string
+	App        string
+	Service    string
+}
 
 type DockerService interface {
 	CreateDockerNetwork(networkMaintainer, networkApp string)
@@ -21,7 +30,7 @@ type DockerService interface {
 	AttachBrandAppToNetwork(networkMaintainer, networkApp, host string)
 	DetachBrandAppFromNetwork(networkMaintainer, networkApp string)
 
-	StartAppContainer(maintainer, appName, composeFilePath string, envVars map[string]string) error
+	StartAppContainer(maintainer, appName, composeFilePath string) error
 	StopAppContainer(maintainer, appName, composeFilePath string)
 	StopAppContainers(containerNames []string)
 	RemoveVolumes(volumes []string)
@@ -30,7 +39,9 @@ type DockerService interface {
 	BuildDockerImage(nameWithTag, dockerfilePath string, protectFromMaintenancePrune bool) error
 }
 
-type DockerServiceImpl struct{}
+type DockerServiceImpl struct {
+	CommandRunner CommandRunner
+}
 
 func (d *DockerServiceImpl) StopAppContainers(containerNames []string) {
 	if len(containerNames) == 0 {
@@ -116,48 +127,35 @@ func isProtectedDockerNetwork(networkName string) bool {
 	return networkName == OfficialDatabaseAppNetworkName
 }
 
-func (d *DockerServiceImpl) StartAppContainer(maintainer, appName, composeFilePath string, envVars map[string]string) error {
+func (d *DockerServiceImpl) StartAppContainer(maintainer, appName, composeFilePath string) error {
 	u.Logger.Info("Starting app", MaintainerField, maintainer, AppField, appName, "compose_file_path", composeFilePath)
-	cmd := exec.Command(
+	output, err := d.CommandRunner.RunCommand(
 		"docker", "compose",
 		"-p", d.mergeNames(maintainer, appName),
 		"-f", composeFilePath,
 		"up", "-d",
-	) // #nosec G204 (CWE-78): Subprocess launched with a potential tainted input or cmd arguments
-	cmd.Env = appendComposeEnv(envVars)
-
-	err := runCommand(cmd)
-	if err != nil {
+	)
+	if err = dockerComposeStartError(output.Combined(), err); err != nil {
 		d.StopAppContainer(maintainer, appName, composeFilePath)
-		return u.Logger.AddContext(err, "maintainer", maintainer, "app_name", appName, "compose_file_path", composeFilePath, "command", cmd.String())
+		return u.Logger.AddContext(err, "maintainer", maintainer, "app_name", appName, "compose_file_path", composeFilePath)
 	}
 	return nil
 }
 
-func appendComposeEnv(envVars map[string]string) []string {
-	env := os.Environ()
-	for key, value := range envVars {
-		env = append(env, key+"="+value)
-	}
-	return env
-}
-
-func runCommand(cmd *exec.Cmd) error {
-	outputBytes, err := cmd.CombinedOutput()
-	output := string(outputBytes)
+func dockerComposeStartError(output string, err error) error {
 	if isDockerHubRateLimitError(output) {
 		return u.Logger.NewError(DockerHubRateLimitReachedErrorMessage, "output", output)
 	}
 	if isDockerImageUnsupportedPlatformError(output) {
 		return u.Logger.NewError(DockerImageUnsupportedPlatformErrorMessage, "output", output)
 	}
-	if err != nil {
-		if strings.Contains(output, "is already in use by container") {
-			return nil
-		}
-		return u.Logger.NewError(err.Error(), "output", output)
+	if isDockerImageDownloadError(output) {
+		return u.Logger.NewError(DockerImageDownloadErrorMessage, "output", output)
 	}
-	return nil
+	if err != nil && strings.Contains(output, "is already in use by container") {
+		return nil
+	}
+	return err
 }
 
 func isDockerHubRateLimitError(output string) bool {
@@ -176,19 +174,25 @@ func isDockerImageUnsupportedPlatformError(output string) bool {
 		(strings.Contains(outputLower, "manifest list entries") && strings.Contains(outputLower, "linux/"))
 }
 
+func isDockerImageDownloadError(output string) bool {
+	outputLower := strings.ToLower(output)
+	return strings.Contains(outputLower, "connection reset by peer") ||
+		strings.Contains(outputLower, "connection refused") ||
+		strings.Contains(outputLower, "i/o timeout") ||
+		strings.Contains(outputLower, "tls handshake timeout") ||
+		strings.Contains(outputLower, "context deadline exceeded")
+}
+
 func (d *DockerServiceImpl) StopAppContainer(maintainer, appName, composeFilePath string) {
 	u.Logger.Info("Stopping app", MaintainerField, maintainer, AppField, appName, "compose_file_path", composeFilePath)
-	cmd := exec.Command(
+	_, err := d.CommandRunner.RunCommand(
 		"docker", "compose",
 		"-p", d.mergeNames(maintainer, appName),
 		"-f", composeFilePath,
 		"down",
-	) // #nosec G204 (CWE-78): Subprocess launched with a potential tainted input or cmd arguments
-
-	output, err := cmd.CombinedOutput()
+	)
 	if err != nil {
-		u.Logger.Error(err, "output", string(output))
-		return
+		u.Logger.Error(err)
 	}
 }
 
@@ -224,4 +228,13 @@ func (d *DockerServiceImpl) BuildDockerImage(nameWithTag, dockerfilePath string,
 	}
 
 	return nil
+}
+
+func ParseContainerName(name string) (*ContainerIdentity, bool) {
+	name = strings.TrimPrefix(name, "/")
+	if !containerNamePattern.MatchString(name) {
+		return nil, false
+	}
+	parts := strings.Split(name, "_")
+	return &ContainerIdentity{Maintainer: parts[0], App: parts[1], Service: parts[2]}, true
 }

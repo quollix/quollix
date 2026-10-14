@@ -66,6 +66,9 @@ func runServer(deps *di.Dependencies) error {
 	if err := deps.FrontendEngine.Reload(); err != nil {
 		return err
 	}
+	defer deps.ContainerLogMonitor.StopMonitoring()
+	defer deps.ContainerMetricsMonitor.StopMonitoring()
+	defer deps.VolumeMetricsMonitor.StopMonitoring()
 	deps.AppManager.StartAppsThatShouldBeRunning()
 	if err := deps.OidcService.InitializeOidcService(); err != nil {
 		return err

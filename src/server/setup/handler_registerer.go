@@ -7,6 +7,7 @@ import (
 	"server/app_store"
 	"server/apps_advanced"
 	"server/apps_basic"
+	"server/backup_server"
 	"server/backups"
 	"server/certificates"
 	"server/configs"
@@ -14,12 +15,13 @@ import (
 	"server/frontend"
 	"server/groups"
 	"server/ingress"
+	"server/logging"
 	"server/maintenance"
+	"server/metrics"
+	"server/observability"
 	"server/oidc_client"
 	"server/oidc_provider"
 	"server/terminal"
-
-	"server/backup_server"
 	"server/tools"
 	"server/users"
 
@@ -29,32 +31,35 @@ import (
 )
 
 type HandlerRegisterer struct {
-	SshHandler                *backup_server.SshHandler
-	AppsHandler               *apps_basic.AppsHandler
-	BackupsHandler            *backups.BackupHandler
-	SettingsHandler           *configs.SettingsHandler
-	AppManager                apps_basic.AppService
-	MaintenanceHandler        maintenance.MaintenanceAgent
-	SetupHandler              *ingress.SetupHandler
-	AppStoreHandler           *app_store.AppStoreHandler
-	UserHandler               *users.UserHandler
-	RouteRegisterer           *users.RouteRegisterer
-	CertificateHandler        *certificates.CertificateHandler
-	Router                    chi.Router
-	Config                    *tools.GlobalConfig
-	TestStateReset            *TestStateResetHandler
-	MaintainerHandler         *app_store.MaintainerHandler
-	TemplateHandler           *frontend.TemplateHandlerImpl
-	BackedUpAppsLoaderHandler *frontend.BackedUpAppsLoaderHandler
-	BackupsPageLoaderHandler  *frontend.BackupsPageLoaderHandler
-	OidcHandler               *oidc_provider.OidcHandler
-	OidcRelyingPartyHandler   *oidc_provider.OidcRelyingPartyHandler
-	OidcClientHandler         *oidc_client.OidcClientHandler
-	MaintenanceConfigsHandler *maintenance.MaintenanceConfigsHandler
-	AppsAdvancedHandler       *apps_advanced.AppsAdvancedHandler
-	GroupHandler              *groups.GroupHandler
-	EmailHandler              *email.EmailHandler
-	TerminalHandler           *terminal.TerminalHandlerImpl
+	LoggingHandler               *logging.Handler
+	MetricsHandler               *metrics.Handler
+	ObservabilitySettingsHandler *observability.SettingsHandler
+	SshHandler                   *backup_server.SshHandler
+	AppsHandler                  *apps_basic.AppsHandler
+	BackupsHandler               *backups.BackupHandler
+	SettingsHandler              *configs.SettingsHandler
+	AppManager                   apps_basic.AppService
+	MaintenanceHandler           maintenance.MaintenanceAgent
+	SetupHandler                 *ingress.SetupHandler
+	AppStoreHandler              *app_store.AppStoreHandler
+	UserHandler                  *users.UserHandler
+	RouteRegisterer              *users.RouteRegisterer
+	CertificateHandler           *certificates.CertificateHandler
+	Router                       chi.Router
+	Config                       *tools.GlobalConfig
+	TestStateReset               *TestStateResetHandler
+	MaintainerHandler            *app_store.MaintainerHandler
+	TemplateHandler              *frontend.TemplateHandlerImpl
+	BackedUpAppsLoaderHandler    *frontend.BackedUpAppsLoaderHandler
+	BackupsPageLoaderHandler     *frontend.BackupsPageLoaderHandler
+	OidcHandler                  *oidc_provider.OidcHandler
+	OidcRelyingPartyHandler      *oidc_provider.OidcRelyingPartyHandler
+	OidcClientHandler            *oidc_client.OidcClientHandler
+	MaintenanceConfigsHandler    *maintenance.MaintenanceConfigsHandler
+	AppsAdvancedHandler          *apps_advanced.AppsAdvancedHandler
+	GroupHandler                 *groups.GroupHandler
+	EmailHandler                 *email.EmailHandler
+	TerminalHandler              *terminal.TerminalHandlerImpl
 }
 
 func (h *HandlerRegisterer) RegisterApplicationHandlers() error {
@@ -120,6 +125,7 @@ func (h *HandlerRegisterer) authenticatedRoutes() []users.Route {
 func (h *HandlerRegisterer) adminRoutes() []users.Route {
 	routes := make([]users.Route, 0)
 	routes = append(routes, h.adminAppRoutes()...)
+	routes = append(routes, h.adminObservabilityRoutes()...)
 	routes = append(routes, h.adminAdvancedAppRoutes()...)
 	routes = append(routes, h.adminStoreRoutes()...)
 	routes = append(routes, h.adminBackupRoutes()...)
@@ -129,6 +135,17 @@ func (h *HandlerRegisterer) adminRoutes() []users.Route {
 	routes = append(routes, h.adminOidcProviderRoutes()...)
 	routes = append(routes, h.adminOidcClientRoutes()...)
 	return routes
+}
+
+func (h *HandlerRegisterer) adminObservabilityRoutes() []users.Route {
+	return []users.Route{
+		{Path: api.Paths.BackendSettingsObservabilityRead, HandlerFunc: h.ObservabilitySettingsHandler.Read, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendSettingsObservabilitySave, HandlerFunc: h.ObservabilitySettingsHandler.Save, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendMetricsRead, HandlerFunc: h.MetricsHandler.ReadMetrics, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendLogsRead, HandlerFunc: h.LoggingHandler.ReadLogs, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendLogsFlush, HandlerFunc: h.LoggingHandler.FlushLogs, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendMetricsCollect, HandlerFunc: h.MetricsHandler.CollectMetrics, AccessLevel: tools.AdminLevel},
+	}
 }
 
 func (h *HandlerRegisterer) adminAppRoutes() []users.Route {
@@ -243,6 +260,8 @@ func (h *HandlerRegisterer) adminOidcClientRoutes() []users.Route {
 
 func (h *HandlerRegisterer) developmentRoutes() []users.Route {
 	return []users.Route{
+		{Path: api.Paths.BackendMetricsWipe, HandlerFunc: h.MetricsHandler.WipeMetrics, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendLogsWipe, HandlerFunc: h.LoggingHandler.WipeLogs, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendReloadFrontendTemplatesFromFileSystem, HandlerFunc: h.TemplateHandler.ReloadFrontendTemplatesFromFileSystemHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.BackendResetTestState, HandlerFunc: h.TestStateReset.ResetTestStateHandler, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.BackendStoreReloadPublishedApps, HandlerFunc: h.AppStoreHandler.ReloadLocalAppsHandler, AccessLevel: tools.AdminLevel},

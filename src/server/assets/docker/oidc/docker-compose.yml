@@ -33,7 +33,7 @@ services:
     environment:
       - PROFILE=DEV
       - DATABASE_HOST_NAME=oidc-provider-db
-      - INITIAL_ADMIN_NAME=admin
+      - INITIAL_ADMIN_NAME=administrator
       - INITIAL_ADMIN_PASSWORD=password
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -49,7 +49,7 @@ services:
     environment:
       - PROFILE=DEV
       - DATABASE_HOST_NAME=oidc-client-db
-      - INITIAL_ADMIN_NAME=admin
+      - INITIAL_ADMIN_NAME=administrator
       - INITIAL_ADMIN_PASSWORD=password
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

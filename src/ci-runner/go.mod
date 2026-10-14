@@ -1,9 +1,9 @@
 module ci-runner
 
-go 1.26.6
+go 1.26.9
 
 require (
-	github.com/quollix/common v1.3.24
+	github.com/quollix/common v1.3.31
 	github.com/quollix/taskrunner v1.2.7
 	github.com/spf13/cobra v1.10.2
 )

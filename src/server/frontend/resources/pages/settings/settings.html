@@ -252,3 +252,45 @@
     </div>
 
 </section>
+
+<hr />
+<section>
+    <h3>Logs and metrics</h3>
+    <form id="observability-settings-form" onsubmit="saveObservabilitySettings(this); return false;">
+        <div class="label-bar">
+            <label>
+                <strong>Log retention (days)</strong>
+                <input id="logs-retention-days" name="logs_retention_days" type="number" min="1" max="36500" step="1"
+                    value="{{$.Page.ObservabilitySettings.LogsRetentionDays}}" required />
+            </label>
+            <label>
+                <strong>Log storage target (GB)</strong>
+                <input id="logs-max-disk-space-gb" name="logs_max_disk_space_gb" type="number" min="1" max="1000000"
+                    step="1" value="{{$.Page.ObservabilitySettings.LogsMaxDiskSpaceGB}}" required />
+            </label>
+            <label>
+                <strong>Metric retention (days)</strong>
+                <input id="metrics-retention-days" name="metrics_retention_days" type="number" min="1" max="36500"
+                    step="1" value="{{$.Page.ObservabilitySettings.MetricsRetentionDays}}" required />
+            </label>
+        </div>
+        <div class="label-bar">
+            <label>
+                <strong>Host collection interval (seconds)</strong>
+                <input id="host-metrics-interval-seconds" name="host_metrics_interval_seconds" type="number" min="1" max="604800"
+                    step="1" value="{{$.Page.ObservabilitySettings.HostMetricsIntervalSeconds}}" required />
+            </label>
+            <label>
+                <strong>Container collection interval (seconds)</strong>
+                <input id="container-metrics-interval-seconds" name="container_metrics_interval_seconds" type="number" min="1" max="604800"
+                    step="1" value="{{$.Page.ObservabilitySettings.ContainerMetricsIntervalSeconds}}" required />
+            </label>
+            <label>
+                <strong>Volume collection interval (seconds)</strong>
+                <input id="volume-metrics-interval-seconds" name="volume_metrics_interval_seconds" type="number" min="1" max="604800"
+                    step="1" value="{{$.Page.ObservabilitySettings.VolumeMetricsIntervalSeconds}}" required />
+            </label>
+            <button id="observability-settings-save-button" type="submit">Save</button>
+        </div>
+    </form>
+</section>

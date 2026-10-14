@@ -200,6 +200,7 @@ type MaintenanceWindowOption struct {
 }
 
 type SettingsPageContent struct {
+	ObservabilitySettings    *api.ObservabilitySettings
 	BackupServer             *api.BackupServerConfigs
 	MaintenanceConfig        *api.MaintenanceConfig
 	RetentionPolicy          *api.RetentionPolicy

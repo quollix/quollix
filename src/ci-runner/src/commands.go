@@ -175,7 +175,16 @@ var DeployDevCmd = &cobra.Command{
 		Tr.Log.Info("Running local DEV container")
 		keepDb := getBoolFlag(cmd, KeepDbFlagName)
 		disableInitialAdminEnv := getBoolFlag(cmd, DisableInitialAdminEnvFlagName)
+		shouldConfigureDevTestDomain := getBoolFlag(cmd, TestDomainFlagName)
 		DeployLocalContainer(keepDb, containerEnv(true, disableInitialAdminEnv))
+		if shouldConfigureDevTestDomain {
+			if err := ConfigureDevTestDomain(); err != nil {
+				Tr.Log.Error("Failed to configure test domain: %v", err)
+				Tr.ExitWithError()
+				return
+			}
+			Tr.Log.Info("Base domain: test.quollix.org; open https://quollix.test.quollix.org")
+		}
 	},
 }
 

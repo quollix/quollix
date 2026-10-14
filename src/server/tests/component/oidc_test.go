@@ -39,17 +39,17 @@ func TestOIDC_HappyPath_AuthorizationCodeFlowWithUserinfo(t *testing.T) {
 	assert.Equal(t, "admin", claims.Role)
 	assert.Equal(t, authRes.Nonce, claims.Nonce)
 
-	assert.Equal(t, adminUsername, claims.PreferredUsername)
+	assert.Equal(t, tools.DefaultAdminName, claims.PreferredUsername)
 	assert.Equal(t, tools.DefaultAdminEmail, claims.Email)
-	assert.Equal(t, adminUsername, claims.Name)
+	assert.Equal(t, tools.DefaultAdminName, claims.Name)
 
 	uinfo := ctx.FetchUserinfo(tokens.AccessToken)
 	assert.Equal(t, expectedSub, uinfo.Sub)
 	assert.Equal(t, "admin", uinfo.Role)
 
-	assert.Equal(t, adminUsername, uinfo.PreferredUsername)
+	assert.Equal(t, tools.DefaultAdminName, uinfo.PreferredUsername)
 	assert.Equal(t, tools.DefaultAdminEmail, uinfo.Email)
-	assert.Equal(t, adminUsername, uinfo.Name)
+	assert.Equal(t, tools.DefaultAdminName, uinfo.Name)
 }
 
 func TestOIDC_Discovery(t *testing.T) {
@@ -191,9 +191,9 @@ func TestOIDC_RefreshTokenFlow(t *testing.T) {
 	pubKey := FetchPublicKeyFromJWKS(t, ctx)
 	claims := VerifyIDToken(t, refreshedTokens.IDToken, pubKey, ctx.Config.Issuer, app.ClientId)
 	assert.Equal(t, expectedSub, claims.Sub)
-	assert.Equal(t, adminUsername, claims.PreferredUsername)
+	assert.Equal(t, tools.DefaultAdminName, claims.PreferredUsername)
 	assert.Equal(t, tools.DefaultAdminEmail, claims.Email)
-	assert.Equal(t, adminUsername, claims.Name)
+	assert.Equal(t, tools.DefaultAdminName, claims.Name)
 
 	refreshedAgainTokens := ctx.refreshTokens(refreshedTokens.RefreshToken, app.ClientId, app.ClientSecret, ClientAuthMethodBasic)
 	assert.NotEqual(t, refreshedTokens.AccessToken, refreshedAgainTokens.AccessToken)
@@ -229,9 +229,9 @@ func runAuthorizationCodeFlowWithAuthMethod(t *testing.T, clientAuthMethod Clien
 
 	uinfo := ctx.FetchUserinfo(tokens.AccessToken)
 	assert.Equal(t, expectedSub, uinfo.Sub)
-	assert.Equal(t, adminUsername, uinfo.PreferredUsername)
+	assert.Equal(t, tools.DefaultAdminName, uinfo.PreferredUsername)
 	assert.Equal(t, tools.DefaultAdminEmail, uinfo.Email)
-	assert.Equal(t, adminUsername, uinfo.Name)
+	assert.Equal(t, tools.DefaultAdminName, uinfo.Name)
 }
 
 func TestOIDC_HappyPath_AuthorizationCodeFlow_ClientSecretBasic(t *testing.T) {

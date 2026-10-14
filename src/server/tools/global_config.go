@@ -1,6 +1,8 @@
 package tools
 
-import "os"
+import (
+	"os"
+)
 
 const DevProfile = "DEV"
 
@@ -36,6 +38,7 @@ func NewGlobalConfigFromEnv() *GlobalConfig {
 
 func newDevGlobalConfig() *GlobalConfig {
 	return &GlobalConfig{
+		CollectMetricsAutomatically:           false,
 		PrintCommandOutput:                    true,
 		ShouldRunMaintenanceAgent:             false,
 		DeployOfficialDatabaseWithPortExposed: true,
@@ -57,6 +60,7 @@ func newDevGlobalConfig() *GlobalConfig {
 
 func newProdGlobalConfig() *GlobalConfig {
 	return &GlobalConfig{
+		CollectMetricsAutomatically:           true,
 		PrintCommandOutput:                    false,
 		ShouldRunMaintenanceAgent:             true,
 		DeployOfficialDatabaseWithPortExposed: false,

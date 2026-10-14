@@ -92,7 +92,6 @@ services:
       APP_HOME_URL: "https://app.${BASE_DOMAIN}"
       CLIENT_ID: "${CLIENT_ID}"
       CLIENT_SECRET: "${CLIENT_SECRET}"
-      APP_SECRET: "${APP_SECRET}"
 `
 
 	secrets, err := extractor.ExtractSecrets([]byte(composeYaml))

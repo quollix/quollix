@@ -98,7 +98,7 @@ const (
 )
 
 func sampleAppLegacyPasswordEnvironment(value string) string {
-	return fmt.Sprintf("      - SAMPLE_LEGACY_PASSWORD=%s\n", value)
+	return fmt.Sprintf("      SAMPLE_LEGACY_PASSWORD: %q\n", value)
 }
 
 func buildSampleAppComposeYAML(options sampleAppComposeOptions) string {
@@ -107,15 +107,19 @@ func buildSampleAppComposeYAML(options sampleAppComposeOptions) string {
     image: sampleapp:local
     container_name: samplemaintainer_sampleapp_sampleapp
     environment:
-      - VERSION=%s
-      - SERVER_URL=https://sampleapp.${BASE_DOMAIN}
-      - OIDC_CLIENT_ID=${CLIENT_ID}
-      - OIDC_CLIENT_SECRET=${CLIENT_SECRET}
-      - APP_SECRET=${APP_SECRET}
-      - SECRET_SAMPLE_SHARED=${SECRET_SAMPLE_SHARED}
-      - %s=${%s}
-%s      - IANA_TIMEZONE=${IANA_TIMEZONE}
-      - PORT=%s
+      VERSION: "%s"
+      HOST_PROFILE_PROBE: "$PROFILE"
+      SERVER_URL: "https://sampleapp.${BASE_DOMAIN}"
+      OIDC_CLIENT_ID: "${CLIENT_ID}"
+      OIDC_CLIENT_SECRET: "${CLIENT_SECRET}"
+      LOGS_RETENTION_DAYS: "${LOGS_RETENTION_DAYS}"
+      LOGS_MAX_DISK_SPACE_GB: "${LOGS_MAX_DISK_SPACE_GB}"
+      METRICS_RETENTION_DAYS: "${METRICS_RETENTION_DAYS}"
+      HOST_METRICS_INTERVAL_SECONDS: "${HOST_METRICS_INTERVAL_SECONDS}"
+      SECRET_SAMPLE_SHARED: "${SECRET_SAMPLE_SHARED}"
+      %s: "${%s}"
+%s      IANA_TIMEZONE: "${IANA_TIMEZONE}"
+      PORT: "%s"
 %s    labels:
       quollix.port: %s
 %s`, options.Version, options.VersionSecretName, options.VersionSecretName, options.ExtraEnvironment, options.Port, options.VolumeMapping, options.Port, options.VolumeDeclaration)

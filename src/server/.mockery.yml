@@ -1,4 +1,48 @@
 packages:
+  server/metrics:
+    interfaces:
+      DockerVolumeClient:
+        config:
+          filename: docker_volume_client_mock.go
+          structname: DockerVolumeClientMock
+      VictoriaMetricsClient:
+        config:
+          filename: victoria_metrics_client_mock.go
+          structname: VictoriaMetricsClientMock
+      ConcurrentMetricsCollector:
+        config:
+          filename: concurrent_metrics_collector_mock.go
+          structname: ConcurrentMetricsCollectorMock
+      ContainerMetricsService:
+        config:
+          filename: container_metrics_service_mock.go
+          structname: ContainerMetricsServiceMock
+      DockerStatsClient:
+        config:
+          filename: docker_stats_client_mock.go
+          structname: DockerStatsClientMock
+  server/logging:
+    interfaces:
+      ContainerObserverManager:
+        config:
+          filename: container_observer_manager_mock.go
+          structname: ContainerObserverManagerMock
+      DockerLogsClient:
+        config:
+          filename: docker_logs_client_mock.go
+          structname: DockerLogsClientMock
+      LogStreamReader:
+        config:
+          filename: log_stream_reader_mock.go
+          structname: LogStreamReaderMock
+      LogSink:
+        config:
+          filename: log_sink_mock.go
+          structname: LogSinkMock
+      VictoriaLogsClient:
+        config:
+          filename: victoria_logs_client_mock.go
+          structname: VictoriaLogsClientMock
   server/tools:
     interfaces:
       CommandRunner:
@@ -43,6 +87,10 @@ packages:
           pkgname: email
   server/configs:
     interfaces:
+      ObservabilityRepository:
+        config:
+          filename: observability_repository_mock.go
+          structname: ObservabilityRepositoryMock
       ConfigsRepository:
         config:
           filename: configs_repository_mock.go
@@ -67,6 +115,14 @@ packages:
           structname: SystemConfigMigrationsProviderMock
   server/apps_basic:
     interfaces:
+      ContainerLogMonitor:
+        config:
+          filename: container_log_monitor_mock.go
+          structname: ContainerLogMonitorMock
+      DatabaseIndependentRuntime:
+        config:
+          filename: database_independent_runtime_mock.go
+          structname: DatabaseIndependentRuntimeMock
       OperationRegistry:
         config:
           filename: operation_registry_mock.go

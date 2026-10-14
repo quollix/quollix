@@ -11,10 +11,9 @@ import (
 	"server/system_config_migrations"
 	"server/tools"
 
+	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
-
-	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
 )
 
@@ -151,9 +150,6 @@ func TestRestoreAppMetaData(t *testing.T) {
 		assert.Nil(t, client.Apps.UpdateMaintenanceSettings(app.AppId, false, false))
 
 		appClient := GetAppClient(t, client)
-		originalAppSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
-		assert.Nil(t, err)
-		assert.Equal(t, app.AppSecret, originalAppSecret)
 		originalSharedSecret = ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_SHARED")
 		originalVersionSecret = ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_VERSION_TWO")
 	})
@@ -165,9 +161,6 @@ func TestRestoreAppMetaData(t *testing.T) {
 	assertAppState(t, fixture.originalApp, restoredApp)
 
 	appClient := GetAppClient(t, fixture.client)
-	restoredAppSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
-	assert.Nil(t, err)
-	assert.Equal(t, restoredApp.AppSecret, restoredAppSecret)
 	assert.Equal(t, originalSharedSecret, ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_SHARED"))
 	assert.Equal(t, originalVersionSecret, ReadRequiredSampleAppEnvValue(t, appClient, "SECRET_SAMPLE_VERSION_TWO"))
 }

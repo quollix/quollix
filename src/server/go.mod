@@ -1,15 +1,17 @@
 module server
 
-go 1.26.6
+go 1.26.9
 
 require (
 	github.com/coreos/go-oidc/v3 v3.21.0
+	github.com/elastic/go-grok v0.3.1
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/google/wire v0.7.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.12.3
+	github.com/moby/moby/api v1.56.0
 	github.com/moby/moby/client v0.6.0
-	github.com/quollix/common v1.3.24
+	github.com/quollix/common v1.3.31
 	github.com/quollix/deepstack v1.2.3
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.57.0
@@ -55,6 +57,7 @@ require (
 	github.com/knadh/koanf/providers/posflag v1.0.1 // indirect
 	github.com/knadh/koanf/providers/structs v1.0.0 // indirect
 	github.com/knadh/koanf/v2 v2.3.2 // indirect
+	github.com/magefile/mage v1.15.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
@@ -62,7 +65,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
-	github.com/moby/moby/api v1.56.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect

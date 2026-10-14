@@ -15,9 +15,9 @@ const (
 	BrandAppAuthCookieName     = u.BrandName + "-auth"
 	BrandAppQuerySecretName    = u.BrandName + "-secret"
 
-	DefaultAdminName     = "admin"
+	DefaultAdminName     = "administrator"
 	DefaultAdminPassword = "password"
-	DefaultAdminEmail    = "admin@example.invalid"
+	DefaultAdminEmail    = DefaultAdminName + "@example.invalid"
 
 	ResticImageName                 = "restic:local"
 	ResticCleanupLabel              = "quollix.cleanup=restic"
@@ -30,28 +30,38 @@ const (
 	BrandAppService       = u.BrandName
 	BrandAppContainerName = u.OfficialMaintainer + "_" + u.OfficialBrandAppName + "_" + BrandAppService
 
-	QuollogAppName = "quollog"
+	GrafanaAppName                         = "grafana"
+	DefaultLogsRetentionDays               = 30
+	DefaultLogsMaxDiskSpaceGB              = 5
+	DefaultMetricsRetentionDays            = 30
+	DefaultHostMetricsIntervalSeconds      = 300
+	DefaultContainerMetricsIntervalSeconds = 300
+	DefaultVolumeMetricsIntervalSeconds    = 3600
 )
 
 var ComposeEnvVars = struct {
-	BaseDomain       string
-	LegacyServerHost string
-	ClientId         string
-	ClientSecret     string
-	// Deprecated: APP_SECRET is legacy app-secret compatibility. New app definitions should use purpose-specific SECRET_* placeholders.
-	AppSecret string
+	BaseDomain   string
+	ClientId     string
+	ClientSecret string
 
-	IanaTimeZone string
+	IanaTimeZone               string
+	LogsRetentionDays          string
+	LogsMaxDiskSpaceGB         string
+	MetricsRetentionDays       string
+	HostMetricsIntervalSeconds string
 }{
-	BaseDomain:       "BASE_DOMAIN",
-	LegacyServerHost: "SERVER_HOST",
-	ClientId:         "CLIENT_ID",
-	ClientSecret:     "CLIENT_SECRET",
-	AppSecret:        "APP_SECRET",
-	IanaTimeZone:     "IANA_TIMEZONE",
+	BaseDomain:                 "BASE_DOMAIN",
+	ClientId:                   "CLIENT_ID",
+	ClientSecret:               "CLIENT_SECRET",
+	IanaTimeZone:               "IANA_TIMEZONE",
+	LogsRetentionDays:          "LOGS_RETENTION_DAYS",
+	LogsMaxDiskSpaceGB:         "LOGS_MAX_DISK_SPACE_GB",
+	MetricsRetentionDays:       "METRICS_RETENTION_DAYS",
+	HostMetricsIntervalSeconds: "HOST_METRICS_INTERVAL_SECONDS",
 }
 
 type GlobalConfig struct {
+	CollectMetricsAutomatically           bool
 	PrintCommandOutput                    bool
 	ShouldRunMaintenanceAgent             bool
 	DeployOfficialDatabaseWithPortExposed bool

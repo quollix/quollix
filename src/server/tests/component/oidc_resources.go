@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"server/oidc_provider"
+	"server/tools"
 
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
@@ -29,8 +30,6 @@ import (
 const (
 	baseURL         = "https://quollix.localhost"
 	testRedirectURI = "https://sampleapp.localhost/callback"
-	adminUsername   = "admin"
-	adminPassword   = "password"
 )
 
 type OidcTestClient struct {
@@ -134,7 +133,7 @@ func VerifyIDToken(t *testing.T, token string, pub *rsa.PublicKey, expectedIss, 
 }
 
 func (c *OidcTestClient) SignInAsAdmin() {
-	c.SignIn(adminUsername, adminPassword)
+	c.SignIn(tools.DefaultAdminName, tools.DefaultAdminPassword)
 }
 
 func (c *OidcTestClient) SignIn(username, password string) {

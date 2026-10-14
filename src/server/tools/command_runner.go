@@ -29,6 +29,8 @@ type CommandRunnerImpl struct {
 
 func (c *CommandRunnerImpl) RunCommand(command string, args ...string) (*CommandOutput, error) {
 	cmd := exec.Command(command, args...) // #nosec G204: command and arguments are built from internal constants and validated config values.
+	// Prevent child processes, including Compose, from accessing Quollix's environment secrets.
+	cmd.Env = []string{}
 	var stdoutBuffer bytes.Buffer
 	var stderrBuffer bytes.Buffer
 	if c.Config.PrintCommandOutput {

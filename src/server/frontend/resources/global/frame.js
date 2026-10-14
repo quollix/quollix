@@ -9,6 +9,16 @@ window.reloadFrontend = async () => {
   if (ok) window.reloadPageAndShowSnackbar("Frontend templates reloaded successfully.");
 }
 
+window.flushLogs = async () => {
+  const ok = await window.apiPost('{{ $.Static.Paths.BackendLogsFlush }}', null)
+  if (ok) window.showSnackbar("Logs flushed successfully.")
+}
+
+window.collectMetrics = async () => {
+  const ok = await window.apiPost('{{ $.Static.Paths.BackendMetricsCollect }}', null)
+  if (ok) window.showSnackbar("Metrics collected successfully.")
+}
+
 window.resetTestState = async () => {
   const confirmed = await window.confirmDialog("Reset test state to snapshot? This removes current test data.")
   if (!confirmed) return
@@ -48,4 +58,14 @@ window.startOperationIndicatorPolling = function() {
     window.setTimeout(pollOnce, 1000)
   }
   pollOnce()
+}
+
+window.wipeLogs = async () => {
+  const ok = await window.apiPost('{{ $.Static.Paths.BackendLogsWipe }}', null)
+  if (ok) window.showSnackbar("Logs emptied successfully.")
+}
+
+window.wipeMetrics = async () => {
+  const ok = await window.apiPost('{{ $.Static.Paths.BackendMetricsWipe }}', null)
+  if (ok) window.showSnackbar("Metrics emptied successfully.")
 }

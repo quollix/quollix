@@ -3,7 +3,6 @@ package apps_basic
 import (
 	"fmt"
 	"net/http"
-	"server/tools"
 
 	u "github.com/quollix/common/utils"
 )
@@ -36,7 +35,7 @@ func (a *AppDetectorImpl) IsOfficialDatabaseApp(appName string) bool {
 }
 
 func (a *AppDetectorImpl) IsSystemApp(appName string) bool {
-	return appName == u.OfficialDatabaseAppName || appName == u.OfficialBrandAppName || appName == tools.QuollogAppName
+	return appName == u.OfficialDatabaseAppName || appName == u.OfficialBrandAppName
 }
 
 func (a *AppDetectorImpl) WriteErrorIfOfficialDatabaseAppIsAddressed(w http.ResponseWriter, appId int) bool {

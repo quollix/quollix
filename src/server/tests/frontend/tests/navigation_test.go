@@ -5,6 +5,7 @@ package frontend
 import (
 	"testing"
 
+	"server/tests/component"
 	"server/tests/frontend_pages"
 
 	"github.com/quollix/common/quollix/api"
@@ -82,6 +83,16 @@ func TestSidebarNavigationAsAdmin(t *testing.T) {
 	frame.Assert.PagePath(api.Paths.FrontendInstalledApps)
 }
 
+func TestFrameFlushLogsAndCollectMetrics(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+	component.InstallGrafana(t, frame.Client)
+
+	frame.Pages.OpenInstalledAppsPage()
+	frame.Browser.FlushLogs().Assert.SnackbarVisibleWithTextEventually("Logs flushed successfully.")
+	frame.Browser.CollectMetrics().Assert.SnackbarVisibleWithTextEventually("Metrics collected successfully.")
+}
+
 func TestAccountTabVisibilityForAnonymousAndAuthenticated(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
@@ -93,4 +104,14 @@ func TestAccountTabVisibilityForAnonymousAndAuthenticated(t *testing.T) {
 	frame.Pages.GoToInstalledAppsPage().Frame.Assert.PagePath(api.Paths.FrontendInstalledApps)
 	frame.Assert.ElementNotPresent("#" + sidebarUserLink)
 	frame.Assert.ElementNotPresent("#" + sidebarLinkFeedback)
+}
+
+func TestFrameWipeLogsAndMetrics(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+	component.InstallGrafana(t, frame.Client)
+
+	frame.Pages.OpenInstalledAppsPage()
+	frame.Browser.WipeLogs().Assert.SnackbarVisibleWithTextEventually("Logs emptied successfully.")
+	frame.Browser.WipeMetrics().Assert.SnackbarVisibleWithTextEventually("Metrics emptied successfully.")
 }

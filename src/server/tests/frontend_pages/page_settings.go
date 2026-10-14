@@ -440,3 +440,32 @@ func isElementVisible(t *testing.T, element *browsertest.Element) bool {
 	return !strings.Contains(strings.ToLower(strings.TrimSpace(*style)), "display:none") &&
 		!strings.Contains(strings.ToLower(strings.TrimSpace(*style)), "display: none")
 }
+
+func (s *SettingsPage) EnterObservabilitySettings(settings *api.ObservabilitySettings) *SettingsPage {
+	s.Frame.Controls.SetInputValue("#logs-retention-days", settings.LogsRetentionDays)
+	s.Frame.Controls.SetInputValue("#logs-max-disk-space-gb", settings.LogsMaxDiskSpaceGB)
+	s.Frame.Controls.SetInputValue("#metrics-retention-days", settings.MetricsRetentionDays)
+	s.Frame.Controls.SetInputValue("#host-metrics-interval-seconds", settings.HostMetricsIntervalSeconds)
+	s.Frame.Controls.SetInputValue("#container-metrics-interval-seconds", settings.ContainerMetricsIntervalSeconds)
+	s.Frame.Controls.SetInputValue("#volume-metrics-interval-seconds", settings.VolumeMetricsIntervalSeconds)
+	return s
+}
+
+func (s *SettingsPage) AssertObservabilitySettings(expected *api.ObservabilitySettings) *SettingsPage {
+	actual := &api.ObservabilitySettings{
+		LogsRetentionDays:               s.Frame.Controls.GetInputValue("#logs-retention-days"),
+		LogsMaxDiskSpaceGB:              s.Frame.Controls.GetInputValue("#logs-max-disk-space-gb"),
+		MetricsRetentionDays:            s.Frame.Controls.GetInputValue("#metrics-retention-days"),
+		HostMetricsIntervalSeconds:      s.Frame.Controls.GetInputValue("#host-metrics-interval-seconds"),
+		ContainerMetricsIntervalSeconds: s.Frame.Controls.GetInputValue("#container-metrics-interval-seconds"),
+		VolumeMetricsIntervalSeconds:    s.Frame.Controls.GetInputValue("#volume-metrics-interval-seconds"),
+	}
+	assert.Equal(s.Frame.T, expected, actual)
+	return s
+}
+
+func (s *SettingsPage) SaveObservabilitySettingsAndAssertSuccessSnackbar() *SettingsPage {
+	s.Frame.Controls.GetRequiredElement("#observability-settings-save-button").MustClick()
+	s.Frame.Assert.SnackbarVisibleWithTextEventually("Observability settings saved.")
+	return s
+}

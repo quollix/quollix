@@ -1,12 +1,15 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
@@ -21,7 +24,26 @@ func main() {
 	http.HandleFunc("/header/", headerHandler)
 	http.HandleFunc("/save-string", saveStringHandler)
 	http.HandleFunc("/read-string", readStringHandler)
-	fmt.Printf("Server running on port %s\n", port)
+	startupLog := struct {
+		Timestamp time.Time `json:"timestamp"`
+		Level     string    `json:"level"`
+		Message   string    `json:"message"`
+		BootID    string    `json:"boot_id"`
+		Stream    string    `json:"stream"`
+	}{
+		Timestamp: time.Now().UTC(),
+		Level:     "info",
+		Message:   "sampleapp started",
+		BootID:    rand.Text(),
+		Stream:    "stdout",
+	}
+	if err := json.NewEncoder(os.Stdout).Encode(startupLog); err != nil {
+		log.Fatal(err)
+	}
+	startupLog.Stream = "stderr"
+	if err := json.NewEncoder(os.Stderr).Encode(startupLog); err != nil {
+		log.Fatal(err)
+	}
 	log.Fatal(http.ListenAndServe(":"+port, nil)) // #nosec G114 (CWE-676): Use of net/http serve function that has no support for setting timeouts; sample app is only relevant for testing
 }
 

@@ -3,12 +3,13 @@ package apps_advanced
 import (
 	"fmt"
 	"net/http"
-	"server/app_migrations"
-	"server/app_store"
-	"server/apps_basic"
 	"strconv"
 	"strings"
 	"time"
+
+	"server/app_migrations"
+	"server/app_store"
+	"server/apps_basic"
 
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/store"
@@ -57,6 +58,14 @@ func (a *AppsAdvancedHandler) UploadVersionFileToApplicationHandler(w http.Respo
 		u.WriteResponseErrorAlways(w, err)
 		return
 	}
+
+	operation := fmt.Sprintf("uploading '%s'", composeArchive.AppName)
+	handle, err := a.OperationRegistry.TryBlockAppOperation(composeArchive.AppName, operation)
+	if err != nil {
+		apps_basic.WriteConcurrentOperationError(w, operation, err)
+		return
+	}
+	defer handle.Done()
 
 	if err := a.VersionValidator.Validate(versionFile.Content, composeArchive.Maintainer, composeArchive.AppName); err != nil {
 		u.WriteResponseErrorAlways(w, err)

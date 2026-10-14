@@ -10,12 +10,12 @@ import (
 
 	"server/apps_advanced"
 	"server/apps_basic"
+	"server/configs"
 	"server/tools"
 
+	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
 	"github.com/quollix/common/quollix/api_client"
-
-	"github.com/quollix/common/assert"
 	u "github.com/quollix/common/utils"
 	"github.com/quollix/common/validation"
 )
@@ -35,11 +35,18 @@ func TestPruningApp(t *testing.T) {
 func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
+	settings := configs.NewObservabilitySettings(14, 10, 60, 420, 660, 5400)
+	assert.Nil(t, client.Settings.SaveObservabilitySettings(settings))
 	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 
 	app := GetInstalledSample(t, client)
 	appClient := GetAppClient(t, client)
+
+	// Apps must not inherit Quollix's environment because it may contain secrets. PROFILE=DEV is the test probe.
+	hostProfile, err := ReadSampleAppEnvValue(appClient, "HOST_PROFILE_PROBE")
+	assert.Nil(t, err)
+	assert.Equal(t, "", hostProfile)
 
 	serverURL, err := ReadSampleAppEnvValue(appClient, "SERVER_URL")
 	assert.Nil(t, err)
@@ -53,13 +60,20 @@ func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, app.ClientSecret, clientSecret)
 
-	appSecret, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.AppSecret)
-	assert.Nil(t, err)
-	assert.Equal(t, app.AppSecret, appSecret)
-
 	ianaTimezone, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.IanaTimeZone)
 	assert.Nil(t, err)
 	assert.Equal(t, "Europe/London", ianaTimezone)
+
+	for name, expected := range map[string]string{
+		tools.ComposeEnvVars.LogsRetentionDays:          settings.LogsRetentionDays,
+		tools.ComposeEnvVars.LogsMaxDiskSpaceGB:         settings.LogsMaxDiskSpaceGB,
+		tools.ComposeEnvVars.MetricsRetentionDays:       settings.MetricsRetentionDays,
+		tools.ComposeEnvVars.HostMetricsIntervalSeconds: settings.HostMetricsIntervalSeconds,
+	} {
+		value, err := ReadSampleAppEnvValue(appClient, name)
+		assert.Nil(t, err)
+		assert.Equal(t, expected, value)
+	}
 
 	sharedSecret, err := ReadSampleAppEnvValue(appClient, "SECRET_SAMPLE_SHARED")
 	assert.Nil(t, err)

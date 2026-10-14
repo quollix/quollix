@@ -53,7 +53,7 @@ func InitDeps() {
 	}
 
 	DatabaseUtils = &u.DatabaseUtilsImpl{}
-	dockerService := &tools.DockerServiceImpl{}
+	dockerService := &tools.DockerServiceImpl{CommandRunner: &tools.CommandRunnerImpl{Config: &tools.GlobalConfig{}}}
 	DatabaseConnector = &tools.DatabaseConnectorImpl{
 		Config:            globalConfig,
 		DirectoryProvider: dirProvider,
@@ -84,7 +84,7 @@ func InitDeps() {
 
 func GetSampleAdminUser() *api.User {
 	return users.NewUser(
-		"admin",
+		tools.DefaultAdminName,
 		"admin@example.com",
 		"hashed-password",
 		"cookieValue",

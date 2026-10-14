@@ -14,8 +14,11 @@ import (
 	frontendpages "server/frontend/pages"
 	"server/groups"
 	"server/ingress"
+	"server/logging"
 	"server/maintenance"
 	"server/maintenance/retention"
+	"server/metrics"
+	"server/observability"
 	"server/oidc_client"
 	"server/oidc_provider"
 	"server/setup"
@@ -34,6 +37,9 @@ import (
 )
 
 type Dependencies struct {
+	ContainerMetricsMonitor     apps_basic.ContainerMetricsMonitor
+	VolumeMetricsMonitor        apps_basic.VolumeMetricsMonitor
+	ContainerLogMonitor         apps_basic.ContainerLogMonitor
 	MaintenanceAgent            maintenance.MaintenanceAgent
 	ResticDockerImageService    backup_server.ResticDockerImageService
 	SystemConfigMigrator        system_config_migrations.SystemConfigMigrator
@@ -77,6 +83,35 @@ type Repositories struct {
 }
 
 var SharedSet = wire.NewSet(
+	NewContainerMetricsMonitor,
+	NewVolumeMetricsMonitor,
+	metrics.NewVolumeMetricsCollectionService,
+	wire.Bind(new(metrics.VolumeMetricsCollectionService), new(*metrics.VolumeMetricsCollectionServiceImpl)),
+	metrics.NewDockerVolumeClient,
+	wire.Bind(new(metrics.DockerVolumeClient), new(*metrics.DockerVolumeClientImpl)),
+	wire.Bind(new(metrics.DockerVolumeUsageAPI), new(*client.Client)),
+	metrics.NewMetricsCollectionService,
+	wire.Bind(new(metrics.MetricsCollectionService), new(*metrics.MetricsCollectionServiceImpl)),
+	metrics.NewConcurrentMetricsCollector,
+	wire.Bind(new(metrics.ConcurrentMetricsCollector), new(*metrics.ConcurrentMetricsCollectorImpl)),
+	metrics.NewContainerMetricsService,
+	wire.Bind(new(metrics.ContainerMetricsService), new(*metrics.ContainerMetricsServiceImpl)),
+	metrics.NewDockerStatsClient,
+	wire.Bind(new(metrics.DockerStatsClient), new(*metrics.DockerStatsClientImpl)),
+	wire.Bind(new(metrics.DockerContainerStatsAPI), new(*client.Client)),
+	NewLogSink,
+	NewVictoriaLogsClient,
+	NewVictoriaMetricsClient,
+	wire.Struct(new(logging.Handler), "*"),
+	wire.Struct(new(metrics.Handler), "*"),
+	logging.NewContainerLogMonitor,
+	logging.NewContainerObserverManager,
+	wire.Bind(new(logging.ContainerObserverManager), new(*logging.ContainerObserverManagerImpl)),
+	wire.Bind(new(apps_basic.ContainerLogMonitor), new(*logging.ContainerLogMonitorImpl)),
+	wire.Struct(new(logging.DockerLogsClientImpl), "*"),
+	wire.Bind(new(logging.DockerLogsClient), new(*logging.DockerLogsClientImpl)),
+	wire.Struct(new(logging.LogStreamReaderImpl), "*"),
+	wire.Bind(new(logging.LogStreamReader), new(*logging.LogStreamReaderImpl)),
 	NewAppStoreClient,
 	NewOfficialMaintainerPublicKey,
 	NewRouter,
@@ -189,6 +224,11 @@ var SharedSet = wire.NewSet(
 	wire.Struct(new(maintenance.AgentHelperImpl), "*"),
 	wire.Struct(new(maintenance.RandomProviderImpl), "*"),
 	wire.Struct(new(configs.MaintenanceRepositoryImpl), "*"),
+	wire.Struct(new(configs.ObservabilityRepositoryImpl), "*"),
+	wire.Struct(new(observability.SettingsServiceImpl), "*"),
+	wire.Struct(new(observability.SettingsHandler), "*"),
+	wire.Bind(new(configs.ObservabilityRepository), new(*configs.ObservabilityRepositoryImpl)),
+	wire.Bind(new(observability.SettingsService), new(*observability.SettingsServiceImpl)),
 	wire.Struct(new(maintenance.MaintenanceAgentImpl), "*"),
 	wire.Struct(new(retention.BackupDeletionFinderImpl), "*"),
 	wire.Struct(new(retention.BackupRetentionSelectorImpl), "*"),
