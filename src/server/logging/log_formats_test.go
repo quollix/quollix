@@ -27,6 +27,62 @@ func TestInterpret_ExtractsFormatData(t *testing.T) {
 		service  string
 		expected *expectedLogLine
 	}{
+		{`[xorm] [info]  2026/10/17 01:27:32.672307 PING DATABASE pgx`, "vikunja", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-17T01:27:32.672307Z"),
+			Level:     "info", Message: "PING DATABASE pgx",
+			Attributes: map[string]any{"component": "xorm"},
+		}},
+		{`time=2026-10-16T06:54:56.971Z level=ERROR msg="Could not connect to db: dial tcp 172.29.0.3:5432: connect: connection refused"`, "vikunja", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-16T06:54:56.971Z"),
+			Level:     "error", Message: "Could not connect to db: dial tcp 172.29.0.3:5432: connect: connection refused",
+		}},
+		{`initdb: warning: enabling "trust" authentication for local connections`, "postgres", &expectedLogLine{
+			Level: "warn", Message: `enabling "trust" authentication for local connections`,
+			Attributes: map[string]any{"component": "initdb"},
+		}},
+		{`[register-setup] JVB user registration output: Error: User exists`, "prosody", &expectedLogLine{
+			Level: "unknown", Message: "JVB user registration output: Error: User exists",
+			Attributes: map[string]any{"component": "register-setup"},
+		}},
+		{`AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.0.5. Set the 'ServerName' directive globally to suppress this message`, "nextcloud", &expectedLogLine{
+			Level: "unknown", Message: "Could not reliably determine the server's fully qualified domain name, using 172.28.0.5. Set the 'ServerName' directive globally to suppress this message",
+			Attributes: map[string]any{"error.code": "AH00558", "component": "apache2"},
+		}},
+		{`Warning: /var/www/html/config/s3.config.php differs from the latest version of this image at /usr/src/nextcloud/config/s3.config.php`, "nextcloud", &expectedLogLine{
+			Level: "warn", Message: "/var/www/html/config/s3.config.php differs from the latest version of this image at /usr/src/nextcloud/config/s3.config.php",
+		}},
+		{`Notice: /Stage[main]/Zulip::Supervisor/Service[supervisor]: Triggered 'refresh' from 2 events`, "zulip", &expectedLogLine{
+			Level: "info", Message: "/Stage[main]/Zulip::Supervisor/Service[supervisor]: Triggered 'refresh' from 2 events",
+		}},
+		{`/package/admin/s6-overlay/libexec/preinit: info: /run belongs to uid 0 instead of 1000 - fixing it`, "jitsi", &expectedLogLine{
+			Level: "info", Message: "/run belongs to uid 0 instead of 1000 - fixing it",
+		}},
+		{`s6-rc: warning: service nginx failed to start`, "jitsi", &expectedLogLine{
+			Level: "warn", Message: "service nginx failed to start",
+		}},
+		{`2026-10-17  1:27:19 0 [Note] mariadbd: ready for connections.`, "mariadb", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-17T01:27:19Z"),
+			Level:     "info", Message: "mariadbd: ready for connections.",
+			Attributes: map[string]any{"thread_id": 0},
+		}},
+		{`2026-10-17 01:28:04.272591+00:00 [info] <0.1164.0> connection 172.31.0.7:50896 -> 172.31.0.5:5672: user 'zulip' authenticated and granted access to vhost '/'`, "rabbitmq", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-17T01:28:04.272591Z"),
+			Level:     "info", Message: "connection 172.31.0.7:50896 -> 172.31.0.5:5672: user 'zulip' authenticated and granted access to vhost '/'",
+			Attributes: map[string]any{"pid": "<0.1164.0>"},
+		}},
+		{`{"time":"2026-10-17T01:27:59.965149849Z","level":"INFO","source":{"function":"server/tools.(*DockerServiceImpl).StartAppContainer","file":"server/tools/docker_service.go","line":131},"msg":"Starting app","app":"vaultwarden","compose_file_path":"/tmp/app-compose-1989703575/docker-compose.yml","maintainer":"quollix"}`, "quollix", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-17T01:27:59.965149849Z"), Level: "info", Message: "Starting app",
+			Attributes: map[string]any{
+				"source": map[string]any{
+					"function": "server/tools.(*DockerServiceImpl).StartAppContainer",
+					"file":     "server/tools/docker_service.go",
+					"line":     float64(131),
+				},
+				"app":               "vaultwarden",
+				"compose_file_path": "/tmp/app-compose-1989703575/docker-compose.yml",
+				"maintainer":        "quollix",
+			},
+		}},
 		{`{"timestamp":"2026-10-12T17:36:20.580492Z","level":"INFO","message":"Log level is enabled.","level":"\"debug\"","target":"vector::app"}`, "vector", &expectedLogLine{
 			Timestamp: testTimestamp(t, "2026-10-12T17:36:20.580492Z"), Level: "info", Message: "Log level is enabled.",
 			Attributes: map[string]any{"target": "vector::app"},
@@ -433,6 +489,14 @@ func TestInterpret_ExtractsFormatData(t *testing.T) {
 
 func TestInterpret_InvalidRecordsFallBackToPlainText(t *testing.T) {
 	for _, tc := range []struct{ service, line string }{
+		{"vikunja", `time=2026-10-16T06:54:56.971Z level=ERROR msg="unterminated`},
+		{"vikunja", `prefix time=2026-10-16T06:54:56.971Z level=INFO msg="ready"`},
+		{"vikunja", `time=2026-10-16T06:54:56.971Z level=INFO`},
+		{"prosody", "[register-setup Module reloaded successfully"},
+		{"nextcloud", "AH00558: apache2 missing separator"},
+		{"zulip", "Notice missing separator"},
+		{"jitsi", "s6-rc: info service nginx: starting"},
+		{"jitsi", "/package/admin/s6-overlay/libexec/preinit: info read-only root"},
 		{"nextcloud", strings.Replace(nextcloudApplicationLog, `"level":2`, `"level":9`, 1)},
 		{"nextcloud", strings.Replace(nextcloudApplicationLog, `"data":[]}`, `"data":[]`, 1)},
 		{"nextcloud", strings.Replace(nextcloudApplicationLog, ", referer: ", " unexpected: ", 1)},

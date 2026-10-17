@@ -173,6 +173,18 @@ func TestServiceLogFormats_ReferenceExistingFormats(t *testing.T) {
 	}
 }
 
+func TestInterpret_JitsiComponentsAcceptS6Logs(t *testing.T) {
+	for _, service := range []string{"jvb", "jicofo", "prosody"} {
+		t.Run(service, func(t *testing.T) {
+			record := NewLogLineInterpreter(service).Parse("s6-rc: info: service legacy-services successfully started", LogRecordContext{ReadTimestamp: receivedAt})
+			assert.Equal(t, &api.LogRecord{
+				ReadTimestamp: receivedAt, Level: "info",
+				Message: "service legacy-services successfully started", Parsed: true,
+			}, record)
+		})
+	}
+}
+
 func TestInterpret_KnownServiceVariants(t *testing.T) {
 	for _, tc := range []struct{ service, line string }{
 		{"nextcloud", `127.0.0.1 - - [03/Oct/2026:10:30:41 +0000] "GET / HTTP/1.1" 200 12 "-" "-"`},

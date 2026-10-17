@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	nextcloudStartupParser = newLogParser(parseLevelMessageLog, "")
 	nextcloudRecordParser  = fieldLogParser(parseNextcloudMessage, logSchema{"time", "level", "message", time.RFC3339Nano})
 	nextcloudLevels        = map[float64]string{0: "debug", 1: "info", 2: "warn", 3: "error", 4: "fatal"}
 	parseNextcloudEnvelope = grokParser(`\[nextcloud\]\[%{BRACKET:app}\]\[%{NONNEGINT:level:int}\] %{GREEDYDATA:payload}`)
@@ -16,7 +17,7 @@ var (
 func parseNextcloudLog(line string) (*parsedLogLine, bool) {
 	parsed, ok := parseApacheContainerLog(line)
 	if !ok {
-		return nil, false
+		return nextcloudStartupParser(line)
 	}
 	if !strings.HasPrefix(parsed.Message, "[nextcloud]") {
 		return parsed, true

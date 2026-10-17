@@ -7,12 +7,50 @@ import (
 )
 
 var (
-	apacheRecordParser = fieldLogParser(parseApacheLog, logSchema{"timestamp", "log.level", "message", time.ANSIC})
-	accessRecordParser = newLogParser(parseHTTPAccessLog, accessTimestampLayout)
-	nginxRecordParser  = newLogParser(parseNginxLog, slashTimestampLayout)
+	apacheDiagnosticParser = newLogParser(parseApacheDiagnostic, "")
+	s6RecordParser         = newLogParser(parseS6Log, "")
+	rabbitmqJSONParser     = jsonLogParser("time", dateTimeOffsetLayout)
+	rabbitmqTextParser     = newLogParser(parseRabbitmqTextLog, dateTimeOffsetLayout)
+	apacheRecordParser     = fieldLogParser(parseApacheLog, logSchema{"timestamp", "log.level", "message", time.ANSIC})
+	accessRecordParser     = newLogParser(parseHTTPAccessLog, accessTimestampLayout)
+	nginxRecordParser      = newLogParser(parseNginxLog, slashTimestampLayout)
 )
 
+func parseProsodyFields(line string) (map[string]any, bool) {
+	if fields, ok := parseProsodyLog(line); ok {
+		return fields, true
+	}
+	if fields, ok := parseS6Log(line); ok {
+		return fields, true
+	}
+	return parseComponentMessageLog(line)
+}
+
+func parseZulipFields(line string) (map[string]any, bool) {
+	if fields, ok := parseTimestampLevelLog(line); ok {
+		return fields, true
+	}
+	return parseLevelMessageLog(line)
+}
+
+func parseJitsiContainerLog(line string) (*parsedLogLine, bool) {
+	if strings.HasPrefix(line, "s6-rc:") || strings.HasPrefix(line, "/package/admin/s6-overlay/libexec/preinit:") {
+		return s6RecordParser(line)
+	}
+	return parseNginxContainerLog(line)
+}
+
+func parseRabbitmqLog(line string) (*parsedLogLine, bool) {
+	if strings.HasPrefix(strings.TrimSpace(line), "{") {
+		return rabbitmqJSONParser(line)
+	}
+	return rabbitmqTextParser(line)
+}
+
 func parseApacheContainerLog(line string) (*parsedLogLine, bool) {
+	if strings.HasPrefix(line, "AH") {
+		return apacheDiagnosticParser(line)
+	}
 	if strings.HasPrefix(line, "[") {
 		return apacheRecordParser(line)
 	}
@@ -29,7 +67,7 @@ func parseNginxContainerLog(line string) (*parsedLogLine, bool) {
 func parseJitsiFields(line string) (map[string]any, bool) {
 	fields, ok := parseJitsiLog(line)
 	if !ok {
-		return nil, false
+		return parseS6Log(line)
 	}
 	if value, exists := fields["context"].(string); exists {
 		message, context, ok := splitLogfmtSuffix(value)

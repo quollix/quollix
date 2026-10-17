@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	initdbRecordParser      = newLogParser(grokParser(`(?P<component>initdb): %{LEVEL:level}: %{GREEDYDATA:message}`), "")
 	postgresRecordParser    = newLogParser(parsePostgresLog, time.DateTime)
 	parsePostgresHeader     = grokParser(`%{STAMP:timestamp} %{NOTSPACE:timezone} \[%{NONNEGINT:pid:int}\] %{LEVEL:level}:\s+%{GREEDYDATA:message}`)
 	parsePostgresCheckpoint = grokParser(
@@ -20,6 +21,9 @@ var (
 )
 
 func parsePostgresRecord(line string) (*parsedLogLine, bool) {
+	if strings.HasPrefix(line, "initdb:") {
+		return initdbRecordParser(line)
+	}
 	parsed, ok := postgresRecordParser(line)
 	if !ok {
 		return nil, false
