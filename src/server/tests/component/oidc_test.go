@@ -15,6 +15,7 @@ import (
 
 	"server/oidc_provider"
 	"server/tools"
+	"server/users"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
@@ -206,6 +207,13 @@ func TestOIDC_RefreshTokenFlow(t *testing.T) {
 	resp := ctx.refreshTokensRaw(initialTokens.RefreshToken, app.ClientId, app.ClientSecret, ClientAuthMethodBasic)
 	defer u.Close(resp.Body)
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	respMissing := ctx.refreshTokensRaw("unknown-refresh-token", app.ClientId, app.ClientSecret, ClientAuthMethodBasic)
+	defer u.Close(respMissing.Body)
+	assert.Equal(t, http.StatusBadRequest, respMissing.StatusCode)
+	body, err := io.ReadAll(respMissing.Body)
+	assert.Nil(t, err)
+	assert.Equal(t, oidc_provider.RefreshTokenNotFoundError+"\n", string(body))
 }
 
 func runAuthorizationCodeFlowWithAuthMethod(t *testing.T, clientAuthMethod ClientAuthMethod) {
@@ -284,4 +292,59 @@ func (c *OidcTestClient) refreshTokensRaw(refreshToken, clientId, clientSecret s
 	resp, err := c.Client.Do(req)
 	assert.Nil(c.T, err)
 	return resp
+}
+
+func TestOIDC_DisablingUserBlocksOIDCAccessForPublicApp(t *testing.T) {
+	admin := GetClientAndLogin(t)
+	defer admin.Test.ResetTestState()
+	app, err := InstallSample(t, admin, "2.0")
+	assert.Nil(t, err)
+	assert.Nil(t, admin.Apps.SetAccessPolicy(app.AppId, api.Policies.PublicAccessPolicy))
+	InviteUserAndSetPassword(t, admin, SampleUsername, SampleUserPassword, SampleUserEmail)
+	user := GetRequiredUserByUsername(t, admin, SampleUsername)
+	ctx := NewOidcTestClient(t)
+	ctx.SignIn(SampleUsername, SampleUserPassword)
+
+	auth, verifier := ctx.AuthorizeWithPKCE(app.ClientId)
+	tokens := ctx.ExchangeCodeForTokens(auth.Code, verifier, app.ClientId, app.ClientSecret, ClientAuthMethodBasic)
+	assert.Equal(t, strconv.Itoa(user.Id), ctx.FetchUserinfo(tokens.AccessToken).Sub)
+	tokens = ctx.refreshTokens(tokens.RefreshToken, app.ClientId, app.ClientSecret, ClientAuthMethodBasic)
+	pendingAuth, pendingVerifier := ctx.AuthorizeWithPKCE(app.ClientId)
+	assert.Nil(t, admin.Users.SetEnabled(user.Id, false))
+
+	t.Run("authorization redirects to sign in", func(t *testing.T) {
+		ctx.T = t
+		resp, _ := ctx.authorizeWithPKCERaw(app.ClientId, testRedirectURI)
+		defer u.Close(resp.Body)
+		assert.Equal(t, http.StatusFound, resp.StatusCode)
+		location, err := resp.Location()
+		assert.Nil(t, err)
+		assert.Equal(t, api.Paths.FrontendSignIn, location.Path)
+		assert.Equal(t, "", location.Query().Get("code"))
+	})
+
+	for _, testCase := range []struct {
+		name    string
+		request func() *http.Response
+	}{
+		{"pending authorization code", func() *http.Response {
+			return ctx.exchangeCodeForTokensRaw(pendingAuth.Code, pendingVerifier, testRedirectURI, app.ClientId, app.ClientSecret, ClientAuthMethodBasic)
+		}},
+		{"refresh token", func() *http.Response {
+			return ctx.refreshTokensRaw(tokens.RefreshToken, app.ClientId, app.ClientSecret, ClientAuthMethodBasic)
+		}},
+		{"userinfo", func() *http.Response {
+			return ctx.fetchUserinfoRaw(tokens.AccessToken)
+		}},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			ctx.T = t
+			resp := testCase.request()
+			defer u.Close(resp.Body)
+			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			body, err := io.ReadAll(resp.Body)
+			assert.Nil(t, err)
+			assert.Equal(t, users.UserDisabledError+"\n", string(body))
+		})
+	}
 }

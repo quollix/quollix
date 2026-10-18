@@ -3,6 +3,8 @@ package oidc_provider
 import "time"
 
 const (
+	RefreshTokenNotFoundError = "refresh token not found"
+
 	authCodeTTL             = 5 * time.Minute
 	accessTokenTTL          = 10 * time.Minute
 	refreshTokenTTL         = 24 * time.Hour

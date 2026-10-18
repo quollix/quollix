@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"server/backup_server"
+	"server/certificates"
 	"server/system_config_migrations"
 	"server/tools"
 
@@ -117,6 +118,10 @@ func TestDatabaseBackupAndRestore(t *testing.T) {
 	client := prepareSshRemoteServerSetup(t)
 	defer client.Test.ResetTestState()
 
+	certificateBeforeBackup, err := client.Certificates.DownloadCertificateBundleBytes()
+	assert.Nil(t, err)
+	certificateLeafBeforeBackup := ExtractLeafCertificateDerBytesFromBundle(t, certificateBeforeBackup)
+
 	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleUserEmail)
 
 	installedApps := ListInstalledApps(t, client)
@@ -124,6 +129,11 @@ func TestDatabaseBackupAndRestore(t *testing.T) {
 	postgresApp := installedApps[0]
 
 	assert.Nil(t, client.Backups.Create(postgresApp.AppId))
+
+	certificateService := certificates.CertificateServiceImpl{}
+	updatedCertificate, err := certificateService.GenerateUniversalSelfSignedCert()
+	assert.Nil(t, err)
+	assert.Nil(t, client.Certificates.UploadCertificateBundle(updatedCertificate.GetBytes()))
 
 	testuser := GetRequiredUserByUsername(t, client, SampleUsername)
 	assert.Equal(t, 2, len(ListUsers(t, client)))
@@ -135,6 +145,11 @@ func TestDatabaseBackupAndRestore(t *testing.T) {
 
 	assert.Equal(t, 2, len(ListUsers(t, client)))
 	_ = assertPostgresDetails(t, client)
+
+	restoredCertificate, err := client.Certificates.DownloadCertificateBundleBytes()
+	assert.Nil(t, err)
+	assert.Equal(t, certificateLeafBeforeBackup, ExtractLeafCertificateDerBytesFromBundle(t, restoredCertificate))
+	assert.Equal(t, certificateLeafBeforeBackup, GetServerLeafCertificateDerBytes(t))
 }
 
 func TestRestoreAppMetaData(t *testing.T) {

@@ -7,6 +7,8 @@ import (
 	"github.com/quollix/common/quollix/api"
 )
 
+const defaultStructuredLogMessage = "(no message)"
+
 type LogRecordContext struct {
 	ReadTimestamp time.Time
 	Maintainer    string
@@ -31,6 +33,10 @@ func normalizeLogRecord(line *parsedLogLine, original string, context LogRecordC
 	record.LogTimestamp = line.Timestamp
 	record.Level = normalizeLogLevel(line.Level)
 	record.Message = line.Message
+	// Some structured events carry all information in attributes; avoid VictoriaLogs' missing-message placeholder.
+	if strings.TrimSpace(record.Message) == "" {
+		record.Message = defaultStructuredLogMessage
+	}
 	if len(line.Attributes) > 0 {
 		record.Attributes = line.Attributes
 	}

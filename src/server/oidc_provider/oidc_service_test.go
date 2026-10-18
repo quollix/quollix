@@ -119,7 +119,7 @@ func TestOidcServiceImpl_Authorize_HappyPath(t *testing.T) {
 	in := authorizeInput()
 
 	testObjects.ClientService.EXPECT().CheckClientIdAndRedirectUri(in.ClientID, in.RedirectURI).Return(nil)
-	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&api.User{Id: in.UserID}, nil)
+	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&api.User{Id: in.UserID, IsEnabled: true}, nil)
 	testObjects.AuthHelper.EXPECT().GenerateSecret().Return("code-123", nil)
 	testObjects.Clock.EXPECT().Now().Return(sampleTime)
 
@@ -471,10 +471,10 @@ func TestTokenWithRefresh_WhenRefreshTokenNotFound_ReturnsError(t *testing.T) {
 	in := refreshGrantInput()
 
 	testObjects.ClientService.EXPECT().AuthenticateClient(in.ClientID, in.ClientSecret).Return(nil)
-	testObjects.Cache.EXPECT().ConsumeRefreshToken(in.RefreshToken).Return((*RefreshToken)(nil), u.Logger.NewError("refresh token not found"))
+	testObjects.Cache.EXPECT().ConsumeRefreshToken(in.RefreshToken).Return((*RefreshToken)(nil), u.Logger.NewError(RefreshTokenNotFoundError))
 
 	_, err := testObjects.Service.TokenWithRefresh(in)
-	assert.Equal(t, "refresh token not found", u.ExtractError(err))
+	assert.Equal(t, RefreshTokenNotFoundError, u.ExtractError(err))
 }
 
 func TestTokenWithRefresh_WhenClientIdMismatch_ReturnsError(t *testing.T) {
@@ -608,7 +608,7 @@ func TestOidcServiceImpl_Authorize_WhenCodeChallengeMethodEmpty_AllowsAuthorize(
 	in.CodeChallengeMethod = ""
 
 	testObjects.ClientService.EXPECT().CheckClientIdAndRedirectUri(in.ClientID, in.RedirectURI).Return(nil)
-	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&api.User{Id: in.UserID}, nil)
+	testObjects.UserRepo.EXPECT().GetUserById(in.UserID).Return(&api.User{Id: in.UserID, IsEnabled: true}, nil)
 	testObjects.AuthHelper.EXPECT().GenerateSecret().Return("code-123", nil)
 	testObjects.Cache.EXPECT().StoreAuthCode(mock.Anything)
 	testObjects.Clock.EXPECT().Now().Return(sampleTime)

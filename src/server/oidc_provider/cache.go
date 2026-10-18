@@ -112,13 +112,13 @@ func (c *OidcCacheImpl) ConsumeRefreshToken(token string) (*RefreshToken, error)
 		now := c.OsWrapper.Now()
 		if now.After(usedRefreshToken.Expiry) {
 			delete(c.UsedRefreshTokens, token)
-			return nil, u.Logger.NewError("refresh token not found")
+			return nil, u.Logger.NewError(RefreshTokenNotFoundError)
 		}
 		c.revokeRefreshTokenFamily(usedRefreshToken.FamilyId)
 		return nil, u.Logger.NewError("refresh token reuse detected")
 	}
 
-	return nil, u.Logger.NewError("refresh token not found")
+	return nil, u.Logger.NewError(RefreshTokenNotFoundError)
 }
 
 func (c *OidcCacheImpl) Cleanup() {

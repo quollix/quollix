@@ -53,7 +53,7 @@ func TestInterpret_JSONMessageAliases(t *testing.T) {
 			{`{"message":"ready"}`, "ready", nil},
 			{`{"msg":"ready"}`, "ready", nil},
 			{`{"message":"primary","msg":"secondary"}`, "primary", map[string]any{"msg": "secondary"}},
-			{`{"message":"","msg":"secondary"}`, "", map[string]any{"msg": "secondary"}},
+			{`{"message":"","msg":"secondary"}`, defaultStructuredLogMessage, map[string]any{"msg": "secondary"}},
 		} {
 			t.Run(service+"/"+tc.line, func(t *testing.T) {
 				record := NewLogLineInterpreter(service).Parse(tc.line, LogRecordContext{})

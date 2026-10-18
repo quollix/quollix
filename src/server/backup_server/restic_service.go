@@ -52,6 +52,10 @@ func (r *ResticServiceImpl) ListBackups() ([]api.BackupInfo, error) {
 }
 
 func (r *ResticServiceImpl) DeleteBackup(backupIds []string) error {
+	if len(backupIds) == 0 {
+		return nil
+	}
+
 	repo, err := r.SshRepository.GetRemoteBackupRepository()
 	if err != nil {
 		return err

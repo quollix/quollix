@@ -87,6 +87,17 @@ func TestInterpret_ExtractsFormatData(t *testing.T) {
 			Timestamp: testTimestamp(t, "2026-10-12T17:36:20.580492Z"), Level: "info", Message: "Log level is enabled.",
 			Attributes: map[string]any{"target": "vector::app"},
 		}},
+		{`[nextcloud][updater][1] {"reqId":"oLJjgMVkn1KqIs4t0E9P","level":1,"time":"2026-10-17T14:45:13+00:00","remoteAddr":"","user":"--","app":"updater","method":"","url":"--","scriptName":"/var/www/html/occ","message":"\\OC\\Updater::appUpgrade: Updated <weather_status> to 2.0.0","userAgent":"--","version":"35.0.1.1","occ_command":["/var/www/html/occ","upgrade"],"data":{"app":"updater"}}`, "nextcloud", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-17T14:45:13Z"),
+			Level:     "info",
+			Message:   `\OC\Updater::appUpgrade: Updated <weather_status> to 2.0.0`,
+			Attributes: map[string]any{
+				"reqId": "oLJjgMVkn1KqIs4t0E9P", "remoteAddr": "", "user": "--",
+				"app": "updater", "method": "", "url": "--", "scriptName": "/var/www/html/occ",
+				"userAgent": "--", "version": "35.0.1.1",
+				"occ_command": []any{"/var/www/html/occ", "upgrade"}, "data": map[string]any{"app": "updater"},
+			},
+		}},
 		{nextcloudApplicationLog, "nextcloud", &expectedLogLine{
 			Timestamp: testTimestamp(t, "2026-10-09T08:23:27Z"),
 			Level:     "warn",
@@ -102,6 +113,7 @@ func TestInterpret_ExtractsFormatData(t *testing.T) {
 			},
 		}},
 		{`{"msg":"","n":1}`, "vikunja", &expectedLogLine{
+			Message:    defaultStructuredLogMessage,
 			Level:      "unknown",
 			Attributes: map[string]any{"n": float64(1)},
 		}},
@@ -356,11 +368,13 @@ func TestInterpret_ExtractsFormatData(t *testing.T) {
 			Attributes: map[string]any{"apache.error.module": "core", "process.pid": 12},
 		}},
 		{`[Sat Oct 03 10:30:41.123 2026] [core:info] [pid 12] AH00163:`, "apache", &expectedLogLine{
+			Message:    defaultStructuredLogMessage,
 			Timestamp:  testTimestamp(t, "2026-10-03T10:30:41.123Z"),
 			Level:      "info",
 			Attributes: map[string]any{"apache.error.module": "core", "process.pid": 12, "error.code": "AH00163"},
 		}},
 		{`[Sat Oct 03 10:30:41 2026] [core:info] [pid 12]`, "apache", &expectedLogLine{
+			Message:    defaultStructuredLogMessage,
 			Timestamp:  testTimestamp(t, "2026-10-03T10:30:41Z"),
 			Level:      "info",
 			Attributes: map[string]any{"apache.error.module": "core", "process.pid": 12},

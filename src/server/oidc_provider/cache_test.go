@@ -109,7 +109,7 @@ func TestConsumeRefreshToken_WhenUsedButExpired_ReturnsNotFound(t *testing.T) {
 	}
 
 	_, err := testObjects.Cache.ConsumeRefreshToken("refresh-123")
-	assert.Equal(t, "refresh token not found", u.ExtractError(err))
+	assert.Equal(t, RefreshTokenNotFoundError, u.ExtractError(err))
 }
 
 func TestConsumeRefreshToken_WhenActive_MovesToUsedAndDeletesActive(t *testing.T) {
@@ -180,7 +180,7 @@ func TestConsumeRefreshToken_WhenReusedButExpired_RemovesUsedAndReturnsNotFound(
 	}
 
 	_, err := testObjects.Cache.ConsumeRefreshToken("refresh-1")
-	assert.Equal(t, "refresh token not found", u.ExtractError(err))
+	assert.Equal(t, RefreshTokenNotFoundError, u.ExtractError(err))
 
 	_, stillUsed := testObjects.Cache.UsedRefreshTokens["refresh-1"]
 	assert.False(t, stillUsed)

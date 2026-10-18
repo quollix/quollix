@@ -57,10 +57,11 @@ func expectUserAndGroups(
 	testObjects.UserRepo.EXPECT().
 		GetUserById(userId).
 		Return(&api.User{
-			Id:       userId,
-			IsAdmin:  isAdmin,
-			Username: username,
-			Email:    email,
+			Id:        userId,
+			IsEnabled: true,
+			IsAdmin:   isAdmin,
+			Username:  username,
+			Email:     email,
 		}, nil)
 
 	returnedGroups := make([]api.Group, 0, len(returnedGroupNames))

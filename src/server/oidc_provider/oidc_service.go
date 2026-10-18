@@ -54,9 +54,12 @@ func (s *OidcServiceImpl) Authorize(in AuthorizeInput) (string, error) {
 		return "", err
 	}
 
-	_, err := s.UserRepository.GetUserById(in.UserID)
+	user, err := s.UserRepository.GetUserById(in.UserID)
 	if err != nil {
 		return "", err
+	}
+	if !user.IsEnabled {
+		return "", u.Logger.NewError(users.UserDisabledError)
 	}
 
 	code, err := s.AuthHelper.GenerateSecret()

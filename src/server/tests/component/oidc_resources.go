@@ -239,11 +239,7 @@ func (c *OidcTestClient) exchangeCodeForTokensRaw(code, verifier, redirectURI, c
 }
 
 func (c *OidcTestClient) FetchUserinfo(accessToken string) oidc_provider.UserinfoResponse {
-	req, err := http.NewRequest("GET", c.Config.UserinfoEndpoint, nil)
-	assert.Nil(c.T, err)
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	resp, err := c.Client.Do(req)
-	assert.Nil(c.T, err)
+	resp := c.fetchUserinfoRaw(accessToken)
 	defer u.Close(resp.Body)
 	assert.Equal(c.T, http.StatusOK, resp.StatusCode)
 
@@ -284,4 +280,13 @@ func applyClientAuthenticationToTokenRequest(req *http.Request, form url.Values,
 
 	form.Set("client_id", clientId)
 	form.Set("client_secret", clientSecret)
+}
+
+func (c *OidcTestClient) fetchUserinfoRaw(accessToken string) *http.Response {
+	req, err := http.NewRequest("GET", c.Config.UserinfoEndpoint, nil)
+	assert.Nil(c.T, err)
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resp, err := c.Client.Do(req)
+	assert.Nil(c.T, err)
+	return resp
 }

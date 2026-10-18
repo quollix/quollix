@@ -26,7 +26,7 @@ func TestContainerObserverManager_ReusesObserverAndRestartsFinishedStream(t *tes
 	objects := setupObserverManagerTest()
 	defer mock.AssertExpectationsForObjects(t, objects.Docker, objects.Reader)
 	finished := make(chan struct{})
-	objects.Docker.EXPECT().OpenContainerLogStream(mock.Anything, "quollix_grist_grist").Return(&ContainerLogStream{ReadCloser: io.NopCloser(strings.NewReader("")), Multiplexed: true}, nil).Times(2)
+	objects.Docker.EXPECT().OpenContainerLogStream(mock.Anything, "quollix_grist_grist").Return(&ContainerLogStream{ReadCloser: io.NopCloser(strings.NewReader("")), Multiplexed: true}, true, nil).Times(2)
 	objects.Reader.EXPECT().ReadStream(mock.Anything).Run(func(stream *LogStreamContext) {
 		assert.Equal(t, "quollix", stream.Maintainer)
 		assert.Equal(t, "grist", stream.App)

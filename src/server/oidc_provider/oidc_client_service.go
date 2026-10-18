@@ -6,6 +6,8 @@ import (
 	"server/configs"
 	"server/groups"
 	"server/users"
+
+	u "github.com/quollix/common/utils"
 )
 
 type OidcClientService interface {
@@ -44,6 +46,9 @@ func (s *OidcClientServiceImpl) GetOidcUserInfo(userIdString string) (*UserinfoR
 	user, err := s.UserRepository.GetUserById(userId)
 	if err != nil {
 		return nil, err
+	}
+	if !user.IsEnabled {
+		return nil, u.Logger.NewError(users.UserDisabledError)
 	}
 
 	role := "user"

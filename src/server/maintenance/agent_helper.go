@@ -59,6 +59,10 @@ func (m *AgentHelperImpl) UpdateAllApps() {
 			defer handle.Done()
 
 			if err := m.AppsServiceAdvanced.UpdateAppViaAppStore(repoApp.AppId); err != nil {
+				if u.ExtractError(err) == apps_advanced.CantUpdateAppError {
+					u.Logger.Info(apps_advanced.CantUpdateAppError, tools.AppField, repoApp.AppName)
+					return
+				}
 				u.Logger.Error(err)
 				return
 			}

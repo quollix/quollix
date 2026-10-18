@@ -55,11 +55,18 @@ func (m *ContainerObserverManagerImpl) Synchronize(ctx context.Context, names []
 			continue
 		}
 		observerContext, cancel := context.WithCancel(ctx)
-		stream, err := m.DockerLogsClient.OpenContainerLogStream(observerContext, name)
+		stream, available, err := m.DockerLogsClient.OpenContainerLogStream(observerContext, name)
 		if err != nil {
 			cancel()
 			if ctx.Err() == nil {
 				u.Logger.Error(err)
+			}
+			continue
+		}
+		if !available {
+			cancel()
+			if ctx.Err() == nil {
+				u.Logger.Info("skipping log collection because container is no longer available", "container", name)
 			}
 			continue
 		}
@@ -70,7 +77,7 @@ func (m *ContainerObserverManagerImpl) Synchronize(ctx context.Context, names []
 			defer close(observer.done)
 			defer cancel()
 			if err := m.LogStreamReader.ReadStream(streamContext); err != nil && observerContext.Err() == nil {
-				u.Logger.Error(err)
+				u.Logger.Error(err, "container", name)
 			}
 		}()
 	}

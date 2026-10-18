@@ -56,8 +56,9 @@ func assertFirstLogLine(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	r, err := logClient.OpenContainerLogStream(ctx, sampleLogger)
+	r, available, err := logClient.OpenContainerLogStream(ctx, sampleLogger)
 	assert.Nil(t, err)
+	assert.True(t, available)
 	defer u.Close(r)
 
 	assert.True(t, r.Multiplexed)

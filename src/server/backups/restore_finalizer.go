@@ -5,6 +5,7 @@ import (
 
 	"server/apps_basic"
 	"server/backup_server"
+	"server/certificates"
 	"server/tools"
 
 	"github.com/quollix/common/quollix/api"
@@ -15,11 +16,12 @@ type RestoreFinalizer interface {
 }
 
 type RestoreFinalizerImpl struct {
-	ResticService     backup_server.ResticService
-	AppService        apps_basic.AppService
-	AppRepo           apps_basic.AppRepository
-	DatabaseConnector tools.DatabaseConnector
-	AppDetector       apps_basic.AppDetector
+	ResticService      backup_server.ResticService
+	AppService         apps_basic.AppService
+	AppRepo            apps_basic.AppRepository
+	DatabaseConnector  tools.DatabaseConnector
+	AppDetector        apps_basic.AppDetector
+	CertificateService certificates.CertificateService
 }
 
 func (f *RestoreFinalizerImpl) FinalizeRestore(info *api.BackupInfo, snapshot *AppSnapshot) (*api.RestoredVersionInfo, error) {
@@ -52,6 +54,13 @@ func (f *RestoreFinalizerImpl) FinalizeRestore(info *api.BackupInfo, snapshot *A
 
 	if f.AppDetector.IsOfficialDatabaseApp(app.AppName) {
 		if err := f.DatabaseConnector.StartDatabaseAndConnect(); err != nil {
+			return nil, err
+		}
+		certBundle, err := f.CertificateService.GetCurrentCertificate()
+		if err != nil {
+			return nil, err
+		}
+		if err := f.CertificateService.ReplaceCertificate(certBundle); err != nil {
 			return nil, err
 		}
 		if err := f.AppService.UpsertAppInDatabase(app); err != nil {

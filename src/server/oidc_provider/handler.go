@@ -4,10 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+
 	"server/users"
 
 	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
+)
+
+var (
+	expectedRefreshTokenErrors = u.MapOf(RefreshTokenNotFoundError, users.UserDisabledError)
+	expectedOidcUserErrors     = u.MapOf(users.UserDisabledError)
 )
 
 type OidcHandler struct {
@@ -38,7 +44,7 @@ func (h *OidcHandler) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 
 	redirectURI, err := h.Service.Authorize(in)
 	if err != nil {
-		u.WriteResponseError(w, nil, err)
+		u.WriteResponseError(w, expectedOidcUserErrors, err)
 		return
 	}
 	http.Redirect(w, r, redirectURI, http.StatusFound)
@@ -88,7 +94,7 @@ func (h *OidcHandler) HandleToken(w http.ResponseWriter, r *http.Request) {
 		}
 		res, err := h.Service.TokenWithAuthCode(in)
 		if err != nil {
-			u.WriteResponseError(w, nil, err)
+			u.WriteResponseError(w, expectedOidcUserErrors, err)
 			return
 		}
 		writeJSON(w, res)
@@ -102,7 +108,7 @@ func (h *OidcHandler) HandleToken(w http.ResponseWriter, r *http.Request) {
 
 		res, err := h.Service.TokenWithRefresh(in)
 		if err != nil {
-			u.WriteResponseError(w, nil, err)
+			u.WriteResponseError(w, expectedRefreshTokenErrors, err)
 			return
 		}
 		writeJSON(w, res)
@@ -121,7 +127,7 @@ func (h *OidcHandler) HandleUserinfo(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.Service.Userinfo(token)
 	if err != nil {
-		u.WriteResponseError(w, nil, err)
+		u.WriteResponseError(w, expectedOidcUserErrors, err)
 		return
 	}
 

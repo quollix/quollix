@@ -15,6 +15,9 @@ var (
 )
 
 func parseNextcloudLog(line string) (*parsedLogLine, bool) {
+	if strings.HasPrefix(line, "[nextcloud]") {
+		return nextcloudRecordParser(line)
+	}
 	parsed, ok := parseApacheContainerLog(line)
 	if !ok {
 		return nextcloudStartupParser(line)

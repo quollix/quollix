@@ -67,7 +67,7 @@ func TestParse_UsesOnlyDeclaredFields(t *testing.T) {
 		t.Run(raw, func(t *testing.T) {
 			record := NewLogLineInterpreter("grist").Parse(raw, LogRecordContext{})
 			assert.True(t, record.Parsed)
-			assert.Equal(t, "", record.Message)
+			assert.Equal(t, defaultStructuredLogMessage, record.Message)
 			var expected map[string]any
 			assert.Nil(t, json.Unmarshal([]byte(raw), &expected))
 			_, hasTimestamp := expected["timestamp"]
@@ -92,7 +92,7 @@ func TestParse_DefaultsMissingLevel(t *testing.T) {
 		parsed       bool
 	}{
 		{"plain text", "plain text", false},
-		{`{"count":1}`, "", true},
+		{`{"count":1}`, defaultStructuredLogMessage, true},
 	} {
 		record := NewLogLineInterpreter("sampleapp").Parse(tc.raw, LogRecordContext{ReadTimestamp: receivedAt})
 		assert.Equal(t, "unknown", record.Level)
@@ -106,7 +106,7 @@ func TestParse_DefaultsMissingLevel(t *testing.T) {
 func TestParse_MissingCommonFieldsRemainStructured(t *testing.T) {
 	record := NewLogLineInterpreter("grist").Parse(`{"count":3}`, LogRecordContext{ReadTimestamp: receivedAt})
 	assert.Equal(t, &api.LogRecord{
-		ReadTimestamp: receivedAt, Level: "unknown", Parsed: true,
+		ReadTimestamp: receivedAt, Level: "unknown", Message: defaultStructuredLogMessage, Parsed: true,
 		Attributes: map[string]any{"count": float64(3)},
 	}, record)
 }
@@ -140,7 +140,7 @@ func TestParse_AbsentDeclaredFieldsRemainOptional(t *testing.T) {
 			assert.True(t, record.Parsed)
 			assert.Nil(t, record.LogTimestamp)
 			assert.Equal(t, "unknown", record.Level)
-			assert.Equal(t, "", record.Message)
+			assert.Equal(t, defaultStructuredLogMessage, record.Message)
 		})
 	}
 }
@@ -150,11 +150,25 @@ func TestParse_ExplicitSchemaKeepsAliasFields(t *testing.T) {
 	parser := &LogLineInterpreterImpl{parser: fieldLogParser(parseJSON, logSchema{levelField: "log.level", messageField: "message"})}
 	record := parser.Parse(raw, LogRecordContext{})
 	assert.Equal(t, "warn", record.Level)
-	assert.Equal(t, "", record.Message)
+	assert.Equal(t, defaultStructuredLogMessage, record.Message)
 	assert.True(t, record.Parsed)
 	var expected map[string]any
 	assert.Nil(t, json.Unmarshal([]byte(raw), &expected))
 	delete(expected, "log.level")
 	delete(expected, "message")
 	assert.Equal(t, expected, record.Attributes)
+}
+
+func TestLogLineInterpreter_Parse_DefaultsBlankMessages(t *testing.T) {
+	for _, messageField := range []string{"", `,"msg":""`, `,"msg":" \t\n"`} {
+		t.Run(messageField, func(t *testing.T) {
+			raw := `{"time":"2026-10-03T10:29:55Z","level":"warn","component":"http","method":"POST","uri":"/api/v2/user/token/refresh","status":401` + messageField + `}`
+			record := NewLogLineInterpreter("vikunja").Parse(raw, LogRecordContext{ReadTimestamp: receivedAt})
+			assert.Equal(t, &api.LogRecord{
+				ReadTimestamp: receivedAt, LogTimestamp: testTimestamp(t, "2026-10-03T10:29:55Z"),
+				Level: "warn", Message: defaultStructuredLogMessage, Parsed: true,
+				Attributes: map[string]any{"component": "http", "method": "POST", "uri": "/api/v2/user/token/refresh", "status": float64(401)},
+			}, record)
+		})
+	}
 }

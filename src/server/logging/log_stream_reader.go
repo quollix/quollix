@@ -11,6 +11,8 @@ import (
 	u "github.com/quollix/common/utils"
 )
 
+const maxLogLineSize = 1024 * 1024 // Allow large JSON records, including stack traces.
+
 type LogStreamContext struct {
 	Reader      io.ReadCloser
 	Multiplexed bool
@@ -45,6 +47,7 @@ func (r *LogStreamReaderImpl) ReadStream(ctx *LogStreamContext) error {
 
 	// TTY output has no channel information, so its stream stays unknown.
 	scanner := bufio.NewScanner(ctx.Reader)
+	scanner.Buffer(make([]byte, 4096), maxLogLineSize)
 	for scanner.Scan() {
 		r.sendLine(ctx, scanner.Text(), "")
 	}
@@ -78,7 +81,7 @@ func (w *logLineWriter) Write(data []byte) (int, error) {
 	size := len(data)
 	for len(data) > 0 {
 		line, rest, complete := bytes.Cut(data, []byte{'\n'})
-		if len(w.pending)+len(line) >= bufio.MaxScanTokenSize {
+		if len(w.pending)+len(line) >= maxLogLineSize {
 			w.pending = nil
 			return size - len(data), bufio.ErrTooLong
 		}
