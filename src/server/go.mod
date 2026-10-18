@@ -3,6 +3,7 @@ module server
 go 1.26.9
 
 require (
+	github.com/containerd/errdefs v1.0.0
 	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/elastic/go-grok v0.3.1
 	github.com/go-chi/chi/v5 v5.5.0
@@ -11,7 +12,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.2
-	github.com/quollix/common v1.3.33
+	github.com/quollix/common v1.3.34
 	github.com/quollix/deepstack v1.2.4
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.58.0
@@ -28,7 +29,6 @@ require (
 	github.com/chromedp/chromedp v0.21.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/compose-spec/compose-go/v2 v2.16.1 // indirect
-	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.8.2 // indirect
