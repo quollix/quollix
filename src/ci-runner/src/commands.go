@@ -82,6 +82,14 @@ var TestProdCmd = &cobra.Command{
 	},
 }
 
+var TestQuollixRestartCmd = &cobra.Command{
+	Use:   "quollix-restart",
+	Short: "verify running apps remain accessible after Quollix restarts",
+	Run: func(cmd *cobra.Command, args []string) {
+		TestQuollixRestart()
+	},
+}
+
 var TestInitialAdminPasswordCmd = &cobra.Command{
 	Use:   "initial-admin-password",
 	Short: "verify generated initial admin password login",
@@ -138,6 +146,7 @@ func ConfigureTestCmd() {
 		TestComponentCmd,
 		TestBehindProxyCmd,
 		TestProdCmd,
+		TestQuollixRestartCmd,
 		TestInitialAdminPasswordCmd,
 		TestSpecialPasswordsCmd,
 		TestIntegrationCmd,

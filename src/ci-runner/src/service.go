@@ -115,6 +115,7 @@ func TestAll() {
 	TestFrontend(false, "", false)
 	TestIntegration()
 	TestComponentWithDevProfile()
+	TestQuollixRestart()
 	TestComponentWithProdProfile()
 	TestInitialAdminPassword()
 	TestBehindProxyHttpMode()

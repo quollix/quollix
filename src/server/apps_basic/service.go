@@ -3,6 +3,7 @@ package apps_basic
 import (
 	"maps"
 
+	"server/configs"
 	"server/tools"
 
 	api "github.com/quollix/common/quollix/api"
@@ -19,6 +20,7 @@ const (
 
 type AppService interface {
 	StartApp(appId int) error
+	EnsureNetworksForAppsThatShouldBeRunning()
 	StopApp(appId int) error
 	DeleteAppAndArtifacts(appId int) error
 
@@ -36,6 +38,7 @@ type AppService interface {
 
 type AppServiceImpl struct {
 	AppRepo                    AppRepository
+	ConfigsService             configs.ConfigsService
 	DockerService              tools.DockerService
 	AppServiceHelper           AppServiceHelper
 	AppDetector                AppDetector
@@ -160,6 +163,28 @@ func (a *AppServiceImpl) SetAppShouldBeRunning(appId int, shouldBeRunning bool) 
 		return err
 	}
 	return nil
+}
+
+func (a *AppServiceImpl) EnsureNetworksForAppsThatShouldBeRunning() {
+	apps, err := a.AppRepo.ListApps()
+	if err != nil {
+		u.Logger.Error(err)
+		return
+	}
+	baseDomain, err := a.ConfigsService.GetBaseDomain()
+	if err != nil {
+		u.Logger.Error(err)
+		return
+	}
+
+	for i := range apps {
+		app := &apps[i]
+		if !app.ShouldBeRunning || a.AppDetector.IsOfficialDatabaseApp(app.AppName) {
+			continue
+		}
+		a.DockerService.CreateDockerNetwork(app.Maintainer, app.AppName)
+		a.DockerService.AttachBrandAppToNetwork(app.Maintainer, app.AppName, baseDomain)
+	}
 }
 
 func (a *AppServiceImpl) DeleteAppAndArtifacts(appId int) error {
