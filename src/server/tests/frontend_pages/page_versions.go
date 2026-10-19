@@ -113,6 +113,8 @@ func (v *VersionsPage) WaitUntilAppVersionInstalled(appName, expectedVersion str
 		)
 	})
 	assert.Nil(v.Frame.T, err)
+	// The version is persisted before container startup finishes.
+	v.Frame.Assert.AppOperationFinished()
 	return v
 }
 

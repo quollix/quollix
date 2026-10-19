@@ -51,6 +51,7 @@ func TestStorePage(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
+	frame.Assert.AppOperationFinished()
 	sampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Nil(t, frame.Client.Apps.Delete(sampleApp.AppId))
 
@@ -100,4 +101,5 @@ func TestStorePageUpdatesInstalledApp(t *testing.T) {
 		return fmt.Errorf("sampleapp is not running on version 2.0 yet")
 	})
 	assert.Nil(t, err)
+	frame.Assert.AppOperationFinished()
 }

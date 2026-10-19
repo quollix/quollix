@@ -87,6 +87,7 @@ func TestFrameFlushLogsAndCollectMetrics(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 	component.InstallGrafana(t, frame.Client)
+	component.WaitForGrafanaContainers(t)
 
 	frame.Pages.OpenInstalledAppsPage()
 	frame.Browser.FlushLogs().Assert.SnackbarVisibleWithTextEventually("Logs flushed successfully.")
@@ -110,6 +111,7 @@ func TestFrameWipeLogsAndMetrics(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 	component.InstallGrafana(t, frame.Client)
+	component.WaitForGrafanaContainers(t)
 
 	frame.Pages.OpenInstalledAppsPage()
 	frame.Browser.WipeLogs()
