@@ -13,6 +13,7 @@ var (
 	parseLevelMessageLog     = grokParser(`%{KNOWNLEVEL:level}: %{GREEDYDATA:message}`)
 	parseS6Log               = grokParser(`(?:s6-rc|/package/admin/s6-overlay/libexec/preinit): %{LEVEL:level}: %{GREEDYDATA:message}`)
 	parseRabbitmqTextLog     = grokParser(`%{STAMP:timestamp}\s+\[%{LEVEL:level}\]\s+%{ERLANGPID:pid}\s+%{GREEDYDATA:message}`)
+	parseRabbitClose         = grokParser(`closing AMQP connection %{ERLANGPID} \(%{IP:source.address}:%{NONNEGINT:source.port:int} -> %{IP:destination.address}:%{NONNEGINT:destination.port:int}, vhost: '%{DATA:rabbitmq.vhost}', user: '%{DATA:user.name}', duration: '%{DATA:connection.duration}'\):`)
 	parseForgejoLog          = grokParser(`%{STAMP:timestamp}\s+%{NOTSPACE:source} \[%{LEVEL:level}\]\s+%{GREEDYDATA:message}`)
 	parseJitsiLog            = grokParser(`%{JITSIAPP:app} %{STAMP:timestamp}\s+%{LEVEL:level}: \[%{NONNEGINT:thread_id:int}\] (?:\[%{BRACKET:context}\] )?%{NOTSPACE:source}: %{GREEDYDATA:message}`)
 	parseProsodyLog          = grokParser(`%{STAMP:timestamp}\s+%{NOTSPACE:component}\s+%{LEVEL:level}\t%{GREEDYDATA:message}`)

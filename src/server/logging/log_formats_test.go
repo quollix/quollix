@@ -70,6 +70,16 @@ func TestInterpret_ExtractsFormatData(t *testing.T) {
 			Level:     "info", Message: "connection 172.31.0.7:50896 -> 172.31.0.5:5672: user 'zulip' authenticated and granted access to vhost '/'",
 			Attributes: map[string]any{"pid": "<0.1164.0>"},
 		}},
+		{`2026-10-21 01:37:58.961821+00:00 [warning] <0.1046.0> closing AMQP connection <0.1046.0> (172.31.0.7:47964 -> 172.31.0.4:5672, vhost: '/', user: 'zulip', duration: '1D, 0H, 10M, 25s'):`, "rabbitmq", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-21T01:37:58.961821Z"),
+			Level:     "warn", Message: "closing AMQP connection <0.1046.0> (172.31.0.7:47964 -> 172.31.0.4:5672, vhost: '/', user: 'zulip', duration: '1D, 0H, 10M, 25s'):",
+			Attributes: map[string]any{
+				"pid": "<0.1046.0>", "source.address": "172.31.0.7", "source.port": 47964,
+				"destination.address": "172.31.0.4", "destination.port": 5672,
+				"rabbitmq.vhost": "/", "user.name": "zulip",
+				"event.duration": int64((24*time.Hour + 10*time.Minute + 25*time.Second).Nanoseconds()),
+			},
+		}},
 		{`{"time":"2026-10-17T01:27:59.965149849Z","level":"INFO","source":{"function":"server/tools.(*DockerServiceImpl).StartAppContainer","file":"server/tools/docker_service.go","line":131},"msg":"Starting app","app":"vaultwarden","compose_file_path":"/tmp/app-compose-1989703575/docker-compose.yml","maintainer":"quollix"}`, "quollix", &expectedLogLine{
 			Timestamp: testTimestamp(t, "2026-10-17T01:27:59.965149849Z"), Level: "info", Message: "Starting app",
 			Attributes: map[string]any{

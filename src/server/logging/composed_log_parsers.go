@@ -1,19 +1,23 @@
 package logging
 
 import (
+	"fmt"
 	"maps"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	apacheDiagnosticParser = newLogParser(parseApacheDiagnostic, "")
-	s6RecordParser         = newLogParser(parseS6Log, "")
-	rabbitmqJSONParser     = jsonLogParser("time", dateTimeOffsetLayout)
-	rabbitmqTextParser     = newLogParser(parseRabbitmqTextLog, dateTimeOffsetLayout)
-	apacheRecordParser     = fieldLogParser(parseApacheLog, logSchema{"timestamp", "log.level", "message", time.ANSIC})
-	accessRecordParser     = newLogParser(parseHTTPAccessLog, accessTimestampLayout)
-	nginxRecordParser      = newLogParser(parseNginxLog, slashTimestampLayout)
+	rabbitmqDurationPattern = regexp.MustCompile(`^(?:(\d+)D, )?(\d+)H, (\d+)M, (\d+)s$`)
+	apacheDiagnosticParser  = newLogParser(parseApacheDiagnostic, "")
+	s6RecordParser          = newLogParser(parseS6Log, "")
+	rabbitmqJSONParser      = jsonLogParser("time", dateTimeOffsetLayout)
+	rabbitmqTextParser      = newLogParser(parseRabbitmqTextLog, dateTimeOffsetLayout)
+	apacheRecordParser      = fieldLogParser(parseApacheLog, logSchema{"timestamp", "log.level", "message", time.ANSIC})
+	accessRecordParser      = newLogParser(parseHTTPAccessLog, accessTimestampLayout)
+	nginxRecordParser       = newLogParser(parseNginxLog, slashTimestampLayout)
 )
 
 func parseProsodyFields(line string) (map[string]any, bool) {
@@ -44,7 +48,50 @@ func parseRabbitmqLog(line string) (*parsedLogLine, bool) {
 	if strings.HasPrefix(strings.TrimSpace(line), "{") {
 		return rabbitmqJSONParser(line)
 	}
-	return rabbitmqTextParser(line)
+	parsed, ok := rabbitmqTextParser(line)
+	if !ok {
+		return nil, false
+	}
+	if fields, ok := parseRabbitClose(parsed.Message); ok {
+		if duration, exists := fields["connection.duration"].(string); exists {
+			delete(fields, "connection.duration")
+			if nanoseconds, ok := parseRabbitmqDuration(duration); ok {
+				fields["event.duration"] = nanoseconds
+			}
+		}
+		maps.Copy(parsed.Attributes, fields)
+	}
+	return parsed, true
+}
+
+func parseRabbitmqDuration(value string) (int64, bool) {
+	parts := rabbitmqDurationPattern.FindStringSubmatch(value)
+	if parts == nil {
+		return 0, false
+	}
+	days, hours, minutes := 0, 0, 0
+	var err error
+	if parts[1] != "" {
+		days, err = strconv.Atoi(parts[1])
+		if err != nil {
+			return 0, false
+		}
+	}
+	if hours, err = strconv.Atoi(parts[2]); err != nil {
+		return 0, false
+	}
+	if minutes, err = strconv.Atoi(parts[3]); err != nil {
+		return 0, false
+	}
+	seconds, err := strconv.Atoi(parts[4])
+	if err != nil {
+		return 0, false
+	}
+	duration, err := time.ParseDuration(fmt.Sprintf("%dh%dm%ds", days*24+hours, minutes, seconds))
+	if err != nil {
+		return 0, false
+	}
+	return int64(duration), true
 }
 
 func parseApacheContainerLog(line string) (*parsedLogLine, bool) {
