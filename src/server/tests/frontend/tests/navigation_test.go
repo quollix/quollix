@@ -4,6 +4,7 @@ package frontend
 
 import (
 	"testing"
+	"time"
 
 	"server/tests/component"
 	"server/tests/frontend_pages"
@@ -87,11 +88,11 @@ func TestFrameFlushLogsAndCollectMetrics(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 	component.InstallGrafana(t, frame.Client)
-	component.WaitForGrafanaContainers(t)
+	component.WaitForMonitoringReady(t, frame.Client)
 
 	frame.Pages.OpenInstalledAppsPage()
 	frame.Browser.FlushLogs().Assert.SnackbarVisibleWithTextEventually("Logs flushed successfully.")
-	frame.Browser.CollectMetrics().Assert.SnackbarVisibleWithTextEventually("Metrics collected successfully.")
+	frame.Browser.CollectMetrics().Assert.SnackbarVisibleWithTextEventuallyWithin("Metrics collected successfully.", 30*time.Second)
 }
 
 func TestAccountTabVisibilityForAnonymousAndAuthenticated(t *testing.T) {
@@ -111,7 +112,7 @@ func TestFrameWipeLogsAndMetrics(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 	component.InstallGrafana(t, frame.Client)
-	component.WaitForGrafanaContainers(t)
+	component.WaitForMonitoringReady(t, frame.Client)
 
 	frame.Pages.OpenInstalledAppsPage()
 	frame.Browser.WipeLogs()

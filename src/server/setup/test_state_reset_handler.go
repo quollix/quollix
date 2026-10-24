@@ -20,6 +20,7 @@ var (
 		tools.SamplePostgresAppContainerName,
 		tools.SampleRabbitMQAppContainerName,
 		"quollix_grafana_grafana",
+		"quollix_grafana_vector",
 		"quollix_grafana_victorialogs",
 		"quollix_grafana_victoriametrics",
 	}
@@ -27,7 +28,7 @@ var (
 		tools.SampleAppDockerVolume,
 		tools.SamplePostgresAppDockerVolume,
 		tools.SampleRabbitMQAppDockerVolume,
-		"quollix_grafana_grafana",
+		"quollix_grafana_vector",
 		"quollix_grafana_victorialogs",
 		"quollix_grafana_victoriametrics",
 	}
