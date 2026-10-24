@@ -40,6 +40,30 @@ func TestInterpret_ExtractsFormatData(t *testing.T) {
 			Level: "warn", Message: `enabling "trust" authentication for local connections`,
 			Attributes: map[string]any{"component": "initdb"},
 		}},
+		{`{"go.version":"go1.26.8","instance.id":"01a16ef5-b934-7af7-bf81-72952e2db4ae","http.response.duration":"2.115026156s","http.response.status":200,"time":"2026-10-24T16:06:06.169569872Z","level":"info","msg":"response completed","version":"3.1.2","vars.name":"library/nginx"}`, "dockerregistry", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-24T16:06:06.169569872Z"),
+			Level:     "info", Message: "response completed",
+			Attributes: map[string]any{
+				"event.duration": int64(2115026156), "http.response.status": float64(200), "vars.name": "library/nginx",
+				"go.version": "go1.26.8", "instance.id": "01a16ef5-b934-7af7-bf81-72952e2db4ae", "version": "3.1.2",
+			},
+		}},
+		{`{"go.version":"go1.26.8","instance.id":"01a16ef5-b934-7af7-bf81-72952e2db4ae","level":"info","msg":"listening on [::]:5000","time":"2026-10-24T17:29:20.285325361Z","version":"3.1.2"}`, "dockerregistry", &expectedLogLine{
+			Timestamp: testTimestamp(t, "2026-10-24T17:29:20.285325361Z"),
+			Level:     "info", Message: "listening on [::]:5000",
+			Attributes: map[string]any{
+				"go.version": "go1.26.8", "instance.id": "01a16ef5-b934-7af7-bf81-72952e2db4ae", "version": "3.1.2",
+			},
+		}},
+		{`192.168.16.2 - - [24/Oct/2026:16:06:04 +0000] "GET /v2/library/nginx/blobs/sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034?ns=docker.io HTTP/1.1" 200 29843579 "" "docker/29.8.0 go/go1.26.8 git-commit/3ce5872 kernel/6.17.0-1032-oem os/linux arch/amd64 containerd-client/2.3.4+unknown storage-driver/overlayfs UpstreamClient(Docker-Client/29.8.0 \\(linux\\))"`, "dockerregistry", &expectedLogLine{
+			Level: "unknown", Message: "HTTP request", Timestamp: testTimestamp(t, "2026-10-24T16:06:04Z"),
+			Attributes: map[string]any{
+				"source.address": "192.168.16.2", "http.request.method": "GET",
+				"url.original": "/v2/library/nginx/blobs/sha256:f2be67225471500c788ce88c597eb5ea8336e912ad1ca4815650e0281afe2034?ns=docker.io",
+				"http.version": "1.1", "http.response.status_code": 200, "http.response.body.size": 29843579,
+				"user_agent.original": "docker/29.8.0 go/go1.26.8 git-commit/3ce5872 kernel/6.17.0-1032-oem os/linux arch/amd64 containerd-client/2.3.4+unknown storage-driver/overlayfs UpstreamClient(Docker-Client/29.8.0 \\\\(linux\\\\))",
+			},
+		}},
 		{`[register-setup] JVB user registration output: Error: User exists`, "prosody", &expectedLogLine{
 			Level: "unknown", Message: "JVB user registration output: Error: User exists",
 			Attributes: map[string]any{"component": "register-setup"},

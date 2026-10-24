@@ -10,14 +10,15 @@ import (
 )
 
 var (
-	rabbitmqDurationPattern = regexp.MustCompile(`^(?:(\d+)D, )?(\d+)H, (\d+)M, (\d+)s$`)
-	apacheDiagnosticParser  = newLogParser(parseApacheDiagnostic, "")
-	s6RecordParser          = newLogParser(parseS6Log, "")
-	rabbitmqJSONParser      = jsonLogParser("time", dateTimeOffsetLayout)
-	rabbitmqTextParser      = newLogParser(parseRabbitmqTextLog, dateTimeOffsetLayout)
-	apacheRecordParser      = fieldLogParser(parseApacheLog, logSchema{"timestamp", "log.level", "message", time.ANSIC})
-	accessRecordParser      = newLogParser(parseHTTPAccessLog, accessTimestampLayout)
-	nginxRecordParser       = newLogParser(parseNginxLog, slashTimestampLayout)
+	rabbitmqDurationPattern  = regexp.MustCompile(`^(?:(\d+)D, )?(\d+)H, (\d+)M, (\d+)s$`)
+	apacheDiagnosticParser   = newLogParser(parseApacheDiagnostic, "")
+	s6RecordParser           = newLogParser(parseS6Log, "")
+	rabbitmqJSONParser       = jsonLogParser("time", dateTimeOffsetLayout)
+	rabbitmqTextParser       = newLogParser(parseRabbitmqTextLog, dateTimeOffsetLayout)
+	dockerRegistryJSONParser = jsonLogParser("time", time.RFC3339Nano)
+	apacheRecordParser       = fieldLogParser(parseApacheLog, logSchema{"timestamp", "log.level", "message", time.ANSIC})
+	accessRecordParser       = newLogParser(parseHTTPAccessLog, accessTimestampLayout)
+	nginxRecordParser        = newLogParser(parseNginxLog, slashTimestampLayout)
 )
 
 func parseProsodyFields(line string) (map[string]any, bool) {
@@ -92,6 +93,19 @@ func parseRabbitmqDuration(value string) (int64, bool) {
 		return 0, false
 	}
 	return int64(duration), true
+}
+
+func parseDockerRegistryLog(line string) (*parsedLogLine, bool) {
+	if parsed, ok := dockerRegistryJSONParser(line); ok {
+		if duration, exists := parsed.Attributes["http.response.duration"].(string); exists {
+			if duration, err := time.ParseDuration(duration); err == nil {
+				delete(parsed.Attributes, "http.response.duration")
+				parsed.Attributes["event.duration"] = int64(duration)
+			}
+		}
+		return parsed, true
+	}
+	return accessRecordParser(line)
 }
 
 func parseApacheContainerLog(line string) (*parsedLogLine, bool) {

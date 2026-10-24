@@ -27,6 +27,7 @@ var logFormats = map[string]logParser{
 	"quollix":          jsonLogParser("time", time.RFC3339Nano),
 	"grist":            jsonLogParser("timestamp", time.DateTime),
 	"rabbitmq":         parseRabbitmqLog,
+	"dockerregistry":   parseDockerRegistryLog,
 	"vikunja":          parseVikunjaLog,
 	"grafana":          jsonLogParser("t", time.RFC3339Nano),
 	"postgres":         parsePostgresRecord,
