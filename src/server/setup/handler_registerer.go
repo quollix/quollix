@@ -235,6 +235,7 @@ func (h *HandlerRegisterer) adminUserRoutes() []users.Route {
 		{Path: api.Paths.BackendUsersChangeUsername, HandlerFunc: h.UserHandler.ChangeUsernameHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendUsersChangeEmail, HandlerFunc: h.UserHandler.ChangeEmailHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendUsersSetEnabled, HandlerFunc: h.UserHandler.SetUserEnabledHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendUsersSetRole, HandlerFunc: h.UserHandler.SetUserRoleHandler, AccessLevel: tools.AdminLevel},
 	}
 }
 

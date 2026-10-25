@@ -1,5 +1,5 @@
 window.grantSelectedApps = async (groupId) => {
-    const appNames = window.getSelectedCheckboxValues("noAccessGrantedTableBody", "app-checkbox")
+    const appNames = window.getSelectedCheckboxValues("noAccessGrantedTableBody")
     if (appNames.length === 0) {
         showSnackbar("Select at least one app to grant access.")
         return
@@ -13,7 +13,7 @@ window.grantSelectedApps = async (groupId) => {
 }
 
 window.revokeSelectedApps = async (groupId) => {
-    const appNames = window.getSelectedCheckboxValues("accessGrantedTableBody", "app-checkbox")
+    const appNames = window.getSelectedCheckboxValues("accessGrantedTableBody")
     if (appNames.length === 0) {
         showSnackbar("Select at least one app to revoke access.")
         return

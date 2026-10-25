@@ -34,6 +34,7 @@ type UserService interface {
 	ChangeUsername(userId int, newUsername string) error
 	ChangeEmail(userId int, newEmail string) error
 	SetUserEnabled(userId int, isEnabled bool, currentlyLoggedInUserId int) error
+	SetUserRole(userId int, isAdmin bool, currentlyLoggedInUserId int) error
 	GetUserIdAndRoleFromQuollixRequest(r *http.Request) (int, tools.UserAccessLevel, error)
 	GetUserIdAndRoleFromRequestForAudience(r *http.Request, audience string) (int, tools.UserAccessLevel, error)
 }
@@ -265,6 +266,9 @@ func (s *UserServiceImpl) SetUserEnabled(userId int, isEnabled bool, currentlyLo
 	if err != nil {
 		return err
 	}
+	if user.IsAdmin && !isEnabled {
+		return u.Logger.NewError(AdminMustBeDemotedBeforeDeactivationError)
+	}
 	user.IsEnabled = isEnabled
 	if err = s.UserRepo.UpdateUser(user); err != nil {
 		return err
@@ -273,6 +277,21 @@ func (s *UserServiceImpl) SetUserEnabled(userId int, isEnabled bool, currentlyLo
 		return s.SessionService.DeleteSessionsByUserId(userId)
 	}
 	return nil
+}
+
+func (s *UserServiceImpl) SetUserRole(userId int, isAdmin bool, currentlyLoggedInUserId int) error {
+	if userId == currentlyLoggedInUserId {
+		return u.Logger.NewError(AdminCanNotChangeOwnRoleError)
+	}
+	user, err := s.UserRepo.GetUserById(userId)
+	if err != nil {
+		return err
+	}
+	if isAdmin && !user.IsEnabled {
+		return u.Logger.NewError(DisabledUserCanNotBePromotedError)
+	}
+	user.IsAdmin = isAdmin
+	return s.UserRepo.UpdateUser(user)
 }
 
 func (s *UserServiceImpl) GetUserIdAndRoleFromQuollixRequest(r *http.Request) (int, tools.UserAccessLevel, error) {

@@ -3,12 +3,11 @@
     <li>App Name: <span id="backups-page-app-name">{{$.Page.AppName}}</span></li>
 </ul>
 
-<button type="button"
-        id="backups-page-back-button"
-        class="lean"
-        onclick="location.href='{{$.Static.Paths.FrontendBackedUpApps}}'">
+<button type="button" id="backups-page-back-button" class="lean"
+    onclick="location.href='{{$.Static.Paths.FrontendBackedUpApps}}'">
     Back
 </button>
+<button type="button" id="backups-delete-selected-button" class="lean alert" disabled>Delete selected</button>
 <br>
 <br>
 

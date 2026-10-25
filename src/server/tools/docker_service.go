@@ -83,6 +83,7 @@ func (d *DockerServiceImpl) CreateDockerNetwork(networkMaintainer, networkApp st
 func (d *DockerServiceImpl) AttachBrandAppToNetwork(networkMaintainer, networkApp, host string) {
 	networkName := d.mergeNames(networkMaintainer, networkApp)
 	// We keep both aliases so the app can reach Quollix directly for OIDC and can also call itself by its app hostname when needed.
+	// For VPN access via WgEasy, adding an alias like sampleapp.<base-domain> to Quollix cannot remove the need for DNS. Docker aliases are visible only to containers on the network, so WireGuard peers still need DNS or an equivalent host mapping to resolve app domains to Quollix.
 	appNetworkAlias := fmt.Sprintf("%s.%s", networkApp, host)
 	hostNetworkAlias := fmt.Sprintf("%s%s", BrandAppDomainPrefix, host)
 	cmd := exec.Command("docker", "network", "connect", networkName, "--alias", appNetworkAlias, "--alias", hostNetworkAlias, BrandAppContainerName) // #nosec G204 (CWE-78): Subprocess launched with a potential tainted input or cmd arguments

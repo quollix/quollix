@@ -1,7 +1,6 @@
 package frontend_pages
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -19,7 +18,11 @@ type UserListEntry struct {
 	Name                                string
 	Email                               string
 	Role                                string
+	CanChangeRole                       bool
+	CanPromoteToAdmin                   bool
 	IsEnabled                           bool
+	CanEnableOrDisableUser              bool
+	CanDeleteUser                       bool
 	Created                             string
 	InvitationExpiration                string
 	PasswordLinkCellText                string
@@ -27,7 +30,6 @@ type UserListEntry struct {
 	EditButtonPresent                   bool
 	ResetButtonPresent                  bool
 	SendPasswordResetEmailButtonPresent bool
-	DeleteButtonPresent                 bool
 }
 
 const (
@@ -113,9 +115,43 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 		if err != nil {
 			return nil, err
 		}
-		role, err := roleCell.Text()
+		roleSelectPresent, _, err := roleCell.Has("select.user-role-select")
 		if err != nil {
 			return nil, err
+		}
+		roleDisabled := true
+		adminOptionDisabled := true
+		var role string
+		if roleSelectPresent {
+			roleSelect, err := roleCell.Element("select.user-role-select")
+			if err != nil {
+				return nil, err
+			}
+			roleValue, err := roleSelect.Property("value")
+			if err != nil {
+				return nil, err
+			}
+			role = roleValue.String()
+			roleDisabledValue, err := roleSelect.Property("disabled")
+			if err != nil {
+				return nil, err
+			}
+			roleDisabled = roleDisabledValue.Bool()
+			adminOption, err := roleSelect.Element(`option[value="admin"]`)
+			if err != nil {
+				return nil, err
+			}
+			adminOptionDisabledValue, err := adminOption.Property("disabled")
+			if err != nil {
+				return nil, err
+			}
+			adminOptionDisabled = adminOptionDisabledValue.Bool()
+		} else {
+			roleText, err := roleCell.Text()
+			if err != nil {
+				return nil, err
+			}
+			role = strings.ToLower(strings.TrimSpace(roleText))
 		}
 
 		enabledCell, err := row.Element(".user-enabled-cell")
@@ -127,6 +163,10 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 			return nil, err
 		}
 		isEnabled, err := enabledCheckbox.Property("checked")
+		if err != nil {
+			return nil, err
+		}
+		enabledControlDisabled, err := enabledCheckbox.Property("disabled")
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +218,11 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 		if err != nil {
 			return nil, err
 		}
-		deleteButtonPresent, _, err := actionsCell.Has(`button.user-delete-button`)
+		deleteButton, err := actionsCell.Element(`button.user-delete-button`)
+		if err != nil {
+			return nil, err
+		}
+		deleteButtonDisabled, err := deleteButton.Property("disabled")
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +231,11 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 			Name:                                strings.TrimSpace(name),
 			Email:                               strings.TrimSpace(email),
 			Role:                                strings.TrimSpace(role),
+			CanChangeRole:                       roleSelectPresent && !roleDisabled,
+			CanPromoteToAdmin:                   roleSelectPresent && !adminOptionDisabled,
 			IsEnabled:                           isEnabled.Bool(),
+			CanEnableOrDisableUser:              !enabledControlDisabled.Bool(),
+			CanDeleteUser:                       !deleteButtonDisabled.Bool(),
 			Created:                             strings.TrimSpace(created),
 			InvitationExpiration:                strings.TrimSpace(invitationExpiration),
 			PasswordLinkCellText:                strings.TrimSpace(passwordLinkCellText),
@@ -195,10 +243,36 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 			EditButtonPresent:                   editButtonPresent,
 			ResetButtonPresent:                  resetButtonPresent,
 			SendPasswordResetEmailButtonPresent: sendPasswordResetEmailButtonPresent,
-			DeleteButtonPresent:                 deleteButtonPresent,
 		})
 	}
 	return out, nil
+}
+
+func (u *UsersPage) SetUserRole(username, role string) *UsersPage {
+	selectElement := u.Frame.Controls.GetRequiredElement(`tr.user-row[data-username="` + username + `"] select.user-role-select`)
+	selectElement.MustSelect(role)
+	u.Frame.Browser.ConfirmDialog()
+	expectedRole := strings.ToLower(role)
+	expectedCanEnableOrDisableUser := expectedRole == "user"
+	err := utils.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
+		users, err := tryListUsers(u.Frame.Page)
+		if err != nil {
+			return err
+		}
+		for _, user := range users {
+			if user.Name != username {
+				continue
+			}
+			if user.Role == expectedRole && user.CanEnableOrDisableUser == expectedCanEnableOrDisableUser {
+				return nil
+			}
+			return utils.Logger.NewError("user role and controls have not updated yet")
+		}
+		return utils.Logger.NewError("user role and controls have not updated yet")
+	})
+	assert.Nil(u.Frame.T, err)
+	u.Frame.Assert.SnackbarVisibleWithTextEventually("'" + username + "' role updated.")
+	return u
 }
 
 func (u *UsersPage) AssertUserInList(username, email string) *UsersPage {
@@ -212,7 +286,7 @@ func (u *UsersPage) AssertUserInList(username, email string) *UsersPage {
 				return nil
 			}
 		}
-		return fmt.Errorf("user not found in frontend list (username=%s email=%s)", username, email)
+		return utils.Logger.NewError("user not found in frontend list")
 	})
 	assert.Nil(u.Frame.T, err)
 	return u
@@ -249,7 +323,13 @@ func (u *UsersPage) SetUserEnabled(username string, isEnabled bool) *UsersPage {
 		if !isEnabled {
 			u.Frame.Browser.ConfirmDialog()
 		}
+		status := "disabled"
+		if isEnabled {
+			status = "enabled"
+		}
+		u.Frame.Assert.SnackbarVisibleWithTextEventually("User " + status + " successfully.")
 		assert.Equal(u.Frame.T, isEnabled, u.Frame.Controls.GetCheckboxValue(rowCheckboxSelector(username)))
+		assert.Equal(u.Frame.T, isEnabled, u.GetRequiredUser(username).CanPromoteToAdmin)
 		return u
 	}
 

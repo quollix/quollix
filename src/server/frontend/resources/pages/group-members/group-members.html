@@ -23,7 +23,7 @@
         <tr>
           <th class="group-detail-checkbox-col">
             <input id="non-members-select-all-checkbox" type="checkbox"
-              onclick="toggleAllCheckboxes('nonMembersTableBody', 'member-checkbox', this.checked)">
+              onclick="toggleAllCheckboxes('nonMembersTableBody', this.checked)">
           </th>
           <th>Name</th>
         </tr>
@@ -32,7 +32,7 @@
         {{range $.Page.NotIn}}
         <tr data-name="{{.Name}}">
           <td class="group-detail-checkbox-col">
-            <input type="checkbox" class="member-checkbox" value="{{.Id}}">
+            <input type="checkbox" class="selection-checkbox" value="{{.Id}}">
           </td>
           <td>{{.Name}}</td>
         </tr>
@@ -62,7 +62,7 @@
         <tr>
           <th class="group-detail-checkbox-col">
             <input id="members-select-all-checkbox" type="checkbox"
-              onclick="toggleAllCheckboxes('membersTableBody', 'member-checkbox', this.checked)">
+              onclick="toggleAllCheckboxes('membersTableBody', this.checked)">
           </th>
           <th>Name</th>
         </tr>
@@ -71,7 +71,7 @@
         {{range $.Page.In}}
         <tr data-name="{{.Name}}">
           <td class="group-detail-checkbox-col">
-            <input type="checkbox" class="member-checkbox" value="{{.Id}}">
+            <input type="checkbox" class="selection-checkbox" value="{{.Id}}">
           </td>
           <td>{{.Name}}</td>
         </tr>

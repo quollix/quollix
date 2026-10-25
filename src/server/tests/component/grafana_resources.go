@@ -49,78 +49,9 @@ services:
     volumes:
       - quollix_grafana_victoriametrics:/victoria-metrics-data
 
-  vector:
-    image: timberio/vector:0.60.0-debian@sha256:3ccb4bbd36e38734394e158db1411e91a69d076ed25013f8de385046a382d36a
-    container_name: quollix_grafana_vector
-    hostname: quollix-host
-    depends_on:
-      - victorialogs
-      - victoriametrics
-    environment:
-      PROCFS_ROOT: /host/proc
-      SYSFS_ROOT: /host/sys
-    command: [--config, /etc/vector/vector.yaml, --log-format, json]
-    volumes:
-      - /:/host:ro,rslave
-      - /var/log/journal:/var/log/journal:ro
-      - /run/log/journal:/run/log/journal:ro
-      - quollix_grafana_vector:/var/lib/vector
-    configs:
-      - source: vector
-        target: /etc/vector/vector.yaml
-
 volumes:
   quollix_grafana_victorialogs: null
   quollix_grafana_victoriametrics: null
-  quollix_grafana_vector: null
-
-configs:
-  vector:
-    content: |
-      data_dir: /var/lib/vector
-      sources:
-        host_journal:
-          type: journald
-          current_boot_only: true
-          extra_args: [--merge]
-        host_metrics:
-          type: host_metrics
-          collectors: [cpu, memory, filesystem]
-          scrape_interval_secs: ${HOST_METRICS_INTERVAL_SECONDS}
-          filesystem:
-            mountpoints:
-              includes: [/host, /host/**]
-              excludes: [/host/dev/**, /host/proc/**, /host/sys/**, /host/var/lib/docker/**, /host/var/lib/containerd/**]
-            filesystems:
-              excludes: [autofs, binfmt_misc, cgroup, cgroup2, debugfs, devpts, devtmpfs, fusectl, mqueue, overlay, proc, pstore, securityfs, sysfs, tracefs]
-      sinks:
-        victoriametrics:
-          type: prometheus_remote_write
-          inputs: [host_metrics]
-          endpoint: http://victoriametrics:8428/api/v1/write
-          healthcheck:
-            enabled: false
-          auth:
-            strategy: basic
-            user: admin
-            password: "${SECRET_VICTORIAMETRICS_PASSWORD}"
-        victorialogs:
-          type: http
-          inputs: [host_journal]
-          uri: "http://victorialogs:9428/insert/jsonline?_stream_fields=source_type,host,_SYSTEMD_UNIT&_msg_field=message&_time_field=timestamp"
-          auth:
-            strategy: basic
-            user: admin
-            password: "${SECRET_VICTORIALOGS_PASSWORD}"
-          compression: gzip
-          encoding:
-            codec: json
-          framing:
-            method: newline_delimited
-          acknowledgements:
-            enabled: true
-          healthcheck:
-            enabled: false
 `
 
 func WaitForMonitoringReady(t *testing.T, client *api_client.QuollixClient) {
@@ -132,7 +63,6 @@ func WaitForMonitoringReady(t *testing.T, client *api_client.QuollixClient) {
 			"quollix_grafana_grafana",
 			"quollix_grafana_victorialogs",
 			"quollix_grafana_victoriametrics",
-			"quollix_grafana_vector",
 		).CombinedOutput()
 		if err != nil {
 			return u.Logger.NewError("failed to inspect Grafana containers", "error", err.Error(), "output", string(output))

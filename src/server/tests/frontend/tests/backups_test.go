@@ -66,6 +66,7 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 	assert.Nil(t, err)
 	sampleApp := component.GetInstalledSample(t, frame.Client)
 	assert.Nil(t, frame.Client.Backups.Create(sampleApp.AppId))
+	assert.Nil(t, frame.Client.Backups.Create(sampleApp.AppId))
 
 	backedUpAppsPage.Reload()
 	sampleBackedUpApp := backedUpAppsPage.GetRequiredBackedUpApp(tools.SampleMaintainer, tools.SampleApp)
@@ -74,12 +75,31 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 
 	backupsPage := backedUpAppsPage.OpenListBackupsPage(tools.SampleMaintainer, tools.SampleApp)
 	backupsPage.AssertMaintainerAndApp(tools.SampleMaintainer, tools.SampleApp)
-	assert.Equal(t, 1, len(backupsPage.ListBackups()))
+	initialBackupRows := backupsPage.ListBackups()
+	assert.Equal(t, 2, len(initialBackupRows))
+	backupsPage.AssertBulkDeleteDisabled(true).AssertSelectAllChecked(false).
+		AssertBackupChecked(initialBackupRows[0].BackupId, false).
+		SetBackupChecked(initialBackupRows[0].BackupId, true).
+		AssertBackupChecked(initialBackupRows[0].BackupId, true).
+		AssertSelectAllChecked(false).
+		AssertBulkDeleteDisabled(false).
+		SetBackupChecked(initialBackupRows[0].BackupId, false).
+		AssertBackupChecked(initialBackupRows[0].BackupId, false).
+		AssertBulkDeleteDisabled(true).
+		SetSelectAll(true).
+		AssertSelectAllChecked(true).
+		AssertBackupChecked(initialBackupRows[0].BackupId, true).
+		AssertBackupChecked(initialBackupRows[1].BackupId, true).
+		SetSelectAll(false).
+		AssertSelectAllChecked(false).
+		AssertBackupChecked(initialBackupRows[0].BackupId, false).
+		AssertBackupChecked(initialBackupRows[1].BackupId, false).
+		AssertBulkDeleteDisabled(true)
 	backupsPage.ClickBack()
 
 	backupsPage = frame.Pages.BackedUpAppsPage.OpenListBackupsPage(tools.SampleMaintainer, tools.SampleApp)
 	backupRows := backupsPage.ListBackups()
-	assert.Equal(t, 1, len(backupRows))
+	assert.Equal(t, 2, len(backupRows))
 
 	backupRow := backupRows[0]
 	assert.True(t, strings.HasPrefix(backupRow.VersionName, "2.0"))
@@ -100,9 +120,10 @@ func TestBackupsPageListRestoreAndDeleteFlow(t *testing.T) {
 	assert.Equal(t, tools.SampleApp, restoredApp.AppName)
 
 	backupsPage.Reload()
-	backupsPage.ClickDeleteFirstBackup()
+	backupsPage.AssertBulkDeleteDisabled(true).SetSelectAll(true).AssertBulkDeleteDisabled(false).DeleteSelectedBackups()
 	backupsPage.Frame.Assert.AppOperationStartedAndFinished()
 	sampleBackupsAfterDelete, err := frame.Client.Backups.ListByApp(tools.SampleMaintainer, tools.SampleApp)
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(sampleBackupsAfterDelete))
+	backupsPage.AssertNoBackupsMessageVisible()
 }

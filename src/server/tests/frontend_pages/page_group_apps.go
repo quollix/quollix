@@ -124,7 +124,7 @@ func (g *GroupAppsPage) selectionTable(tableBodySelector string) SelectionTableH
 		Frame:          g.Frame,
 		TableBody:      tableBodySelector,
 		RowSelector:    appRowSelector,
-		RowCheckboxCSS: "input.app-checkbox",
+		RowCheckboxCSS: "input.selection-checkbox",
 	}
 }
 

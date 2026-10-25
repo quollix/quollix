@@ -113,13 +113,13 @@ func TestAll() {
 	Tr.Log.Info("Running all CI tests")
 	TestUnit()
 	TestFrontend(false, "", false)
+	TestOidc(false, false)
 	TestIntegration()
 	TestComponentWithDevProfile()
 	TestQuollixRestart()
 	TestComponentWithProdProfile()
 	TestInitialAdminPassword()
 	TestBehindProxyHttpMode()
-	TestOidc(false, false)
 	TestSpecialPasswords()
 }
 

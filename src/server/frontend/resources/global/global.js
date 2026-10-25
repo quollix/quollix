@@ -39,6 +39,21 @@ window.setButtonDisabled = function (button, disabled) {
     button.toggleAttribute('aria-disabled', disabled)
 }
 
+window.toggleAllCheckboxes = (tableBodyId, shouldBeChecked) => {
+    const tableBody = document.getElementById(tableBodyId)
+    for (const checkbox of tableBody.querySelectorAll('input.selection-checkbox')) {
+        checkbox.checked = shouldBeChecked
+    }
+}
+
+window.getSelectedCheckboxValues = (tableBodyId) => {
+    const tableBody = document.getElementById(tableBodyId)
+    const selected = tableBody.querySelectorAll('input.selection-checkbox:checked')
+    const values = []
+    for (const checkbox of selected) values.push(checkbox.value)
+    return values
+}
+
 window.confirmDialog = async function (message) {
     const dlg = document.getElementById('confirm-dialog')
     const msg = document.getElementById('confirm-message')

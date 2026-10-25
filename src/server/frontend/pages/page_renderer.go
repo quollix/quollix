@@ -35,6 +35,7 @@ type PageRendererImpl struct {
 
 type Auth struct {
 	Name    string
+	UserId  int
 	IsAdmin bool
 }
 
@@ -65,6 +66,7 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 	user, err := getAuthFromContext(request.Request)
 	if err == nil {
 		auth.Name = user.Username
+		auth.UserId = user.Id
 		auth.IsAdmin = user.IsAdmin
 	}
 

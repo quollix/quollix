@@ -33,9 +33,30 @@ window.setUserEnabled = async (userId, username, checkbox) => {
   }
   const ok = await apiPost('{{ $.Static.Paths.BackendUsersSetEnabled }}', { user_id: userId, is_enabled: isEnabled })
   if (ok) {
+    reloadPageAndShowSnackbar(`User ${isEnabled ? 'enabled' : 'disabled'} successfully.`)
     return
   }
   checkbox.checked = !isEnabled
+}
+
+window.setUserRole = async (userId, username, select) => {
+  const previousRole = select.dataset.prevRole
+  const nextRole = select.value
+  const isAdmin = select.value === 'admin'
+  const action = isAdmin ? 'promote' : 'demote'
+  const role = isAdmin ? 'admin' : 'regular user'
+  const confirmed = await confirmDialog(`Are you sure you want to ${action} '${username}' to ${role}?`)
+  if (!confirmed) {
+    select.value = previousRole
+    return
+  }
+  const ok = await apiPost('{{ $.Static.Paths.BackendUsersSetRole }}', { user_id: userId, is_admin: isAdmin })
+  if (ok) {
+    select.dataset.prevRole = nextRole
+    reloadPageAndShowSnackbar(`'${username}' role updated.`)
+    return
+  }
+  select.value = previousRole
 }
 
 window.copyToClipboard = async (link, host) => {

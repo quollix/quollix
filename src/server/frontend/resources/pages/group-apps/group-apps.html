@@ -26,7 +26,7 @@
             <thead>
             <tr>
                 <th class="group-detail-checkbox-col">
-                    <input id="group-apps-no-access-select-all-checkbox" type="checkbox" onclick="toggleAllCheckboxes('noAccessGrantedTableBody', 'app-checkbox', this.checked)">
+                    <input id="group-apps-no-access-select-all-checkbox" type="checkbox" onclick="toggleAllCheckboxes('noAccessGrantedTableBody', this.checked)">
                 </th>
                 <th>App</th>
             </tr>
@@ -35,7 +35,7 @@
             {{range $.Page.AccessNotGrantedApps}}
             <tr data-name="{{.}}">
                 <td class="group-detail-checkbox-col">
-                    <input type="checkbox" class="app-checkbox" value="{{.}}">
+                    <input type="checkbox" class="selection-checkbox" value="{{.}}">
                 </td>
                 <td>{{.}}</td>
             </tr>
@@ -65,7 +65,7 @@
             <thead>
             <tr>
                 <th class="group-detail-checkbox-col">
-                    <input id="group-apps-access-granted-select-all-checkbox" type="checkbox" onclick="toggleAllCheckboxes('accessGrantedTableBody', 'app-checkbox', this.checked)">
+                    <input id="group-apps-access-granted-select-all-checkbox" type="checkbox" onclick="toggleAllCheckboxes('accessGrantedTableBody', this.checked)">
                 </th>
                 <th>App</th>
             </tr>
@@ -74,7 +74,7 @@
             {{range $.Page.AccessGrantedApps}}
             <tr data-name="{{.}}">
                 <td class="group-detail-checkbox-col">
-                    <input type="checkbox" class="app-checkbox" value="{{.}}">
+                    <input type="checkbox" class="selection-checkbox" value="{{.}}">
                 </td>
                 <td>{{.}}</td>
             </tr>

@@ -1,14 +1,14 @@
 .copy-to-clipboard-button {
-    padding:0.25rem 0.4rem;
-    border-radius:0.35rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.35rem;
     background: #0172ad;
-    cursor:pointer;
+    cursor: pointer;
 }
 
 .copy-to-clipboard-button:hover {
-    background:#017FC0;
+    background: #017FC0;
 }
 
-#create-user-button {
-    max-width:120px;
+.user-role-select {
+    min-width: 130px;
 }

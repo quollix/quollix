@@ -31,7 +31,14 @@
     <tr class="user-row" data-username="{{$user.Username}}">
       <td class="user-name-cell">{{$user.Username}}</td>
       <td class="user-email-cell">{{$user.Email}}</td>
-      <td class="user-role-cell">{{if $user.IsAdmin}}Admin{{else}}User{{end}}</td>
+      <td class="user-role-cell">
+        <select class="user-role-select lean" aria-label="Role for {{$user.Username}}"
+          data-prev-role="{{if $user.IsAdmin}}admin{{else}}user{{end}}"
+          onchange="setUserRole('{{$user.Id}}','{{$user.Username}}', this)" {{if eq $user.Id $.Globals.Auth.UserId}}disabled{{end}}>
+          <option value="user" {{if not $user.IsAdmin}}selected{{end}}>User</option>
+          <option value="admin" {{if $user.IsAdmin}}selected{{end}} {{if not $user.IsEnabled}}disabled{{end}}>Admin</option>
+        </select>
+      </td>
       <td class="user-enabled-cell">
         <input type="checkbox" class="user-enabled-checkbox"
           onchange="setUserEnabled('{{$user.Id}}','{{$user.Username}}', this)" {{if $user.IsEnabled}}checked{{end}} {{if
@@ -53,7 +60,7 @@
           <i class="mdi mdi-pencil-outline" aria-hidden="true"></i>
         </button>
 
-        {{if not $user.IsAdmin}}
+        {{if ne $user.Id $.Globals.Auth.UserId}}
         <button type="button" class="lean user-reset-password-button" title="Reset password" aria-label="Reset password"
           onclick="resetPassword('{{$user.Id}}','{{$user.Username}}')">
           <i class="mdi mdi-lock-reset" aria-hidden="true"></i>
@@ -64,11 +71,11 @@
           <i class="mdi mdi-email-fast-outline" aria-hidden="true"></i>
         </button>
         {{end}}
-        <button type="button" class="lean alert user-delete-button" title="Delete user" aria-label="Delete user"
-          onclick="deleteUser('{{$user.Id}}','{{$user.Username}}')">
+        {{end}}
+        <button type="button" class="lean alert user-delete-button" {{if ne $user.Id $.Globals.Auth.UserId}}title="Delete user"{{end}} aria-label="Delete user"
+          onclick="deleteUser('{{$user.Id}}','{{$user.Username}}')" {{if eq $user.Id $.Globals.Auth.UserId}}disabled{{end}}>
           <i class="mdi mdi-delete-outline" aria-hidden="true"></i>
         </button>
-        {{end}}
       </td>
     </tr>
     {{end}}

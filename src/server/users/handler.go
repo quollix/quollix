@@ -11,18 +11,22 @@ import (
 )
 
 const (
-	IncorrectLoginCredentialsError    = "Incorrect username or password"
-	UserAlreadyExistsError            = "user already exists"
-	EmailAlreadyExistsError           = "email already exists"
-	AdminCanNotDeleteOwnAccountError  = "admin cannot delete own account"
-	AdminCanNotResetOwnPasswordError  = "admin cannot reset own password"
-	AdminCanNotDisableOwnAccountError = "admin cannot disable own account"
+	IncorrectLoginCredentialsError            = "Incorrect username or password"
+	UserAlreadyExistsError                    = "user already exists"
+	EmailAlreadyExistsError                   = "email already exists"
+	AdminCanNotDeleteOwnAccountError          = "admin cannot delete own account"
+	AdminCanNotResetOwnPasswordError          = "admin cannot reset own password"
+	AdminCanNotDisableOwnAccountError         = "admin cannot disable own account"
+	AdminCanNotChangeOwnRoleError             = "admin cannot change own role"
+	DisabledUserCanNotBePromotedError         = "disabled user cannot be promoted to admin"
+	AdminMustBeDemotedBeforeDeactivationError = "admin must be demoted before deactivation"
 )
 
 var (
 	ExpectedUserDeletionErrors   = u.MapOf(AdminCanNotDeleteOwnAccountError)
 	ExpectedPasswordResetErrors  = u.MapOf(AdminCanNotResetOwnPasswordError)
-	ExpectedSetUserEnabledErrors = u.MapOf(AdminCanNotDisableOwnAccountError)
+	ExpectedSetUserEnabledErrors = u.MapOf(AdminCanNotDisableOwnAccountError, AdminMustBeDemotedBeforeDeactivationError)
+	ExpectedSetUserRoleErrors    = u.MapOf(AdminCanNotChangeOwnRoleError, DisabledUserCanNotBePromotedError)
 	expectedCookieNotFoundError  = u.MapOf("cookie not found")
 	expectedTokenExpiredErrors   = u.MapOf(TokenExpiredError, UserNotFoundError)
 	expectedLoginErrors          = u.MapOf(IncorrectLoginCredentialsError, UserDisabledError)
@@ -263,6 +267,27 @@ func (s *UserHandler) SetUserEnabledHandler(w http.ResponseWriter, r *http.Reque
 	err = s.UserService.SetUserEnabled(userId, request.IsEnabled, currentlyLoggedInUser.Id)
 	if err != nil {
 		u.WriteResponseError(w, ExpectedSetUserEnabledErrors, err)
+		return
+	}
+}
+
+func (s *UserHandler) SetUserRoleHandler(w http.ResponseWriter, r *http.Request) {
+	request, ok := validation.ReadBody[api.SetUserRoleRequest](w, r)
+	if !ok {
+		return
+	}
+	userId, err := strconv.Atoi(request.UserId)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+	currentlyLoggedInUser, err := GetAuthFromContext(r)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+	if err = s.UserService.SetUserRole(userId, request.IsAdmin, currentlyLoggedInUser.Id); err != nil {
+		u.WriteResponseError(w, ExpectedSetUserRoleErrors, err)
 		return
 	}
 }

@@ -15,11 +15,9 @@ var projectCleanupContainers = []string{
 	"quollix_grafana_victoriametrics",
 	"quollix_grafana_victorialogs",
 	"quollix_grafana_grafana",
-	"quollix_grafana_vector",
 }
 
 var projectCleanupVolumes = []string{
-	"quollix_grafana_vector",
 	"quollix_grafana_victorialogs",
 	"quollix_grafana_victoriametrics",
 	OfficialDatabaseVolumeName,

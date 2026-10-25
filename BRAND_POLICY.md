@@ -16,7 +16,7 @@ Quollix source code remains available under the MIT License, including for comme
 
 ## Permitted Use
 
-You may use the Quollix name and logo to truthfully refer to Quollix. Do not imply an official connection, endorsement, sponsorship, or certification that you do not have.
+You may use the Quollix name and logo to truthfully identify or refer to Quollix, such as in discussions, reviews, documentation, news coverage, or advertising for content about Quollix. Do not imply an official connection, endorsement, sponsorship, or certification that you do not have.
 
 You may copy and display included Quollix branding when running or distributing an unmodified official release, including builds from its source. Normal configuration is allowed. Your build, distribution, or deployment does not become official by retaining the branding.
 

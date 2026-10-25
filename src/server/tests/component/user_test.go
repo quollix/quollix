@@ -76,6 +76,66 @@ func TestDisablingUserBlocksLoginAndInvalidatesSessions(t *testing.T) {
 	assert.Nil(t, userClient.Auth.SignIn(SampleUsername, SampleUserPassword))
 }
 
+func TestAdminCanChangeAnotherUsersRole(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleUserEmail)
+	user := GetRequiredUserByUsername(t, client, SampleUsername)
+
+	assert.Nil(t, client.Users.SetRole(user.Id, true))
+	assert.True(t, GetRequiredUserByUsername(t, client, SampleUsername).IsAdmin)
+	assert.Nil(t, client.Users.SetRole(user.Id, false))
+	assert.False(t, GetRequiredUserByUsername(t, client, SampleUsername).IsAdmin)
+}
+
+func TestAdminCanDeleteAnotherAdmin(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleUserEmail)
+	user := GetRequiredUserByUsername(t, client, SampleUsername)
+	assert.Nil(t, client.Users.SetRole(user.Id, true))
+	assert.Nil(t, client.Users.Delete(user.Id))
+	_, exists, err := client.Users.GetByUsername(SampleUsername)
+	assert.Nil(t, err)
+	assert.False(t, exists)
+}
+
+func TestAdminCannotChangeOwnRole(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	admin := GetRequiredUserByUsername(t, client, tools.DefaultAdminName)
+	err := client.Users.SetRole(admin.Id, false)
+	u.AssertDeepStackErrorFromRequest(t, err, users.AdminCanNotChangeOwnRoleError)
+}
+
+func TestDisabledUserCannotBePromotedToAdmin(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	assert.Nil(t, client.Users.Invite(SampleUsername, SampleUserEmail))
+	user := GetRequiredUserByUsername(t, client, SampleUsername)
+	assert.Nil(t, client.Users.SetEnabled(user.Id, false))
+	err := client.Users.SetRole(user.Id, true)
+	u.AssertDeepStackErrorFromRequest(t, err, users.DisabledUserCanNotBePromotedError)
+	user = GetRequiredUserByUsername(t, client, SampleUsername)
+	assert.False(t, user.IsAdmin)
+	assert.False(t, user.IsEnabled)
+}
+
+func TestAdminMustBeDemotedBeforeDeactivation(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleUserEmail)
+	user := GetRequiredUserByUsername(t, client, SampleUsername)
+	assert.Nil(t, client.Users.SetRole(user.Id, true))
+	err := client.Users.SetEnabled(user.Id, false)
+	u.AssertDeepStackErrorFromRequest(t, err, users.AdminMustBeDemotedBeforeDeactivationError)
+	assert.Nil(t, client.Users.SetRole(user.Id, false))
+	assert.Nil(t, client.Users.SetEnabled(user.Id, false))
+	user = GetRequiredUserByUsername(t, client, SampleUsername)
+	assert.False(t, user.IsAdmin)
+	assert.False(t, user.IsEnabled)
+}
+
 func getNormalUser(userList []api.User) (*api.User, error) {
 	for _, user := range userList {
 		if !user.IsAdmin {

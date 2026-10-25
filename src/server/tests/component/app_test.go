@@ -594,6 +594,7 @@ func TestUploadingAppAlreadyExistingUpdatesIt(t *testing.T) {
 	assert.Equal(t, "3000", sampleAppOld.Port)
 	assert.True(t, sampleAppOld.AutomaticUpdatesEnabled)
 	assert.True(t, sampleAppOld.AutomaticBackupsEnabled)
+	assert.Nil(t, client.Apps.SetAccessPolicy(sampleAppOld.AppId, api.Policies.PublicAccessPolicy))
 
 	originalVersionFile := api.BinaryFile{
 		FileName: getSampleFileNameForAppUpload(),
@@ -617,7 +618,8 @@ func TestUploadingAppAlreadyExistingUpdatesIt(t *testing.T) {
 	assert.Equal(t, tools.SampleAppVersion2CreationTimestamp, sampleAppNew.VersionCreationTimestamp)
 	assert.Equal(t, "3001", sampleAppNew.Port)
 	assert.Equal(t, originalVersionFile.Content, sampleAppNew.VersionContent)
-	assert.False(t, sampleAppNew.AutomaticUpdatesEnabled)
+	assert.Equal(t, api.Policies.PublicAccessPolicy, sampleAppNew.AccessPolicy)
+	assert.True(t, sampleAppNew.AutomaticUpdatesEnabled)
 	assert.True(t, sampleAppNew.AutomaticBackupsEnabled)
 }
 
@@ -690,6 +692,8 @@ func TestUpdatesAndPreUpdateBackupCreation(t *testing.T) {
 
 	appBeforeUpdate, err := InstallSample(t, client, "1.0")
 	assert.Nil(t, err)
+	assert.Nil(t, client.Apps.SetAccessPolicy(appBeforeUpdate.AppId, api.Policies.PublicAccessPolicy))
+	appBeforeUpdate.AccessPolicy = api.Policies.PublicAccessPolicy
 	assert.Nil(t, client.Apps.Start(appBeforeUpdate.AppId))
 
 	appClient := GetAppClient(t, client)

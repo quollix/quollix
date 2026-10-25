@@ -123,7 +123,7 @@ func (g *GroupMembersPage) selectionTable(tableBodySelector string) SelectionTab
 		Frame:          g.Frame,
 		TableBody:      tableBodySelector,
 		RowSelector:    userRowSelector,
-		RowCheckboxCSS: "input.member-checkbox",
+		RowCheckboxCSS: "input.selection-checkbox",
 	}
 }
 

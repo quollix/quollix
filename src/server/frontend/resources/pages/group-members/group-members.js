@@ -1,5 +1,5 @@
 window.addSelectedMembers = async (groupId) => {
-    const userIds = window.getSelectedCheckboxValues("nonMembersTableBody", "member-checkbox")
+    const userIds = window.getSelectedCheckboxValues("nonMembersTableBody")
     if (userIds.length === 0) {
         showSnackbar("Select at least one user to add.")
         return
@@ -13,7 +13,7 @@ window.addSelectedMembers = async (groupId) => {
 }
 
 window.removeSelectedMembers = async (groupId) => {
-    const userIds = window.getSelectedCheckboxValues("membersTableBody", "member-checkbox")
+    const userIds = window.getSelectedCheckboxValues("membersTableBody")
     if (userIds.length === 0) {
         showSnackbar("Select at least one user to remove.")
         return

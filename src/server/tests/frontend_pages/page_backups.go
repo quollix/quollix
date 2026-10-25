@@ -1,6 +1,7 @@
 package frontend_pages
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ func (b *BackupsPage) Reload() {
 }
 
 type BackupRow struct {
+	BackupId                      string
 	VersionName                   string
 	VersionCreationDate           string
 	Description                   string
@@ -60,6 +62,8 @@ func (b *BackupsPage) ListBackups() []BackupRow {
 
 	out := make([]BackupRow, 0, len(rows))
 	for _, row := range rows {
+		backupId, err := row.Attribute("data-backup-id")
+		assert.Nil(b.Frame.T, err)
 		versionCell, err := row.Element(".backup-version-name-cell")
 		assert.Nil(b.Frame.T, err)
 		version, err := versionCell.Text()
@@ -94,6 +98,7 @@ func (b *BackupsPage) ListBackups() []BackupRow {
 		assert.NotNil(b.Frame.T, deleteButton)
 
 		out = append(out, BackupRow{
+			BackupId:                      *backupId,
 			VersionName:                   strings.TrimSpace(version),
 			VersionCreationDate:           strings.TrimSpace(versionCreationDate),
 			Description:                   strings.TrimSpace(description),
@@ -104,8 +109,50 @@ func (b *BackupsPage) ListBackups() []BackupRow {
 	return out
 }
 
+func (b *BackupsPage) AssertBulkDeleteDisabled(disabled bool) *BackupsPage {
+	button := b.Frame.Controls.GetRequiredElement("#backups-delete-selected-button")
+	disabledAttribute, err := button.Attribute("disabled")
+	assert.Nil(b.Frame.T, err)
+	assert.Equal(b.Frame.T, disabled, disabledAttribute != nil)
+	return b
+}
+
+func (b *BackupsPage) AssertNoBackupsMessageVisible() *BackupsPage {
+	_, err := b.Frame.Page.WaitElementWithin("#backups-empty-message", backupOperationTimeout)
+	assert.Nil(b.Frame.T, err)
+	return b
+}
+
+func (b *BackupsPage) AssertSelectAllChecked(checked bool) *BackupsPage {
+	assert.Equal(b.Frame.T, checked, b.Frame.Controls.GetCheckboxValue(".backup-select-all-checkbox"))
+	return b
+}
+
+func (b *BackupsPage) SetSelectAll(checked bool) *BackupsPage {
+	b.Frame.Controls.SetCheckboxValue(".backup-select-all-checkbox", checked)
+	return b
+}
+
+func (b *BackupsPage) AssertBackupChecked(backupId string, checked bool) *BackupsPage {
+	selector := fmt.Sprintf("tr.backup-row[data-backup-id='%s'] .selection-checkbox", backupId)
+	assert.Equal(b.Frame.T, checked, b.Frame.Controls.GetCheckboxValue(selector))
+	return b
+}
+
+func (b *BackupsPage) SetBackupChecked(backupId string, checked bool) *BackupsPage {
+	selector := fmt.Sprintf("tr.backup-row[data-backup-id='%s'] .selection-checkbox", backupId)
+	b.Frame.Controls.SetCheckboxValue(selector, checked)
+	return b
+}
+
+func (b *BackupsPage) DeleteSelectedBackups() *BackupsPage {
+	b.Frame.Controls.GetRequiredElement("#backups-delete-selected-button").MustClick()
+	b.Frame.Browser.ConfirmDialog()
+	return b
+}
+
 func (b *BackupsPage) ClickRestoreFirstBackup() *BackupsPage {
-	row := b.waitForSingleBackupRow()
+	row := b.waitForFirstBackupRow()
 	restoreButton, err := row.Element("button.backup-restore-button")
 	assert.Nil(b.Frame.T, err)
 	restoreButton.MustClick()
@@ -129,7 +176,7 @@ func (b *BackupsPage) WaitUntilAppAbsent(appName string) *BackupsPage {
 }
 
 func (b *BackupsPage) ClickDeleteFirstBackup() *BackupsPage {
-	row := b.waitForSingleBackupRow()
+	row := b.waitForFirstBackupRow()
 	deleteButton, err := row.Element("button.backup-delete-button")
 	assert.Nil(b.Frame.T, err)
 	deleteButton.MustClick()
@@ -145,15 +192,15 @@ func (b *BackupsPage) DeleteFirstBackupUntilRemoved() *BackupsPage {
 	return b
 }
 
-func (b *BackupsPage) waitForSingleBackupRow() *browsertest.Element {
+func (b *BackupsPage) waitForFirstBackupRow() *browsertest.Element {
 	var row *browsertest.Element
 	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		rows, listErr := b.Frame.Page.Elements("tr.backup-row")
 		if listErr != nil {
 			return listErr
 		}
-		if len(rows) != 1 {
-			return u.Logger.NewError("expected exactly one backup row", "count", len(rows))
+		if len(rows) == 0 {
+			return u.Logger.NewError("expected at least one backup row")
 		}
 		row = rows[0]
 		return nil

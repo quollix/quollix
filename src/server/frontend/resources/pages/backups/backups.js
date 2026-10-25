@@ -52,6 +52,38 @@ const backupsPageMaintainer = document.getElementById('backups-page-maintainer')
 const backupsPageApp = document.getElementById('backups-page-app-name')?.textContent?.trim() || '';
 const backupsLoadingMessage = document.getElementById('backups-loading-message');
 const backupsContainer = document.getElementById('backups-container');
+const deleteSelectedBackupsButton = document.getElementById('backups-delete-selected-button');
+
+function getSelectedBackupRows() {
+  if (!backupsContainer?.querySelector('#backups-table-body')) return [];
+
+  const selectedIds = new Set(window.getSelectedCheckboxValues('backups-table-body'));
+  return [...(backupsContainer?.querySelectorAll('.backup-row') || [])]
+    .filter((row) => selectedIds.has(row.dataset.backupId));
+}
+
+function updateBulkDeleteButton() {
+  if (deleteSelectedBackupsButton) deleteSelectedBackupsButton.disabled = getSelectedBackupRows().length === 0;
+}
+
+async function deleteSelectedBackups() {
+  const rows = getSelectedBackupRows();
+  if (rows.length === 0) return;
+
+  const confirmed = await confirmDialog(`Delete ${rows.length} selected backups? This cannot be undone.`);
+  if (!confirmed) return;
+
+  const ok = await doNetworkChangedRequest('{{ $.Static.Paths.BackendBackupsDelete }}', {
+    backup_ids: rows.map((row) => row.dataset.backupId),
+  });
+  if (!ok) return;
+
+  for (const row of rows) row.remove();
+  updateBulkDeleteButton();
+  if (backupsContainer.querySelectorAll('.backup-row').length === 0) renderBackups([]);
+}
+
+deleteSelectedBackupsButton?.addEventListener('click', deleteSelectedBackups);
 
 function buildBackupsPageDataUrl(isFirstLoad) {
   const params = new URLSearchParams();
@@ -66,6 +98,7 @@ function renderBackups(backups) {
   backupsContainer.replaceChildren();
 
   if (backups.length === 0) {
+    updateBulkDeleteButton();
     const emptyMessage = document.createElement('p');
     emptyMessage.id = 'backups-empty-message';
     emptyMessage.textContent = 'No backups were found for this app.';
@@ -76,6 +109,17 @@ function renderBackups(backups) {
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
+  const selectionHeader = document.createElement('th');
+  const selectAllCheckbox = document.createElement('input');
+  selectAllCheckbox.type = 'checkbox';
+  selectAllCheckbox.className = 'backup-select-all-checkbox';
+  selectAllCheckbox.setAttribute('aria-label', 'Select all backups');
+  selectAllCheckbox.addEventListener('change', () => {
+    window.toggleAllCheckboxes('backups-table-body', selectAllCheckbox.checked);
+    updateBulkDeleteButton();
+  });
+  selectionHeader.appendChild(selectAllCheckbox);
+  headerRow.appendChild(selectionHeader);
   for (const label of ['App Version', 'Version Creation Date', 'Description', 'Backup Creation Date', 'Quollix Version', 'Actions']) {
     const th = document.createElement('th');
     th.textContent = label;
@@ -85,10 +129,26 @@ function renderBackups(backups) {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
+  tbody.id = 'backups-table-body';
   for (const backup of backups) {
     const row = document.createElement('tr');
     row.className = 'backup-row';
     row.dataset.backupId = backup.backup_id;
+
+    const selectionCell = document.createElement('td');
+    const selectionCheckbox = document.createElement('input');
+    selectionCheckbox.type = 'checkbox';
+    selectionCheckbox.className = 'selection-checkbox';
+    selectionCheckbox.value = backup.backup_id;
+    selectionCheckbox.setAttribute('aria-label', `Select backup ${backup.version_name}`);
+    selectionCheckbox.addEventListener('change', () => {
+      const checkboxes = tbody.querySelectorAll('.selection-checkbox');
+      const selectedIds = window.getSelectedCheckboxValues('backups-table-body');
+      selectAllCheckbox.checked = checkboxes.length > 0 && selectedIds.length === checkboxes.length;
+      updateBulkDeleteButton();
+    });
+    selectionCell.appendChild(selectionCheckbox);
+    row.appendChild(selectionCell);
 
     const versionCell = document.createElement('td');
     versionCell.className = 'backup-version-name-cell';
@@ -156,6 +216,7 @@ function renderBackups(backups) {
 
   table.appendChild(tbody);
   backupsContainer.appendChild(table);
+  updateBulkDeleteButton();
 }
 
 if (backupsContainer) {

@@ -27,15 +27,12 @@ func TestUsersPageInvitationStateChangesAfterSetPasswordViaClient(t *testing.T) 
 	admin := page.GetRequiredUser(tools.DefaultAdminName)
 	assert.Equal(t, tools.DefaultAdminName, admin.Name)
 	assert.Equal(t, tools.DefaultAdminEmail, admin.Email)
-	assert.Equal(t, "Admin", admin.Role)
-	assert.True(t, admin.IsEnabled)
 	assertFrontendTimestampSet(t, admin.Created)
 	assert.Equal(t, "—", admin.InvitationExpiration)
 	assert.False(t, admin.PasswordLinkPresent)
 	assert.Equal(t, "—", admin.PasswordLinkCellText)
 	assert.True(t, admin.EditButtonPresent)
 	assert.False(t, admin.ResetButtonPresent)
-	assert.False(t, admin.DeleteButtonPresent)
 
 	page.CreateUser(username, sampleUserEmail).AssertUserInList(username, sampleUserEmail)
 	users = page.ListUsers()
@@ -44,14 +41,11 @@ func TestUsersPageInvitationStateChangesAfterSetPasswordViaClient(t *testing.T) 
 	user := page.GetRequiredUser(username)
 	assert.Equal(t, username, user.Name)
 	assert.Equal(t, sampleUserEmail, user.Email)
-	assert.Equal(t, "User", user.Role)
-	assert.True(t, user.IsEnabled)
 	assertFrontendTimestampSet(t, user.Created)
 	assertFrontendTimestampSet(t, user.InvitationExpiration)
 	assert.True(t, user.PasswordLinkPresent)
 	assert.True(t, user.EditButtonPresent)
 	assert.True(t, user.ResetButtonPresent)
-	assert.True(t, user.DeleteButtonPresent)
 
 	userFromBackend := component.GetRequiredUserByUsername(t, frame.Client, username)
 	anonymousClient := api_client.NewQuollixClient()
@@ -65,7 +59,51 @@ func TestUsersPageInvitationStateChangesAfterSetPasswordViaClient(t *testing.T) 
 	assert.Equal(t, "—", user.PasswordLinkCellText)
 	assert.True(t, user.EditButtonPresent)
 	assert.True(t, user.ResetButtonPresent)
-	assert.True(t, user.DeleteButtonPresent)
+}
+
+func TestUsersPageRestrictsAdminActionsOnOwnAccount(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+
+	page := frame.Pages.GoToUsersPage()
+	admin := page.GetRequiredUser(tools.DefaultAdminName)
+	assert.Equal(t, "admin", admin.Role)
+	assert.True(t, admin.IsEnabled)
+	assert.False(t, admin.CanChangeRole)
+	assert.False(t, admin.CanEnableOrDisableUser)
+	assert.False(t, admin.CanDeleteUser)
+	assert.False(t, admin.ResetButtonPresent)
+}
+
+func TestUsersPageCanPromoteAndDemoteOtherUsersBeforeDeactivation(t *testing.T) {
+	frame := frontend_pages.Setup(t)
+	defer frame.Client.Test.ResetTestState()
+
+	page := frame.Pages.GoToUsersPage()
+
+	page.CreateUser(username, sampleUserEmail)
+	user := page.GetRequiredUser(username)
+	assert.Equal(t, "user", user.Role)
+	assert.True(t, user.IsEnabled)
+	assert.True(t, user.CanChangeRole)
+	assert.True(t, user.CanEnableOrDisableUser)
+	assert.True(t, user.CanDeleteUser)
+
+	page.SetUserRole(username, "Admin")
+	user = page.GetRequiredUser(username)
+	assert.Equal(t, "admin", user.Role)
+	assert.False(t, user.CanEnableOrDisableUser)
+	assert.True(t, user.CanDeleteUser)
+	assert.True(t, user.ResetButtonPresent)
+
+	page.SetUserRole(username, "User")
+	user = page.GetRequiredUser(username)
+	assert.Equal(t, "user", user.Role)
+	assert.True(t, user.CanEnableOrDisableUser)
+	page.SetUserEnabled(username, false)
+	user = page.GetRequiredUser(username)
+	assert.False(t, user.IsEnabled)
+	assert.False(t, user.CanPromoteToAdmin)
 }
 
 func TestUsersPageDirectInviteAllowsEmptyEmail(t *testing.T) {
@@ -89,12 +127,14 @@ func TestUsersPageCanDisableAndEnableUser(t *testing.T) {
 	page.SetUserEnabled(username, false)
 	user := page.GetRequiredUser(username)
 	assert.False(t, user.IsEnabled)
+	assert.False(t, user.CanPromoteToAdmin)
 
 	waitForBackendUserEnabledState(t, frame.Client, username, false)
 
 	page.SetUserEnabled(username, true)
 	user = page.GetRequiredUser(username)
 	assert.True(t, user.IsEnabled)
+	assert.True(t, user.CanPromoteToAdmin)
 
 	waitForBackendUserEnabledState(t, frame.Client, username, true)
 }
@@ -149,10 +189,13 @@ func TestUsersPageSendPasswordResetEmail(t *testing.T) {
 	assert.Nil(t, frame.Client.Email.SaveConfig(configs.GetSampleEmailConfig()))
 
 	frame.Pages.GoToUsersPage()
-	user = frame.Pages.UsersPage.GetRequiredUser(username)
+	usersPage = frame.Pages.UsersPage
+	usersPage.SetUserRole(username, "Admin")
+	user = usersPage.GetRequiredUser(username)
+	assert.True(t, user.ResetButtonPresent)
 	assert.True(t, user.SendPasswordResetEmailButtonPresent)
 
-	frame.Pages.UsersPage.SendPasswordResetEmail(username)
+	usersPage.SendPasswordResetEmail(username)
 }
 
 func TestUsersPageInviteViaEmailButtonRequiresEmail(t *testing.T) {
