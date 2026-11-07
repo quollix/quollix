@@ -57,7 +57,7 @@ func prepareServer(deps *di.Dependencies) error {
 		return err
 	}
 	if err := deps.ResticDockerImageService.UpdateResticDockerImage(); err != nil {
-		return err
+		u.Logger.Error(err)
 	}
 	return nil
 }
