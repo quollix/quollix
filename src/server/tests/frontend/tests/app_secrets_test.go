@@ -19,6 +19,9 @@ func TestAppSecretsPage(t *testing.T) {
 
 	_, err := component.InstallSample(t, frame.Client, "2.0")
 	assert.Nil(t, err)
+	// Confirm the app is up, preventing brittle NETWORK_CHANGED issues
+	appClient := component.GetAppClient(t, frame.Client)
+	assert.Nil(t, component.AssertSampleAppDefaultContent(appClient, false))
 
 	oldSharedSecret, err := frame.Client.Apps.GetInstalledAppSecret(tools.SampleApp, "SECRET_SAMPLE_SHARED")
 	assert.Nil(t, err)

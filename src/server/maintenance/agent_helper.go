@@ -49,25 +49,24 @@ func (m *AgentHelperImpl) UpdateAllApps() {
 			continue
 		}
 
-		handle, err := m.OperationRegistry.TryBlockAppOperation(repoApp.AppName, "running maintenance job - updating app: "+repoApp.AppName)
-		if err != nil {
-			u.Logger.Error(err)
-			return
-		}
-
-		func() {
-			defer handle.Done()
-
-			if err := m.AppsServiceAdvanced.UpdateAppViaAppStore(repoApp.AppId); err != nil {
-				if u.ExtractError(err) == apps_advanced.CantUpdateAppError {
-					u.Logger.Info(apps_advanced.CantUpdateAppError, tools.AppField, repoApp.AppName)
-					return
-				}
-				u.Logger.Error(err)
-				return
+		if err := m.updateApp(repoApp); err != nil {
+			if u.ExtractError(err) == apps_advanced.CantUpdateAppError {
+				u.Logger.Info(apps_advanced.CantUpdateAppError, tools.AppField, repoApp.AppName)
+				continue
 			}
-		}()
+			u.Logger.Error(u.Logger.AddContext(err, tools.AppField, repoApp.AppName))
+		}
 	}
+}
+
+func (m *AgentHelperImpl) updateApp(app apps_basic.RepoApp) error {
+	handle, err := m.OperationRegistry.TryBlockAppOperation(app.AppName, "running maintenance job - updating app: "+app.AppName)
+	if err != nil {
+		return err
+	}
+	defer handle.Done()
+
+	return m.AppsServiceAdvanced.UpdateAppViaAppStore(app.AppId)
 }
 
 func (m *AgentHelperImpl) CreateBackupsForAllAppsIfConfigured() {
@@ -92,21 +91,20 @@ func (m *AgentHelperImpl) CreateBackupsForAllAppsIfConfigured() {
 			continue
 		}
 
-		handle, err := m.OperationRegistry.TryBlockAppOperation(repoApp.AppName, "running maintenance job - creating app backup of: "+repoApp.AppName)
-		if err != nil {
-			u.Logger.Error(err)
-			return
+		if err := m.createBackup(repoApp); err != nil {
+			u.Logger.Error(u.Logger.AddContext(err, tools.AppField, repoApp.AppName))
 		}
-
-		func() {
-			defer handle.Done()
-
-			if err := m.BackupService.CreateBackup(repoApp.AppId, tools.ScheduledBackupDescription); err != nil {
-				u.Logger.Error(err)
-				return
-			}
-		}()
 	}
+}
+
+func (m *AgentHelperImpl) createBackup(app apps_basic.RepoApp) error {
+	handle, err := m.OperationRegistry.TryBlockAppOperation(app.AppName, "running maintenance job - creating app backup of: "+app.AppName)
+	if err != nil {
+		return err
+	}
+	defer handle.Done()
+
+	return m.BackupService.CreateBackup(app.AppId, tools.ScheduledBackupDescription)
 }
 
 func (m *AgentHelperImpl) RetentBackupsForAllAppsIfConfigured() {
@@ -127,38 +125,30 @@ func (m *AgentHelperImpl) RetentBackupsForAllAppsIfConfigured() {
 	}
 
 	for _, backedUpApp := range backedUpApps {
-		handle, err := m.OperationRegistry.TryBlockAppOperation(backedUpApp.AppName, "running maintenance job - retent backups of app: "+backedUpApp.AppName)
-		if err != nil {
-			u.Logger.Error(err)
-			return
+		if err := m.retentBackupsForApp(backedUpApp); err != nil {
+			u.Logger.Error(u.Logger.AddContext(err, tools.AppField, backedUpApp.AppName))
 		}
-
-		func() {
-			defer handle.Done()
-
-			maintainerAndApp := api.MaintainerAndApp{
-				Maintainer: backedUpApp.Maintainer,
-				AppName:    backedUpApp.AppName,
-			}
-
-			backupInfo, err := m.BackupService.ListBackupsOfApp(maintainerAndApp)
-			if err != nil {
-				u.Logger.Error(err)
-				return
-			}
-
-			backupIdsToDelete, err := m.BackupDeletionFinder.GetBackupsForRetention(backupInfo)
-			if err != nil {
-				u.Logger.Error(err)
-				return
-			}
-
-			if err := m.BackupService.DeleteBackups(backupIdsToDelete); err != nil {
-				u.Logger.Error(err)
-				return
-			}
-		}()
 	}
+}
+
+func (m *AgentHelperImpl) retentBackupsForApp(app api.MaintainerAndApp) error {
+	handle, err := m.OperationRegistry.TryBlockAppOperation(app.AppName, "running maintenance job - retent backups of app: "+app.AppName)
+	if err != nil {
+		return err
+	}
+	defer handle.Done()
+
+	backupInfo, err := m.BackupService.ListBackupsOfApp(app)
+	if err != nil {
+		return err
+	}
+
+	backupIdsToDelete, err := m.BackupDeletionFinder.GetBackupsForRetention(backupInfo)
+	if err != nil {
+		return err
+	}
+
+	return m.BackupService.DeleteBackups(backupIdsToDelete)
 }
 
 func (m *AgentHelperImpl) CalculateNextMaintenanceAtUtc(now time.Time, ianaTimeZone string, maintenanceWindowStartHour int) (*time.Time, error) {

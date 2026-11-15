@@ -1,6 +1,7 @@
 package maintenance
 
 import (
+	"errors"
 	"server/apps_advanced"
 	"server/apps_basic"
 	"server/backup_server"
@@ -105,6 +106,21 @@ func TestUpdateAllApps(t *testing.T) {
 	testObjects.Helper.UpdateAllApps()
 }
 
+func TestUpdateAllApps_ContinuesAfterUpdateFailure(t *testing.T) {
+	testObjects := newAgentHelperTestObjects(t)
+	defer assertAgentHelperExpectations(t, testObjects)
+
+	firstApp := apps_basic.RepoApp{AppId: 1, AppName: "app-with-failed-update", AutomaticUpdatesEnabled: true, ShouldBeRunning: true}
+	secondApp := apps_basic.RepoApp{AppId: 2, AppName: "app-with-successful-update", AutomaticUpdatesEnabled: true, ShouldBeRunning: true}
+	testObjects.AppRepo.EXPECT().ListApps().Return([]apps_basic.RepoApp{firstApp, secondApp}, nil)
+	testObjects.AppDetector.EXPECT().IsSystemApp(firstApp.AppName).Return(false)
+	testObjects.AppDetector.EXPECT().IsSystemApp(secondApp.AppName).Return(false)
+	testObjects.AppsServiceAdvanced.EXPECT().UpdateAppViaAppStore(firstApp.AppId).Return(errors.New("update failed"))
+	testObjects.AppsServiceAdvanced.EXPECT().UpdateAppViaAppStore(secondApp.AppId).Return(nil)
+
+	testObjects.Helper.UpdateAllApps()
+}
+
 func TestCreateBackups_BackupsEnabled(t *testing.T) {
 	testObjects := newAgentHelperTestObjects(t)
 	defer assertAgentHelperExpectations(t, testObjects)
@@ -129,6 +145,20 @@ func TestCreateBackups_BackupsDisabled(t *testing.T) {
 
 	testObjects.Helper.CreateBackupsForAllAppsIfConfigured()
 }
+
+func TestCreateBackups_ContinuesAfterBackupFailure(t *testing.T) {
+	testObjects := newAgentHelperTestObjects(t)
+	defer assertAgentHelperExpectations(t, testObjects)
+
+	firstApp := apps_basic.RepoApp{AppId: 1, AppName: "app-with-failed-backup", AutomaticBackupsEnabled: true}
+	secondApp := apps_basic.RepoApp{AppId: 2, AppName: "app-with-successful-backup", AutomaticBackupsEnabled: true}
+	testObjects.SshRepositoryService.EXPECT().IsBackupEnabled().Return(true, nil)
+	testObjects.AppRepo.EXPECT().ListApps().Return([]apps_basic.RepoApp{firstApp, secondApp}, nil)
+	testObjects.BackupService.EXPECT().CreateBackup(firstApp.AppId, tools.ScheduledBackupDescription).Return(errors.New("backup failed"))
+	testObjects.BackupService.EXPECT().CreateBackup(secondApp.AppId, tools.ScheduledBackupDescription).Return(nil)
+
+	testObjects.Helper.CreateBackupsForAllAppsIfConfigured()
+}
 func TestRetentBackups_BackupsEnabled(t *testing.T) {
 	testObjects := newAgentHelperTestObjects(t)
 	defer assertAgentHelperExpectations(t, testObjects)
@@ -145,6 +175,27 @@ func TestRetentBackups_BackupsEnabled(t *testing.T) {
 	testObjects.BackupService.EXPECT().ListBackupsOfApp(appOne).Return(backupInfo, nil)
 	testObjects.BackupDeletionFinder.EXPECT().GetBackupsForRetention(backupInfo).Return([]string{"123"}, nil)
 	testObjects.BackupService.EXPECT().DeleteBackups([]string{"123"}).Return(nil)
+
+	testObjects.Helper.RetentBackupsForAllAppsIfConfigured()
+}
+
+func TestRetentBackups_ContinuesAfterRetentionFailure(t *testing.T) {
+	testObjects := newAgentHelperTestObjects(t)
+	defer assertAgentHelperExpectations(t, testObjects)
+
+	testObjects.SshRepositoryService.EXPECT().IsBackupEnabled().Return(true, nil)
+
+	firstApp := api.MaintainerAndApp{Maintainer: "maintainer-1", AppName: "app-1"}
+	secondApp := api.MaintainerAndApp{Maintainer: "maintainer-2", AppName: "app-2"}
+	firstBackupInfo := []api.BackupInfo{{BackupId: "123", Maintainer: firstApp.Maintainer, AppName: firstApp.AppName}}
+	secondBackupInfo := []api.BackupInfo{{BackupId: "456", Maintainer: secondApp.Maintainer, AppName: secondApp.AppName}}
+	testObjects.BackupService.EXPECT().ListAppsInBackupRepo().Return([]api.MaintainerAndApp{firstApp, secondApp}, nil)
+	testObjects.BackupService.EXPECT().ListBackupsOfApp(firstApp).Return(firstBackupInfo, nil)
+	testObjects.BackupDeletionFinder.EXPECT().GetBackupsForRetention(firstBackupInfo).Return([]string{"123"}, nil)
+	testObjects.BackupService.EXPECT().DeleteBackups([]string{"123"}).Return(errors.New("backup deletion failed"))
+	testObjects.BackupService.EXPECT().ListBackupsOfApp(secondApp).Return(secondBackupInfo, nil)
+	testObjects.BackupDeletionFinder.EXPECT().GetBackupsForRetention(secondBackupInfo).Return([]string{"456"}, nil)
+	testObjects.BackupService.EXPECT().DeleteBackups([]string{"456"}).Return(nil)
 
 	testObjects.Helper.RetentBackupsForAllAppsIfConfigured()
 }

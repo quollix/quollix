@@ -89,6 +89,7 @@ func (s *MaintenanceAgentImpl) considerRunningMaintenanceJob() {
 }
 
 func (s *MaintenanceAgentImpl) RunMaintenanceJob() {
+	// Maintenance errors are logged as they occur and reported indirectly through Quollix error alert emails to admins.
 	u.Logger.Info("running maintenance job")
 	s.ServiceHelper.UpdateAllApps()
 	if err := s.ResticImage.UpdateResticDockerImage(); err != nil {

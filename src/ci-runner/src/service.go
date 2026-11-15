@@ -16,6 +16,7 @@ const (
 	ProdProfileBuildTag = "prod_profile"
 	BehindProxyBuildTag = "behind_proxy"
 	IntegrationBuildTag = "integration"
+	VictoriaBuildTag    = "victoria"
 	FrontendBuildTag    = "frontend"
 	OidcBuildTag        = "oidc"
 	ReleaseBuildTag     = "release"
@@ -32,6 +33,8 @@ const (
 	FrontendTestFilterFlagName      = "test-filter"
 	FrontendTestFilterFlagShort     = "f"
 	FrontendWithGuiFlagName         = "with-gui"
+	VictoriaKeepStackFlagName       = "keep-stack"
+	VictoriaKeepStackFlagShort      = "k"
 	OidcKeepDatabasesFlagName       = "keep-databases"
 	OidcKeepDatabasesFlagShort      = "d"
 	OidcKeepContainersFlagName      = "keep-containers"
@@ -66,6 +69,19 @@ func TestIntegration() {
 	DeployLocalDatabase()
 
 	runServerTests(IntegrationBuildTag)
+}
+
+func TestVictoria(keepStack bool) {
+	Tr.Log.TaskDescription("Running VictoriaMetrics and VictoriaLogs integration tests")
+	if keepStack {
+		Tr.Config.CleanupFunc = nil
+		Tr.Log.Info("Keep-stack enabled, leaving the Victoria test stack running")
+	} else {
+		Tr.Cmd().Dir(DockerVictoriaTestDir).AllowFail().Run("docker compose down --remove-orphans")
+		defer Tr.Cmd().Dir(DockerVictoriaTestDir).AllowFail().Run("docker compose down --remove-orphans")
+	}
+	Tr.Cmd().Dir(DockerVictoriaTestDir).Run("docker compose up -d")
+	runServerTests(VictoriaBuildTag)
 }
 
 func TestRelease() {
@@ -115,6 +131,7 @@ func TestAll() {
 	TestFrontend(false, "", false)
 	TestOidc(false, false)
 	TestIntegration()
+	TestVictoria(false)
 	TestComponentWithDevProfile()
 	TestQuollixRestart()
 	TestComponentWithProdProfile()

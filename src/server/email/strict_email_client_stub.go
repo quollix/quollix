@@ -10,8 +10,14 @@ import (
 )
 
 const (
-	invitationEmailSubject    = "User invitation"
-	passwordResetEmailSubject = "Password reset"
+	invitationEmailSubject         = "User invitation"
+	passwordResetEmailSubject      = "Password reset"
+	broadcastEmailFailureRecipient = "broadcast-failure@example.com"
+)
+
+const (
+	TestBroadcastEmailSubject = "Quollix server update"
+	TestBroadcastEmailBody    = "Hello administrators,\n\nThis is a component test broadcast message.\n\nBest regards,\nQuollix"
 )
 
 type StrictEmailClientStub struct{}
@@ -29,7 +35,23 @@ func (e *StrictEmailClientStub) SendEmail(emailConfig *u.EmailConfig, to, subjec
 	if subject == passwordResetEmailSubject {
 		return e.assertPasswordResetEmail(to, body)
 	}
+	if subject == TestBroadcastEmailSubject {
+		return e.assertBroadcastEmail(to, body)
+	}
 	return u.Logger.NewError("unexpected email subject", "actual", subject)
+}
+
+func (e *StrictEmailClientStub) assertBroadcastEmail(to, body string) error {
+	if body != TestBroadcastEmailBody {
+		return u.Logger.NewError("unexpected broadcast email body", "actual", body)
+	}
+	if to == broadcastEmailFailureRecipient {
+		return u.Logger.NewError("simulated broadcast email delivery failure")
+	}
+	if to != tools.SampleRealUserEmail {
+		return u.Logger.NewError("unexpected broadcast email recipient", "actual", to, "expected", tools.SampleRealUserEmail)
+	}
+	return nil
 }
 
 func (e *StrictEmailClientStub) assertTestEmail(to, subject, body string) error {

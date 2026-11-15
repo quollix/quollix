@@ -64,7 +64,7 @@ func (d *TestStateResetHandler) resetTestState() {
 
 	go func() {
 		defer waitGroup.Done()
-		err := runDockerCmd(d.DirectoryProvider.GetDockerDir(), "exec", tools.TestSshServerHost, "rm", "-rf", tools.TestSshServerBackupsDirectory)
+		err := runDockerCmd(d.DirectoryProvider.GetDockerDir(), "exec", tools.TestSshServerHost, "rm", "-rf", tools.TestSshServerBackupsDirectory, "/config/backups1", "/config/backups2")
 		if err != nil {
 			u.Logger.Error(err.Error())
 		}

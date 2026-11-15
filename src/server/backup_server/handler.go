@@ -93,7 +93,7 @@ func (s *SshHandler) TestSshAccessHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (b *SshHandler) PurgeBackupServerHandler(w http.ResponseWriter, r *http.Request) {
-	request, ok := validation.ReadBody[api.SshConnectionRequest](w, r)
+	request, ok := validation.ReadBody[api.PurgeBackupServerRequest](w, r)
 	if !ok {
 		return
 	}
@@ -101,8 +101,7 @@ func (b *SshHandler) PurgeBackupServerHandler(w http.ResponseWriter, r *http.Req
 	handle := b.OperationRegistry.RegisterOperation("purging backup server")
 	defer handle.Done()
 
-	err := error(nil)
-	if err = b.SshClient.PurgeBackupServer(request); err != nil {
+	if err := b.SshClient.PurgeBackupServer(request); err != nil {
 		u.WriteResponseError(w, BackupOperationExpectedErrors, err)
 		return
 	}

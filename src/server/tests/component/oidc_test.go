@@ -157,7 +157,7 @@ func TestOIDC_Userinfo_WithoutTokenCausesUnauthorizedCode(t *testing.T) {
 func TestOIDC_EmailClaimUsesSyntheticEmailUnlessRealEmailExposureIsEnabled(t *testing.T) {
 	client := GetClientAndLogin(t)
 	defer client.Test.ResetTestState()
-	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleRealUserEmail)
+	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, tools.SampleRealUserEmail)
 
 	app, err := InstallSample(t, client, "2.0")
 	assert.Nil(t, err)
@@ -168,7 +168,7 @@ func TestOIDC_EmailClaimUsesSyntheticEmailUnlessRealEmailExposureIsEnabled(t *te
 	assertOidcEmailClaim(t, app, SampleUserEmail)
 
 	assert.Nil(t, client.Email.SaveExposeRealEmailInOidcToken(true))
-	assertOidcEmailClaim(t, app, SampleRealUserEmail)
+	assertOidcEmailClaim(t, app, tools.SampleRealUserEmail)
 
 	assert.Nil(t, client.Email.SaveExposeRealEmailInOidcToken(false))
 	assertOidcEmailClaim(t, app, SampleUserEmail)

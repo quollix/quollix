@@ -28,8 +28,10 @@ var ConfigKeys = struct {
 	BackupServerPassword     string
 	BackupServerKnownHosts   string
 	BackupEncryptionPassword string
+	BackupFolderPath         string
 
 	InvitationEmailTemplate string
+	BroadcastEmailTemplate  string
 
 	BackupRetentionPreUpdated string
 	BackupRetentionDaily      string
@@ -46,8 +48,24 @@ var ConfigKeys = struct {
 	ResticDockerfileHash string
 
 	// acme library derives the public key from the private key, so we only need to store the private key
-	AcmeAccountPrivateKey string
-	AcmeAccountRegistered string
+	AcmeAccountPrivateKey         string
+	AcmeAccountRegistered         string
+	AlertCPUUsageEnabled          string
+	AlertMemoryUsageEnabled       string
+	AlertDiskUsageEnabled         string
+	AlertCertificateExpiryEnabled string
+	AlertQuollixErrorsEnabled     string
+	AlertHostUsageTriggerPercent  string
+	AlertHostUsageRecoveryPercent string
+	AlertHostUsagePendingMinutes  string
+	AlertCPUUsageState            string
+	AlertCPUUsagePendingSince     string
+	AlertMemoryUsageState         string
+	AlertMemoryUsagePendingSince  string
+	AlertDiskUsageState           string
+	AlertDiskUsagePendingSince    string
+	AlertCertificateExpiryState   string
+	AlertQuollixErrorsState       string
 }{
 	BaseDomain:                      "base_domain",
 	LogsRetentionDays:               "logs_retention_days",
@@ -76,8 +94,10 @@ var ConfigKeys = struct {
 	BackupServerPassword:     "backup_server_password",
 	BackupServerKnownHosts:   "backup_server_known_hosts",
 	BackupEncryptionPassword: "backup_restic_password",
+	BackupFolderPath:         "backup_folder_path",
 
 	InvitationEmailTemplate: "email_template_invitation",
+	BroadcastEmailTemplate:  "email_template_broadcast",
 
 	BackupRetentionPreUpdated: "backup_retention_pre_updated",
 	BackupRetentionDaily:      "backup_retention_daily",
@@ -93,6 +113,22 @@ var ConfigKeys = struct {
 	SystemConfigVersion:  "system_config_version",
 	ResticDockerfileHash: "restic_dockerfile_sha256",
 
-	AcmeAccountPrivateKey: "acme_account_private_key",
-	AcmeAccountRegistered: "acme_account_registered",
+	AcmeAccountPrivateKey:         "acme_account_private_key",
+	AcmeAccountRegistered:         "acme_account_registered",
+	AlertCPUUsageEnabled:          "alert_cpu_usage_enabled",
+	AlertMemoryUsageEnabled:       "alert_memory_usage_enabled",
+	AlertDiskUsageEnabled:         "alert_disk_usage_enabled",
+	AlertCertificateExpiryEnabled: "alert_certificate_expiry_enabled",
+	AlertQuollixErrorsEnabled:     "alert_quollix_errors_enabled",
+	AlertHostUsageTriggerPercent:  "alert_host_usage_trigger_percent",
+	AlertHostUsageRecoveryPercent: "alert_host_usage_recovery_percent",
+	AlertHostUsagePendingMinutes:  "alert_host_usage_pending_minutes",
+	AlertCPUUsageState:            "alert_cpu_usage_state",
+	AlertCPUUsagePendingSince:     "alert_cpu_usage_pending_since",
+	AlertMemoryUsageState:         "alert_memory_usage_state",
+	AlertMemoryUsagePendingSince:  "alert_memory_usage_pending_since",
+	AlertDiskUsageState:           "alert_disk_usage_state",
+	AlertDiskUsagePendingSince:    "alert_disk_usage_pending_since",
+	AlertCertificateExpiryState:   "alert_certificate_expiry_state",
+	AlertQuollixErrorsState:       "alert_quollix_errors_state",
 }

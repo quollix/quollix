@@ -2,6 +2,7 @@ package email
 
 import (
 	"net/http"
+	"server/apps_basic"
 	"server/configs"
 	"server/users"
 	"strconv"
@@ -13,14 +14,24 @@ import (
 
 var expectedUserInvitationEmailErrors = u.MapOf(users.UserAlreadyExistsError, users.EmailAlreadyExistsError, users.ReservedEmailMustMatchUserError, u.EmailServiceNotEnabledErrorMessage)
 var expectedPasswordResetEmailErrors = u.MapOf(users.AdminCanNotResetOwnPasswordError, u.EmailServiceNotEnabledErrorMessage)
+var expectedBroadcastEmailErrors = u.MapOf(
+	u.EmailServiceNotEnabledErrorMessage,
+	PartialEmailDeliveryError,
+	BroadcastEmailSubjectCannotBeEmptyError,
+	BroadcastEmailBodyCannotBeEmptyError,
+)
+var expectedBroadcastEmailTemplateErrors = u.MapOf(
+	BroadcastEmailTemplateCannotBeEmptyError,
+)
 
 type EmailHandler struct {
-	EmailService     EmailService
-	EmailRepository  configs.EmailRepository
-	ConfigsRepo      configs.ConfigsRepository
-	OidcEmailService configs.OidcEmailExposureService
-	EmailClient      u.EmailClient
-	UserEmailService UserEmailService
+	OperationRegistry apps_basic.OperationRegistry
+	EmailService      EmailService
+	EmailRepository   configs.EmailRepository
+	ConfigsRepo       configs.ConfigsRepository
+	OidcEmailService  configs.OidcEmailExposureService
+	EmailClient       u.EmailClient
+	UserEmailService  UserEmailService
 }
 
 func (e *EmailHandler) SaveEmailConfig(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +127,47 @@ func (e *EmailHandler) SaveInvitationTemplate(w http.ResponseWriter, r *http.Req
 func (e *EmailHandler) ResetInvitationTemplate(w http.ResponseWriter, r *http.Request) {
 	if err := e.UserEmailService.ResetInvitationEmailTemplate(); err != nil {
 		u.WriteResponseError(w, nil, err)
+		return
+	}
+}
+
+func (e *EmailHandler) ReadBroadcastTemplate(w http.ResponseWriter, r *http.Request) {
+	template, err := e.ConfigsRepo.GetConfig(configs.ConfigKeys.BroadcastEmailTemplate)
+	if err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+	u.SendJsonResponse(w, api.BroadcastEmailTemplateRequest{Template: template})
+}
+
+func (e *EmailHandler) SaveBroadcastTemplate(w http.ResponseWriter, r *http.Request) {
+	request, ok := validation.ReadBody[api.BroadcastEmailTemplateRequest](w, r)
+	if !ok {
+		return
+	}
+	if err := e.UserEmailService.SaveBroadcastEmailTemplate(request.Template); err != nil {
+		u.WriteResponseError(w, expectedBroadcastEmailTemplateErrors, err)
+		return
+	}
+}
+
+func (e *EmailHandler) ResetBroadcastTemplate(w http.ResponseWriter, r *http.Request) {
+	if err := e.UserEmailService.ResetBroadcastEmailTemplate(); err != nil {
+		u.WriteResponseError(w, nil, err)
+		return
+	}
+}
+
+func (e *EmailHandler) SendBroadcastEmail(w http.ResponseWriter, r *http.Request) {
+	request, ok := validation.ReadBody[api.SendBroadcastEmailRequest](w, r)
+	if !ok {
+		return
+	}
+	handle := e.OperationRegistry.RegisterOperation("sending email to all users")
+	defer handle.Done()
+
+	if err := e.UserEmailService.SendBroadcastEmail(request.Subject, request.Body); err != nil {
+		u.WriteResponseError(w, expectedBroadcastEmailErrors, err)
 		return
 	}
 }

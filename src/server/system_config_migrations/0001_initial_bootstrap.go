@@ -20,6 +20,7 @@ import (
 )
 
 func (s *SystemConfigMigrationsProviderImpl) runInitialBootstrapMigration() error {
+	u.Logger.Info(systemConfigMigrationLogMessage, "step", 1, "action", "initial bootstrap")
 	steps := []func() error{
 		s.createAdminUserIfNotExist,
 		s.setHostIfNotExist,
@@ -50,7 +51,6 @@ func (s *SystemConfigMigrationsProviderImpl) createBackupServerConfigIfItNotExis
 		return err
 	}
 	if !doesBackupServerConfigExist {
-		u.Logger.Info("no remote backup server configuration found in database, creating empty remote backup server configuration")
 		if err := s.SshRepository.SaveRemoteBackupRepository(backup_server.GetEmptyRemoteRepoConfigs()); err != nil {
 			return err
 		}
@@ -81,7 +81,6 @@ func (s *SystemConfigMigrationsProviderImpl) loadEmailSettingsIfNotExist() error
 		return err
 	}
 	if !isEmailConfigPresent {
-		u.Logger.Info("no email configuration found in database, creating empty email configuration")
 		if err := s.EmailRepo.SaveEmailConfig(configs.GetEmptyEmailConfig()); err != nil {
 			return err
 		}
@@ -103,7 +102,6 @@ func (s *SystemConfigMigrationsProviderImpl) createServerCertificateIfNotExist()
 		return nil
 	}
 
-	u.Logger.Info("no TLS certificate found in database, creating self-signed certificate")
 	certBundle, err := s.CertificateService.GenerateUniversalSelfSignedCert()
 	if err != nil {
 		return err
@@ -144,7 +142,6 @@ func (s *SystemConfigMigrationsProviderImpl) createOidcEmailExposureConfigIfNotE
 		return nil
 	}
 
-	u.Logger.Info("no OIDC real email exposure config found in database, disabling real email exposure")
 	return s.OidcEmailService.SaveExposeRealEmailInOidcToken(false)
 }
 
@@ -154,11 +151,9 @@ func (s *SystemConfigMigrationsProviderImpl) createOfficialDatabaseAppEntryIfNot
 		return err
 	}
 	if doesAppExist {
-		u.Logger.Info("postgres app already exists, skipping creation", tools.AppField, u.OfficialDatabaseAppName)
 		return nil
 	}
 
-	u.Logger.Info("creating postgres app")
 	composeFilePath, err := url.JoinPath(s.DirectoryProvider.GetOfficialDatabaseDockerDir(), "docker-compose.yml")
 	if err != nil {
 		return u.Logger.NewError(err.Error(), "compose_file_path", composeFilePath)
@@ -212,10 +207,8 @@ func (s *SystemConfigMigrationsProviderImpl) createAdminUserIfNotExist() error {
 	}
 
 	if doesAdminExist {
-		u.Logger.Info("At least one Admin user has been found in the database, so the creation of an admin account is being skipped.")
 		return nil
 	} else {
-		u.Logger.Info("No Admin user was found in the database, but the application needs at least one. Admin user is being created.")
 		return s.createAdminsUser()
 	}
 }
@@ -246,7 +239,6 @@ func (s *SystemConfigMigrationsProviderImpl) createAdminsUser() error {
 	if err != nil {
 		return err
 	}
-	u.Logger.Info("Initial admin user created")
 	return nil
 }
 
@@ -260,7 +252,6 @@ func (s *SystemConfigMigrationsProviderImpl) createEmailTemplatesIfNotExist() er
 		return err
 	}
 	if !doesInvitationEmailTemplateExist {
-		u.Logger.Info("no invitation email template found in database, creating default invitation email template")
 		if err := s.ConfigsRepo.SetConfig(configs.ConfigKeys.InvitationEmailTemplate, users.DefaultInvitationEmailTemplate); err != nil {
 			return err
 		}
@@ -275,7 +266,6 @@ func (s *SystemConfigMigrationsProviderImpl) createRetentionPolicyIfNotExist() e
 		return err
 	}
 	if !isSet {
-		u.Logger.Info("no retention policy found in database, creating default retention policy")
 		defaultPolicy := retention.GetDefaultRetentionPolicy()
 		if err := s.RetentionPolicyRepository.SetRetentionPolicy(defaultPolicy); err != nil {
 			return err
@@ -292,8 +282,6 @@ func (s *SystemConfigMigrationsProviderImpl) createMaintenanceConfigIfNotExist()
 	if isSet {
 		return nil
 	}
-
-	u.Logger.Info("no maintenance config found in database, creating default maintenance config")
 
 	maintenanceWindowStartHour := 2
 	defaultIanaTimeZone := "Europe/London"
@@ -316,7 +304,6 @@ func (s *SystemConfigMigrationsProviderImpl) createVersionConfigIfNotExist() err
 		return err
 	}
 	if !isSet {
-		u.Logger.Info("no application version found in database, creating application version entry")
 		if err := s.ConfigsRepo.SetConfig(configs.ConfigKeys.ApplicationVersion, tools.ApplicationVersion); err != nil {
 			return err
 		}
@@ -330,7 +317,6 @@ func (s *SystemConfigMigrationsProviderImpl) createAcmeAccountCreatedFlagIfNotEx
 		return err
 	}
 	if !isSet {
-		u.Logger.Info("no ACME account created flag found in database, creating ACME account created flag and setting it to false")
 		if err := s.ConfigsRepo.SetConfig(configs.ConfigKeys.AcmeAccountRegistered, "false"); err != nil {
 			return err
 		}

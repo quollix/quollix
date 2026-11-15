@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"server/apps_basic"
 	"server/di"
 
 	u "github.com/quollix/common/utils"
@@ -70,10 +71,14 @@ func runServer(deps *di.Dependencies) error {
 	defer deps.ContainerMetricsMonitor.StopMonitoring()
 	defer deps.VolumeMetricsMonitor.StopMonitoring()
 	deps.AppManager.EnsureNetworksForAppsThatShouldBeRunning()
+	if err := startMonitoringWhenGrafanaAppIsRunning(deps); err != nil {
+		return err
+	}
 	if err := deps.OidcService.InitializeOidcService(); err != nil {
 		return err
 	}
 	deps.MaintenanceAgent.StartMaintenanceAgentDaemon()
+	deps.AlertAgent.StartAlertAgentDaemon()
 	if err := deps.TimezoneProvider.InitializeIanaTimezones(); err != nil {
 		return err
 	}
@@ -84,5 +89,23 @@ func runServer(deps *di.Dependencies) error {
 	}
 
 	deps.ShutdownHandler.WaitAndShutdown(servers)
+	return nil
+}
+
+func startMonitoringWhenGrafanaAppIsRunning(deps *di.Dependencies) error {
+	apps, err := deps.Repos.AppsRepo.ListApps()
+	if err != nil {
+		return err
+	}
+	for _, app := range apps {
+		if !apps_basic.IsOfficialGrafanaApp(&app) || !app.ShouldBeRunning {
+			continue
+		}
+
+		deps.ContainerLogMonitor.StartMonitoring()
+		deps.ContainerMetricsMonitor.StartMonitoring()
+		deps.VolumeMetricsMonitor.StartMonitoring()
+		break
+	}
 	return nil
 }

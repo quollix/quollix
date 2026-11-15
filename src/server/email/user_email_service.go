@@ -37,26 +37,30 @@ type UserEmailService interface {
 	ResetInvitationEmailTemplate() error
 	SaveInvitationEmailTemplate(template string) error
 	RenderInvitationEmailTemplate(data InvitationTemplateRenderData) (string, error)
+	ResetBroadcastEmailTemplate() error
+	SaveBroadcastEmailTemplate(template string) error
+	SendBroadcastEmail(subject, content string) error
 }
 
 type UserEmailServiceImpl struct {
-	ConfigRepo     configs.ConfigsRepository
-	ConfigsService configs.ConfigsService
-	EmailRepo      configs.EmailRepository
-	UserService    users.UserService
-	UserRepo       users.UserRepository
-	EmailService   EmailService
+	ConfigRepo           configs.ConfigsRepository
+	ConfigsService       configs.ConfigsService
+	EmailRepo            configs.EmailRepository
+	UserService          users.UserService
+	UserRepo             users.UserRepository
+	EmailService         EmailService
+	MultiUserEmailSender MultiUserEmailSender
 }
 
-func (e *UserEmailServiceImpl) verifyEmailConfigEnabled() error {
+func (e *UserEmailServiceImpl) getEnabledEmailConfig() (*u.EmailConfig, error) {
 	emailConfig, err := e.EmailRepo.ReadEmailConfig()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !emailConfig.IsEnabled {
-		return u.Logger.NewError(u.EmailServiceNotEnabledErrorMessage)
+		return nil, u.Logger.NewError(u.EmailServiceNotEnabledErrorMessage)
 	}
-	return nil
+	return emailConfig, nil
 }
 
 func (e *UserEmailServiceImpl) buildServerURL() (string, error) {
@@ -76,10 +80,6 @@ func (e *UserEmailServiceImpl) buildSetPasswordLink(token string) (string, error
 }
 
 func (e *UserEmailServiceImpl) InviteUserViaEmail(username, targetEmail string) error {
-	if err := e.verifyEmailConfigEnabled(); err != nil {
-		return err
-	}
-
 	invitationDetails, err := e.UserService.InviteUser(username, targetEmail)
 	if err != nil {
 		return err
@@ -105,10 +105,6 @@ func (e *UserEmailServiceImpl) InviteUserViaEmail(username, targetEmail string) 
 }
 
 func (e *UserEmailServiceImpl) SendPasswordResetEmail(userIdToResetPassword, currentlyLoggedInUserId int) error {
-	if err := e.verifyEmailConfigEnabled(); err != nil {
-		return err
-	}
-
 	token, err := e.UserService.ResetPasswordOfUser(userIdToResetPassword, currentlyLoggedInUserId)
 	if err != nil {
 		return err
@@ -161,6 +157,38 @@ func (e *UserEmailServiceImpl) RenderInvitationEmailTemplate(data InvitationTemp
 		return "", u.Logger.NewError(err.Error())
 	}
 	return rendered.String(), nil
+}
+
+func (e *UserEmailServiceImpl) ResetBroadcastEmailTemplate() error {
+	return e.ConfigRepo.SetConfig(configs.ConfigKeys.BroadcastEmailTemplate, users.DefaultBroadcastEmailTemplate)
+}
+
+func (e *UserEmailServiceImpl) SaveBroadcastEmailTemplate(template string) error {
+	if err := ValidateBroadcastEmailTemplate(template); err != nil {
+		return err
+	}
+	return e.ConfigRepo.SetConfig(configs.ConfigKeys.BroadcastEmailTemplate, template)
+}
+
+func (e *UserEmailServiceImpl) SendBroadcastEmail(subject, body string) error {
+	if strings.TrimSpace(subject) == "" {
+		return u.Logger.NewError(BroadcastEmailSubjectCannotBeEmptyError)
+	}
+	if strings.TrimSpace(body) == "" {
+		return u.Logger.NewError(BroadcastEmailBodyCannotBeEmptyError)
+	}
+	emailConfig, err := e.getEnabledEmailConfig()
+	if err != nil {
+		return err
+	}
+	return e.MultiUserEmailSender.SendEmailToUsersWithConfig(emailConfig, subject, body, false)
+}
+
+func ValidateBroadcastEmailTemplate(template string) error {
+	if strings.TrimSpace(template) == "" {
+		return u.Logger.NewError(BroadcastEmailTemplateCannotBeEmptyError)
+	}
+	return nil
 }
 
 func ValidateInvitationEmailTemplate(template string) error {

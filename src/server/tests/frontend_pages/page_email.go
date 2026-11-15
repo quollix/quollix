@@ -3,6 +3,7 @@ package frontend_pages
 import (
 	"fmt"
 	"server/users"
+	"time"
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/quollix/api"
@@ -41,9 +42,33 @@ func (e *EmailPage) EnableEmail() *EmailPage {
 func (e *EmailPage) Save() *EmailPage {
 	saveButton, err := e.Frame.Page.Element("#email-save-config-button")
 	assert.Nil(e.Frame.T, err)
-	saveButton.MustClick()
+	e.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
+		saveButton.MustClick()
+	})
 	e.Frame.Assert.SnackbarVisibleWithTextEventually("Email settings saved.")
 	e.Frame.Assert.PagePath(api.Paths.FrontendEmail)
+	return e
+}
+
+func (e *EmailPage) AssertBroadcastAndInvitationSectionsVisible(visible bool) *EmailPage {
+	if visible {
+		e.Frame.Assert.ElementPresent("#broadcast-email-form")
+		e.Frame.Assert.ElementPresent("#email-template-form")
+		return e
+	}
+	err := u.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
+		for _, selector := range []string{"#broadcast-email-form", "#email-template-form"} {
+			exists, _, err := e.Frame.Page.Has(selector)
+			if err != nil {
+				return err
+			}
+			if exists {
+				return fmt.Errorf("element %q is still present", selector)
+			}
+		}
+		return nil
+	})
+	assert.Nil(e.Frame.T, err)
 	return e
 }
 
@@ -202,4 +227,54 @@ func (e *EmailPage) AssertInvitationTemplateValue(expected string) *EmailPage {
 
 func (e *EmailPage) AssertDefaultInvitationTemplate() *EmailPage {
 	return e.AssertInvitationTemplateValue(users.DefaultInvitationEmailTemplate)
+}
+
+func (e *EmailPage) SetBroadcastBody(body string) *EmailPage {
+	e.Frame.Controls.SetInputValue("#broadcast-email-body-input", body)
+	return e
+}
+
+func (e *EmailPage) SaveBroadcastTemplate() *EmailPage {
+	button, err := e.Frame.Page.Element("#email-save-broadcast-template-button")
+	assert.Nil(e.Frame.T, err)
+	button.MustClick()
+	e.Frame.Assert.SnackbarVisibleWithTextEventually("Broadcast email template saved.")
+	return e
+}
+
+func (e *EmailPage) ResetBroadcastTemplate() *EmailPage {
+	button, err := e.Frame.Page.Element("#email-reset-broadcast-template-button")
+	assert.Nil(e.Frame.T, err)
+	button.MustClick()
+	e.Frame.Browser.ConfirmDialog()
+	e.Frame.Assert.SnackbarVisibleWithTextEventually("Broadcast email template has been reset.")
+	e.Frame.Assert.PagePath(api.Paths.FrontendEmail)
+	return e
+}
+
+func (e *EmailPage) AssertBroadcastTemplateValue(expected string) *EmailPage {
+	err := u.Eventually(func() error {
+		if actual := e.Frame.Controls.GetInputValue("#broadcast-email-body-input"); actual != expected {
+			return fmt.Errorf("unexpected broadcast email body: %q", actual)
+		}
+		return nil
+	})
+	assert.Nil(e.Frame.T, err)
+	return e
+}
+
+func (e *EmailPage) SetBroadcastSubject(subject string) *EmailPage {
+	e.Frame.Controls.SetInputValue("#broadcast-email-subject-input", subject)
+	return e
+}
+
+func (e *EmailPage) SendBroadcastEmail() *EmailPage {
+	button, err := e.Frame.Page.Element("#send-broadcast-email-button")
+	assert.Nil(e.Frame.T, err)
+	e.Frame.Browser.DoAndWaitDOMContentLoaded(func() {
+		button.MustClick()
+		e.Frame.Browser.ConfirmDialog()
+	})
+	e.Frame.Assert.SnackbarVisibleWithTextEventually("Email sent to all eligible users.")
+	return e
 }

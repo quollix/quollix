@@ -39,6 +39,11 @@ func TestSaveInvitationEmailTemplate_ValidatesBeforePersisting(t *testing.T) {
 	assert.Equal(t, "invitation email template is missing required placeholder", u.ExtractError(err))
 }
 
+func TestValidateBroadcastEmailTemplate_RejectsEmptyBody(t *testing.T) {
+	err := ValidateBroadcastEmailTemplate(" \t")
+	assert.Equal(t, BroadcastEmailTemplateCannotBeEmptyError, u.ExtractError(err))
+}
+
 func TestRenderInvitationEmailTemplate_RendersAllFields(t *testing.T) {
 	configRepo := configs.NewConfigsRepositoryMock(t)
 	configRepo.EXPECT().GetConfig(configs.ConfigKeys.InvitationEmailTemplate).Return("User={{.Username}} Link={{.InvitationLink}} ValidUntil={{.ExpirationDate}} Server={{.ServerUrl}}", nil)

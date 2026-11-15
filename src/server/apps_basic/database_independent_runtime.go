@@ -20,8 +20,8 @@ type AppRuntimeSpec struct {
 	ClientId     string
 	ClientSecret string
 
-	EmailSettings         *u.EmailConfig
-	ObservabilitySettings *api.ObservabilitySettings
+	EmailSettings         u.EmailConfig
+	ObservabilitySettings api.ObservabilitySettings
 }
 
 // Why does this exist? The problem is, when doing app operations on postgres app like backup or restore, we need to stop the postgres container temporarily. During this time, we can not read any data from the database, so we must assert to have all required runtime information before conducting the operation.
@@ -72,7 +72,7 @@ func (r *DatabaseIndependentRuntimeImpl) StartApp(spec *AppRuntimeSpec) error {
 	defer u.RemoveDir(composeDir)
 
 	composeYamlPath := filepath.Join(composeDir, "docker-compose.yml")
-	completedComposeContent, err := CompleteAppComposeYaml(spec.App, spec.BaseDomain, spec.IanaTimeZone, spec.ObservabilitySettings)
+	completedComposeContent, err := CompleteAppComposeYaml(spec.App, spec.BaseDomain, spec.IanaTimeZone, spec.ObservabilitySettings, spec.EmailSettings)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (r *DatabaseIndependentRuntimeImpl) StartApp(spec *AppRuntimeSpec) error {
 	if err := r.DockerService.StartAppContainer(spec.App.Maintainer, spec.App.AppName, composeYamlPath); err != nil {
 		return err
 	}
-	if isOfficialGrafanaApp(spec.App) {
+	if IsOfficialGrafanaApp(spec.App) {
 		r.ContainerLogMonitor.StartMonitoring()
 		r.ContainerMetricsMonitor.StartMonitoring()
 		r.VolumeMetricsMonitor.StartMonitoring()
@@ -102,7 +102,7 @@ func (r *DatabaseIndependentRuntimeImpl) StopApp(spec *AppRuntimeSpec) error {
 
 	composeYamlPath := filepath.Join(composeDir, "docker-compose.yml")
 
-	completedContent, err := CompleteAppComposeYaml(app, spec.BaseDomain, spec.IanaTimeZone, spec.ObservabilitySettings)
+	completedContent, err := CompleteAppComposeYaml(app, spec.BaseDomain, spec.IanaTimeZone, spec.ObservabilitySettings, spec.EmailSettings)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (r *DatabaseIndependentRuntimeImpl) StopApp(spec *AppRuntimeSpec) error {
 		return u.Logger.NewError(err.Error())
 	}
 
-	if isOfficialGrafanaApp(app) {
+	if IsOfficialGrafanaApp(app) {
 		r.ContainerMetricsMonitor.StopMonitoring()
 		r.VolumeMetricsMonitor.StopMonitoring()
 		r.ContainerLogMonitor.StopMonitoring()
@@ -142,17 +142,19 @@ func (a *DatabaseIndependentRuntimeImpl) CollectAppSpec(appId int) (*AppRuntimeS
 	}
 	spec.IanaTimeZone = maintenanceConfig.IanaTimezone
 
-	spec.EmailSettings, err = a.EmailRepository.ReadEmailConfig()
+	emailSettings, err := a.EmailRepository.ReadEmailConfig()
 	if err != nil {
 		return nil, err
 	}
-	spec.ObservabilitySettings, err = a.ObservabilityRepository.Read()
+	spec.EmailSettings = *emailSettings
+	observabilitySettings, err := a.ObservabilityRepository.Read()
 	if err != nil {
 		return nil, err
 	}
+	spec.ObservabilitySettings = *observabilitySettings
 	return spec, nil
 }
 
-func isOfficialGrafanaApp(app *RepoApp) bool {
+func IsOfficialGrafanaApp(app *RepoApp) bool {
 	return app.Maintainer == u.OfficialMaintainer && app.AppName == tools.GrafanaAppName
 }

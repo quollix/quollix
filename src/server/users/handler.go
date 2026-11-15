@@ -11,22 +11,20 @@ import (
 )
 
 const (
-	IncorrectLoginCredentialsError            = "Incorrect username or password"
-	UserAlreadyExistsError                    = "user already exists"
-	EmailAlreadyExistsError                   = "email already exists"
-	AdminCanNotDeleteOwnAccountError          = "admin cannot delete own account"
-	AdminCanNotResetOwnPasswordError          = "admin cannot reset own password"
-	AdminCanNotDisableOwnAccountError         = "admin cannot disable own account"
-	AdminCanNotChangeOwnRoleError             = "admin cannot change own role"
-	DisabledUserCanNotBePromotedError         = "disabled user cannot be promoted to admin"
-	AdminMustBeDemotedBeforeDeactivationError = "admin must be demoted before deactivation"
+	IncorrectLoginCredentialsError    = "Incorrect username or password"
+	UserAlreadyExistsError            = "user already exists"
+	EmailAlreadyExistsError           = "email already exists"
+	AdminCanNotDeleteOwnAccountError  = "admin cannot delete own account"
+	AdminCanNotResetOwnPasswordError  = "admin cannot reset own password"
+	AdminCanNotDisableOwnAccountError = "admin cannot disable own account"
+	AdminCanNotChangeOwnRoleError     = "admin cannot change own role"
 )
 
 var (
 	ExpectedUserDeletionErrors   = u.MapOf(AdminCanNotDeleteOwnAccountError)
 	ExpectedPasswordResetErrors  = u.MapOf(AdminCanNotResetOwnPasswordError)
-	ExpectedSetUserEnabledErrors = u.MapOf(AdminCanNotDisableOwnAccountError, AdminMustBeDemotedBeforeDeactivationError)
-	ExpectedSetUserRoleErrors    = u.MapOf(AdminCanNotChangeOwnRoleError, DisabledUserCanNotBePromotedError)
+	ExpectedSetUserEnabledErrors = u.MapOf(AdminCanNotDisableOwnAccountError)
+	ExpectedSetUserRoleErrors    = u.MapOf(AdminCanNotChangeOwnRoleError)
 	expectedCookieNotFoundError  = u.MapOf("cookie not found")
 	expectedTokenExpiredErrors   = u.MapOf(TokenExpiredError, UserNotFoundError)
 	expectedLoginErrors          = u.MapOf(IncorrectLoginCredentialsError, UserDisabledError)

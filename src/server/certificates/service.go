@@ -30,6 +30,7 @@ const (
 type CertificateService interface {
 	ReplaceCertificate(certBundle *CertificateBundle) error
 	GetCurrentCertificate() (*CertificateBundle, error)
+	GetCurrentCertificateExpirationDate() (time.Time, error)
 	GenerateUniversalSelfSignedCert() (*CertificateBundle, error)
 	GetAcmeAccountPrivateKey() (*rsa.PrivateKey, error)
 	GetAcmeAccountPrivateKeyPemBytes() ([]byte, error)
@@ -58,6 +59,18 @@ func (s *CertificateServiceImpl) GetCurrentCertificate() (*CertificateBundle, er
 	}
 
 	return NewCertificateBundleFromString(certString)
+}
+
+func (s *CertificateServiceImpl) GetCurrentCertificateExpirationDate() (time.Time, error) {
+	bundle, err := s.GetCurrentCertificate()
+	if err != nil {
+		return time.Time{}, err
+	}
+	leaf, err := bundle.GetLeafCertificate()
+	if err != nil {
+		return time.Time{}, err
+	}
+	return leaf.NotAfter.UTC(), nil
 }
 
 func (c *CertificateServiceImpl) GenerateUniversalSelfSignedCert() (*CertificateBundle, error) {

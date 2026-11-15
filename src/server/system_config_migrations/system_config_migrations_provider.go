@@ -3,6 +3,7 @@ package system_config_migrations
 import (
 	"time"
 
+	"server/alerts"
 	"server/apps_basic"
 	"server/backup_server"
 	"server/certificates"
@@ -23,6 +24,8 @@ var (
 const (
 	DefaultInitialAdminName   = "administrator"
 	legacyServerHostConfigKey = "server_host"
+
+	systemConfigMigrationLogMessage = "running system config migration"
 )
 
 type SystemConfigMigrationsProviderImpl struct {
@@ -42,6 +45,8 @@ type SystemConfigMigrationsProviderImpl struct {
 	MaintenanceRepo            configs.MaintenanceRepository
 	OsWrapper                  u.OsWrapper
 	CertificateService         certificates.CertificateService
+	AlertSettingsRepository    alerts.AlertSettingsRepository
+	AlertStateRepository       alerts.StateRepository
 }
 
 func (s *SystemConfigMigrationsProviderImpl) List() []func() error {
@@ -50,5 +55,8 @@ func (s *SystemConfigMigrationsProviderImpl) List() []func() error {
 		s.runInitialBootstrapMigration,
 		s.renameServerHostConfigToBaseDomain,
 		s.createObservabilitySettings,
+		s.createBackupFolderPath,
+		s.createAlertConfiguration,
+		s.createBroadcastEmailTemplate,
 	}
 }

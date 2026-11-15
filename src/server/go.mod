@@ -1,6 +1,6 @@
 module server
 
-go 1.26.10
+go 1.27.4
 
 require (
 	github.com/containerd/errdefs v1.0.0
@@ -12,7 +12,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.2
-	github.com/quollix/common v1.3.35
+	github.com/quollix/common v1.3.47
 	github.com/quollix/deepstack v1.2.4
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/crypto v0.58.0

@@ -23,6 +23,22 @@ var ReleaseCmd = &cobra.Command{
 	},
 }
 
+var BuildCmd = &cobra.Command{
+	Use:   "build",
+	Short: "build commands",
+	Run: func(cmd *cobra.Command, args []string) {
+		u.ShowHelpCommand(cmd)
+	},
+}
+
+var BuildLocalCmd = &cobra.Command{
+	Use:   "local-image",
+	Short: "build the local Docker image",
+	Run: func(cmd *cobra.Command, args []string) {
+		BuildLocalDockerImage()
+	},
+}
+
 var TestCmd = &cobra.Command{
 	Use:   "test",
 	Short: "test commands",
@@ -55,6 +71,15 @@ var TestIntegrationCmd = &cobra.Command{
 	Short: "run integration tests",
 	Run: func(cmd *cobra.Command, args []string) {
 		TestIntegration()
+	},
+}
+
+var TestVictoriaCmd = &cobra.Command{
+	Use:              "victoria",
+	Short:            "run VictoriaMetrics and VictoriaLogs integration tests",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
+	Run: func(cmd *cobra.Command, args []string) {
+		TestVictoria(getBoolFlag(cmd, VictoriaKeepStackFlagName))
 	},
 }
 
@@ -136,6 +161,7 @@ var TestReleaseCmd = &cobra.Command{
 }
 
 func ConfigureTestCmd() {
+	TestVictoriaCmd.Flags().BoolP(VictoriaKeepStackFlagName, VictoriaKeepStackFlagShort, false, "keep the Victoria test stack running after the tests")
 	TestFrontendCmd.Flags().BoolP(FrontendKeepSetupFlagName, FrontendKeepSetupFlagShort, false, "reuse frontend setup and skip cleanup")
 	TestFrontendCmd.Flags().StringP(FrontendTestFilterFlagName, FrontendTestFilterFlagShort, "", "run only frontend tests matching regex")
 	TestFrontendCmd.Flags().BoolP(FrontendWithGuiFlagName, "g", false, "run frontend tests with visible browser window")
@@ -150,6 +176,7 @@ func ConfigureTestCmd() {
 		TestInitialAdminPasswordCmd,
 		TestSpecialPasswordsCmd,
 		TestIntegrationCmd,
+		TestVictoriaCmd,
 		TestUnitCmd,
 		TestFrontendCmd,
 		TestOidcCmd,

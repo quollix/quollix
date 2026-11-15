@@ -16,6 +16,7 @@ var (
 const ApplicationVersion = "1.3.15"
 
 const (
+	SampleRealUserEmail      = "user@example.com"
 	SampleTestRecipientEmail = "recipient@example.invalid"
 	SampleTestEmailSubject   = "Test email"
 	SampleTestEmailBody      = "This is a test message send by Quollix."

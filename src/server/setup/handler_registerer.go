@@ -4,6 +4,7 @@ import (
 	"mime"
 	"net/http"
 
+	"server/alerts"
 	"server/app_store"
 	"server/apps_advanced"
 	"server/apps_basic"
@@ -31,6 +32,7 @@ import (
 )
 
 type HandlerRegisterer struct {
+	AlertSettingsHandler         *alerts.AlertSettingsHandler
 	LoggingHandler               *logging.Handler
 	MetricsHandler               *metrics.Handler
 	ObservabilitySettingsHandler *observability.SettingsHandler
@@ -125,6 +127,7 @@ func (h *HandlerRegisterer) authenticatedRoutes() []users.Route {
 func (h *HandlerRegisterer) adminRoutes() []users.Route {
 	routes := make([]users.Route, 0)
 	routes = append(routes, h.adminAppRoutes()...)
+	routes = append(routes, h.adminAlertSettingsRoutes()...)
 	routes = append(routes, h.adminObservabilityRoutes()...)
 	routes = append(routes, h.adminAdvancedAppRoutes()...)
 	routes = append(routes, h.adminStoreRoutes()...)
@@ -135,6 +138,13 @@ func (h *HandlerRegisterer) adminRoutes() []users.Route {
 	routes = append(routes, h.adminOidcProviderRoutes()...)
 	routes = append(routes, h.adminOidcClientRoutes()...)
 	return routes
+}
+
+func (h *HandlerRegisterer) adminAlertSettingsRoutes() []users.Route {
+	return []users.Route{
+		{Path: api.Paths.BackendSettingsAlertsRead, HandlerFunc: h.AlertSettingsHandler.Read, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendSettingsAlertsSave, HandlerFunc: h.AlertSettingsHandler.Save, AccessLevel: tools.AdminLevel},
+	}
 }
 
 func (h *HandlerRegisterer) adminObservabilityRoutes() []users.Route {
@@ -281,6 +291,10 @@ func (h *HandlerRegisterer) adminEmailRoutes() []users.Route {
 		{Path: api.Paths.BackendEmailReadInvitationTemplate, HandlerFunc: h.EmailHandler.ReadInvitationTemplate, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendEmailSaveInvitationTemplate, HandlerFunc: h.EmailHandler.SaveInvitationTemplate, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendEmailResetInvitationTemplate, HandlerFunc: h.EmailHandler.ResetInvitationTemplate, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendEmailReadBroadcastTemplate, HandlerFunc: h.EmailHandler.ReadBroadcastTemplate, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendEmailSaveBroadcastTemplate, HandlerFunc: h.EmailHandler.SaveBroadcastTemplate, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendEmailResetBroadcastTemplate, HandlerFunc: h.EmailHandler.ResetBroadcastTemplate, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.BackendEmailSendBroadcast, HandlerFunc: h.EmailHandler.SendBroadcastEmail, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendUsersInviteUserViaEmail, HandlerFunc: h.EmailHandler.InviteUserViaEmailHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendUsersResetPasswordViaEmail, HandlerFunc: h.EmailHandler.SendPasswordResetEmailHandler, AccessLevel: tools.AdminLevel},
 	}
@@ -327,6 +341,7 @@ func (h *HandlerRegisterer) frontendRoutes() []users.Route {
 		{Path: api.Paths.FrontendProviders, HandlerFunc: h.TemplateHandler.ProvidersHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendClients, HandlerFunc: h.TemplateHandler.OidcClientsHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendMaintenance, HandlerFunc: h.TemplateHandler.MaintenancePageHandler, AccessLevel: tools.AdminLevel},
+		{Path: api.Paths.FrontendAlerts, HandlerFunc: h.TemplateHandler.AlertsPageHandler, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.FrontendUserEdit, HandlerFunc: h.TemplateHandler.UserEditPageHandler, AccessLevel: tools.AdminLevel},
 	}
 }

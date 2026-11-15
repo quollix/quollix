@@ -79,7 +79,7 @@
       {{end}}
 
       <td class="app-access">
-        {{if $app.IsOfficialDatabaseApp}}
+        {{if not $app.IsOpenable}}
         —
         {{else}}
         <button type="button" class="open-btn lean" onclick="openFromRow(

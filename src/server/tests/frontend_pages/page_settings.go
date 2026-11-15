@@ -108,6 +108,11 @@ func (s *SettingsPage) GetBackupServerKnownHosts() string {
 	return s.Frame.Controls.GetInputValue("#backup-server-known-hosts")
 }
 
+func (s *SettingsPage) EnterBackupServerFolderPath(path string) *SettingsPage {
+	s.Frame.Controls.SetInputValue("#backup-server-folder-path", path)
+	return s
+}
+
 func (s *SettingsPage) EnterBackupServerHostAndPortAndGetKnownHostsAndAssertValid(host, port string) *SettingsPage {
 	// Getting known hosts starts the SSH helper container, which can trigger NETWORK_CHANGED in the browser.
 	// A simple reload usually recovers from that, but this form loses unsaved SSH data on reload, so retry the whole input flow.
@@ -277,6 +282,7 @@ func (s *SettingsPage) PurgeBackupServerAndAssertSuccessSnackbar() *SettingsPage
 func (s *SettingsPage) ReadBackupServerFormValues() *api.BackupServerConfigs {
 	return &api.BackupServerConfigs{
 		IsEnabled:          s.Frame.Controls.GetCheckboxValue("#backup-server-enabled-checkbox"),
+		BackupFolderPath:   s.Frame.Controls.GetInputValue("#backup-server-folder-path"),
 		Host:               s.Frame.Controls.GetInputValue(`input[name="backupServerHost"]`),
 		SshPort:            s.Frame.Controls.GetInputValue(`input[name="backupServerSshPort"]`),
 		SshUser:            s.Frame.Controls.GetInputValue("#backup-server-ssh-user"),

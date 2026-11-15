@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"server/alerts"
+
 	api "github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
@@ -30,6 +32,7 @@ type EmailPageContent struct {
 	EmailConfig                *u.EmailConfig
 	ExposeRealEmailInOidcToken bool
 	InvitationEmailTemplate    string
+	BroadcastEmailTemplate     string
 }
 
 type TerminalAppsPageContent struct {
@@ -175,6 +178,7 @@ type InstalledAppPageDto struct {
 	VersionCreationTimestampTooltip   string
 	IsRunning                         bool
 	IsOfficialDatabaseApp             bool
+	IsOpenable                        bool
 	IsOfficial                        bool
 	IsPublic                          bool
 }
@@ -216,6 +220,31 @@ type UserEditPage struct {
 
 type MaintenancePage struct {
 	Apps []api.AdminAppDto
+}
+
+type AlertsPage struct {
+	Settings *api.AlertSettings
+	Alerts   []AlertRow
+}
+
+type AlertRow struct {
+	Id      string
+	Name    string
+	Enabled bool
+	Status  string
+}
+
+func alertRow(id, name string, enabled bool, state alerts.AlertRuntimeState) AlertRow {
+	status := string(state.Status)
+	if !enabled {
+		status = "unknown"
+	}
+	return AlertRow{
+		Id:      id,
+		Name:    name,
+		Enabled: enabled,
+		Status:  status,
+	}
 }
 
 type AccountPageData struct {

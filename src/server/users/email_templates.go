@@ -16,10 +16,16 @@ To get started, please set your password using the link below:
 
 This invitation link is valid until {{.ExpirationDate}}.
 
-If you were not expecting this invitation, you can safely ignore this email.
-
-Best regards
+Best regards,
+Your Quollix administrators
 ` // #nosec G101 (CWE-798): Potential hardcoded credentials
+
+	DefaultBroadcastEmailTemplate = `Hello,
+
+<write-your-text-here>
+
+Best regards,
+Your Quollix administrators`
 
 	DefaultPasswordResetEmailBody = `Hello,
 

@@ -88,10 +88,45 @@ func TestAppListingInBackupRepo(t *testing.T) {
 	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 
-	configureBackupRepo(t, client)
+	configureBackupRepoWithSettings(t, client, backup_server.GetSampleRemoteRepo())
 	assertAppsNumbersInBackupRepo(t, client, 0)
 
 	assert.Nil(t, CreateSampleBackup(t, client))
+	assertAppsNumbersInBackupRepo(t, client, 1)
+}
+
+func TestBackupsAreIsolatedByRemoteFolder(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	_, err := InstallAndStartSample(t, client, "2.0")
+	assert.Nil(t, err)
+
+	repo := backup_server.GetSampleRemoteRepo()
+	repo.BackupFolderPath = "/config/backups1"
+	configureBackupRepoWithSettings(t, client, repo)
+	assert.Nil(t, CreateSampleBackup(t, client))
+	assertAppsNumbersInBackupRepo(t, client, 1)
+
+	repo.BackupFolderPath = "./backups2"
+	configureBackupRepoWithSettings(t, client, repo)
+	assertAppsNumbersInBackupRepo(t, client, 0)
+	assert.Nil(t, CreateSampleBackup(t, client))
+	assertAppsNumbersInBackupRepo(t, client, 1)
+
+	assert.Nil(t, client.Backups.PurgeServer(&api.PurgeBackupServerRequest{
+		Host:             repo.Host,
+		SshPort:          repo.SshPort,
+		SshUser:          repo.SshUser,
+		SshPassword:      repo.SshPassword,
+		SshKnownHosts:    repo.SshKnownHosts,
+		BackupFolderPath: repo.BackupFolderPath,
+	}))
+	configureBackupRepoWithSettings(t, client, repo)
+	assertAppsNumbersInBackupRepo(t, client, 0)
+
+	repo.BackupFolderPath = "/config/backups1"
+	configureBackupRepoWithSettings(t, client, repo)
 	assertAppsNumbersInBackupRepo(t, client, 1)
 }
 
@@ -205,6 +240,11 @@ func TestRestoreAppSecretsOverwriteInstalledAppSecrets(t *testing.T) {
 
 func configureBackupRepo(t *testing.T, client *api_client.QuollixClient) {
 	repo := backup_server.GetSampleRemoteRepo()
+	repo.BackupFolderPath = "/config/backups1"
+	configureBackupRepoWithSettings(t, client, repo)
+}
+
+func configureBackupRepoWithSettings(t *testing.T, client *api_client.QuollixClient, repo *api.BackupServerConfigs) {
 
 	knownHosts, err := client.Settings.GetKnownHosts(repo)
 	assert.Nil(t, err)
@@ -314,6 +354,7 @@ func TestWrongEncryptionPassword_PurgeBackupServerAndRecreateWithNewPassword(t *
 	defer client.Test.ResetTestState()
 
 	repo := backup_server.GetSampleRemoteRepo()
+	repo.BackupFolderPath = "/config/backups1"
 	knownHosts, err := client.Settings.GetKnownHosts(repo)
 	assert.Nil(t, err)
 	repo.SshKnownHosts = knownHosts
@@ -325,7 +366,14 @@ func TestWrongEncryptionPassword_PurgeBackupServerAndRecreateWithNewPassword(t *
 	err = client.Settings.SaveSshConfigs(repo)
 	u.AssertDeepStackErrorFromRequest(t, err, backup_server.WrongEncryptionPasswordErr)
 
-	assert.Nil(t, client.Backups.PurgeServer(repo))
+	assert.Nil(t, client.Backups.PurgeServer(&api.PurgeBackupServerRequest{
+		Host:             repo.Host,
+		SshPort:          repo.SshPort,
+		SshUser:          repo.SshUser,
+		SshPassword:      repo.SshPassword,
+		SshKnownHosts:    repo.SshKnownHosts,
+		BackupFolderPath: repo.BackupFolderPath,
+	}))
 	assert.Nil(t, client.Settings.SaveSshConfigs(repo))
 }
 

@@ -39,6 +39,7 @@ func NewGlobalConfigFromEnv() *GlobalConfig {
 func newDevGlobalConfig() *GlobalConfig {
 	return &GlobalConfig{
 		CollectMetricsAutomatically:           false,
+		ForceFlushMetricsAfterPush:            true,
 		PrintCommandOutput:                    true,
 		ShouldRunMaintenanceAgent:             false,
 		DeployOfficialDatabaseWithPortExposed: true,
@@ -61,6 +62,7 @@ func newDevGlobalConfig() *GlobalConfig {
 func newProdGlobalConfig() *GlobalConfig {
 	return &GlobalConfig{
 		CollectMetricsAutomatically:           true,
+		ForceFlushMetricsAfterPush:            false,
 		PrintCommandOutput:                    false,
 		ShouldRunMaintenanceAgent:             true,
 		DeployOfficialDatabaseWithPortExposed: false,

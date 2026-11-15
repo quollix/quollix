@@ -36,13 +36,13 @@
           data-prev-role="{{if $user.IsAdmin}}admin{{else}}user{{end}}"
           onchange="setUserRole('{{$user.Id}}','{{$user.Username}}', this)" {{if eq $user.Id $.Globals.Auth.UserId}}disabled{{end}}>
           <option value="user" {{if not $user.IsAdmin}}selected{{end}}>User</option>
-          <option value="admin" {{if $user.IsAdmin}}selected{{end}} {{if not $user.IsEnabled}}disabled{{end}}>Admin</option>
+          <option value="admin" {{if $user.IsAdmin}}selected{{end}}>Admin</option>
         </select>
       </td>
       <td class="user-enabled-cell">
         <input type="checkbox" class="user-enabled-checkbox"
           onchange="setUserEnabled('{{$user.Id}}','{{$user.Username}}', this)" {{if $user.IsEnabled}}checked{{end}} {{if
-          $user.IsAdmin}}disabled{{end}}>
+          eq $user.Id $.Globals.Auth.UserId}}disabled{{end}}>
       </td>
       <td class="user-created-cell">{{$user.CreatedAt}}</td>
       <td class="user-invitation-expiration-cell">{{if

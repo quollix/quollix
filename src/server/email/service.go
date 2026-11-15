@@ -17,6 +17,7 @@ const (
 type EmailService interface {
 	SaveEmailConfig(*u.EmailConfig) error
 	SendEmail(to, subject, body string) error
+	SendEmailWithConfig(emailConfig *u.EmailConfig, to, subject, body string) error
 }
 
 type EmailServiceImpl struct {
@@ -29,6 +30,10 @@ func (e *EmailServiceImpl) SendEmail(to, subject, body string) error {
 	if err != nil {
 		return err
 	}
+	return e.SendEmailWithConfig(emailConfig, to, subject, body)
+}
+
+func (e *EmailServiceImpl) SendEmailWithConfig(emailConfig *u.EmailConfig, to, subject, body string) error {
 	if !emailConfig.IsEnabled {
 		return u.Logger.NewError(u.EmailServiceNotEnabledErrorMessage)
 	}

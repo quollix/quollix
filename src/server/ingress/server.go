@@ -85,7 +85,8 @@ func (s *ServerListener) runServer(listen func() error) {
 type errorLoggerWhichDropsBadCertMessages struct{}
 
 func (w errorLoggerWhichDropsBadCertMessages) Write(p []byte) (int, error) {
-	if isNetworkChangedError(p) {
+	if isIgnorableTLSHandshakeError(p) {
+		u.Logger.Info(string(p))
 		return len(p), nil
 	}
 
@@ -105,10 +106,14 @@ func (w errorLoggerWhichDropsBadCertMessages) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func isNetworkChangedError(payload []byte) bool {
-	// "visit https://quollix.org and search for 'NETWORK_CHANGED' for more information"
+func isIgnorableTLSHandshakeError(payload []byte) bool {
 	payloadString := string(payload)
-	return strings.Contains(payloadString, "TLS handshake error") && strings.Contains(payloadString, "unknown certificate")
+	if !strings.Contains(payloadString, "TLS handshake error") {
+		return false
+	}
+
+	// Clients may close an in-progress handshake while a newly uploaded certificate takes effect. This is expected and should not be treated as an error.
+	return strings.Contains(payloadString, "unknown certificate") || strings.Contains(payloadString, ": EOF")
 }
 
 func (s *ServerListener) dynamicCertProvider() func(*tls.ClientHelloInfo) (*tls.Certificate, error) {

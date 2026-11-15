@@ -8,6 +8,7 @@ import (
 
 	"github.com/quollix/common/assert"
 	"github.com/quollix/common/browsertest"
+	"github.com/quollix/common/quollix/api"
 	u "github.com/quollix/common/utils"
 )
 
@@ -28,6 +29,7 @@ func (s *FrameSession) SignOut() *FrameType {
 		s.Frame.Page.MustElement("#sign-out-tab a").MustClick()
 	})
 	s.Frame.Client.Parent.Cookie = nil
+	s.Frame.Assert.PathEventually(api.Paths.FrontendInstalledApps)
 	s.ClearBrowserCookies()
 	return s.Frame
 }

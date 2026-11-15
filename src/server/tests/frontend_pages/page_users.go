@@ -18,9 +18,8 @@ type UserListEntry struct {
 	Name                                string
 	Email                               string
 	Role                                string
-	CanChangeRole                       bool
-	CanPromoteToAdmin                   bool
 	IsEnabled                           bool
+	CanChangeRole                       bool
 	CanEnableOrDisableUser              bool
 	CanDeleteUser                       bool
 	Created                             string
@@ -120,7 +119,6 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 			return nil, err
 		}
 		roleDisabled := true
-		adminOptionDisabled := true
 		var role string
 		if roleSelectPresent {
 			roleSelect, err := roleCell.Element("select.user-role-select")
@@ -137,15 +135,6 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 				return nil, err
 			}
 			roleDisabled = roleDisabledValue.Bool()
-			adminOption, err := roleSelect.Element(`option[value="admin"]`)
-			if err != nil {
-				return nil, err
-			}
-			adminOptionDisabledValue, err := adminOption.Property("disabled")
-			if err != nil {
-				return nil, err
-			}
-			adminOptionDisabled = adminOptionDisabledValue.Bool()
 		} else {
 			roleText, err := roleCell.Text()
 			if err != nil {
@@ -232,7 +221,6 @@ func tryListUsers(page *browsertest.Page) ([]UserListEntry, error) {
 			Email:                               strings.TrimSpace(email),
 			Role:                                strings.TrimSpace(role),
 			CanChangeRole:                       roleSelectPresent && !roleDisabled,
-			CanPromoteToAdmin:                   roleSelectPresent && !adminOptionDisabled,
 			IsEnabled:                           isEnabled.Bool(),
 			CanEnableOrDisableUser:              !enabledControlDisabled.Bool(),
 			CanDeleteUser:                       !deleteButtonDisabled.Bool(),
@@ -253,7 +241,6 @@ func (u *UsersPage) SetUserRole(username, role string) *UsersPage {
 	selectElement.MustSelect(role)
 	u.Frame.Browser.ConfirmDialog()
 	expectedRole := strings.ToLower(role)
-	expectedCanEnableOrDisableUser := expectedRole == "user"
 	err := utils.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
 		users, err := tryListUsers(u.Frame.Page)
 		if err != nil {
@@ -263,7 +250,7 @@ func (u *UsersPage) SetUserRole(username, role string) *UsersPage {
 			if user.Name != username {
 				continue
 			}
-			if user.Role == expectedRole && user.CanEnableOrDisableUser == expectedCanEnableOrDisableUser {
+			if user.Role == expectedRole && user.CanEnableOrDisableUser {
 				return nil
 			}
 			return utils.Logger.NewError("user role and controls have not updated yet")
@@ -329,7 +316,6 @@ func (u *UsersPage) SetUserEnabled(username string, isEnabled bool) *UsersPage {
 		}
 		u.Frame.Assert.SnackbarVisibleWithTextEventually("User " + status + " successfully.")
 		assert.Equal(u.Frame.T, isEnabled, u.Frame.Controls.GetCheckboxValue(rowCheckboxSelector(username)))
-		assert.Equal(u.Frame.T, isEnabled, u.GetRequiredUser(username).CanPromoteToAdmin)
 		return u
 	}
 

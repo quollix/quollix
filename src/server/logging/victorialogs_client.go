@@ -20,6 +20,7 @@ import (
 type VictoriaLogsClient interface {
 	Push(records []api.LogRecord) error
 	Pull() ([]api.LogRecord, error)
+	Query(string) ([]map[string]json.RawMessage, error)
 	Wipe() error
 }
 
@@ -85,6 +86,31 @@ func (s *VictoriaLogsClientImpl) Pull() ([]api.LogRecord, error) {
 	}
 
 	return out, nil
+}
+
+func (s *VictoriaLogsClientImpl) Query(query string) ([]map[string]json.RawMessage, error) {
+	form := url.Values{"query": {query}}
+	resp, err := s.authenticatedRequest(http.MethodPost, "/select/logsql/query", "application/x-www-form-urlencoded", strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	defer u.Close(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, tools.GetStatusCodeError(http.StatusOK, resp.StatusCode)
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	var rows []map[string]json.RawMessage
+	for {
+		var row map[string]json.RawMessage
+		if err := decoder.Decode(&row); err != nil {
+			if errors.Is(err, io.EOF) {
+				return rows, nil
+			}
+			return nil, u.Logger.NewError(err.Error())
+		}
+		rows = append(rows, row)
+	}
 }
 
 func decodeLogRecord(row map[string]json.RawMessage) (api.LogRecord, error) {

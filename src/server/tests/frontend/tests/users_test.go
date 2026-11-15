@@ -75,7 +75,7 @@ func TestUsersPageRestrictsAdminActionsOnOwnAccount(t *testing.T) {
 	assert.False(t, admin.ResetButtonPresent)
 }
 
-func TestUsersPageCanPromoteAndDemoteOtherUsersBeforeDeactivation(t *testing.T) {
+func TestUsersPageCanChangeOtherUserRoleAndEnabledState(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 
@@ -92,18 +92,21 @@ func TestUsersPageCanPromoteAndDemoteOtherUsersBeforeDeactivation(t *testing.T) 
 	page.SetUserRole(username, "Admin")
 	user = page.GetRequiredUser(username)
 	assert.Equal(t, "admin", user.Role)
-	assert.False(t, user.CanEnableOrDisableUser)
+	assert.True(t, user.CanEnableOrDisableUser)
 	assert.True(t, user.CanDeleteUser)
 	assert.True(t, user.ResetButtonPresent)
 
+	page.SetUserEnabled(username, false)
+	user = page.GetRequiredUser(username)
+	assert.Equal(t, "admin", user.Role)
+	assert.False(t, user.IsEnabled)
+	assert.True(t, user.CanEnableOrDisableUser)
+
+	page.SetUserEnabled(username, true)
 	page.SetUserRole(username, "User")
 	user = page.GetRequiredUser(username)
 	assert.Equal(t, "user", user.Role)
-	assert.True(t, user.CanEnableOrDisableUser)
-	page.SetUserEnabled(username, false)
-	user = page.GetRequiredUser(username)
-	assert.False(t, user.IsEnabled)
-	assert.False(t, user.CanPromoteToAdmin)
+	assert.True(t, user.IsEnabled)
 }
 
 func TestUsersPageDirectInviteAllowsEmptyEmail(t *testing.T) {
@@ -127,14 +130,12 @@ func TestUsersPageCanDisableAndEnableUser(t *testing.T) {
 	page.SetUserEnabled(username, false)
 	user := page.GetRequiredUser(username)
 	assert.False(t, user.IsEnabled)
-	assert.False(t, user.CanPromoteToAdmin)
 
 	waitForBackendUserEnabledState(t, frame.Client, username, false)
 
 	page.SetUserEnabled(username, true)
 	user = page.GetRequiredUser(username)
 	assert.True(t, user.IsEnabled)
-	assert.True(t, user.CanPromoteToAdmin)
 
 	waitForBackendUserEnabledState(t, frame.Client, username, true)
 }

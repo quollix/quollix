@@ -108,34 +108,6 @@ func TestAdminCannotChangeOwnRole(t *testing.T) {
 	u.AssertDeepStackErrorFromRequest(t, err, users.AdminCanNotChangeOwnRoleError)
 }
 
-func TestDisabledUserCannotBePromotedToAdmin(t *testing.T) {
-	client := GetClientAndLogin(t)
-	defer client.Test.ResetTestState()
-	assert.Nil(t, client.Users.Invite(SampleUsername, SampleUserEmail))
-	user := GetRequiredUserByUsername(t, client, SampleUsername)
-	assert.Nil(t, client.Users.SetEnabled(user.Id, false))
-	err := client.Users.SetRole(user.Id, true)
-	u.AssertDeepStackErrorFromRequest(t, err, users.DisabledUserCanNotBePromotedError)
-	user = GetRequiredUserByUsername(t, client, SampleUsername)
-	assert.False(t, user.IsAdmin)
-	assert.False(t, user.IsEnabled)
-}
-
-func TestAdminMustBeDemotedBeforeDeactivation(t *testing.T) {
-	client := GetClientAndLogin(t)
-	defer client.Test.ResetTestState()
-	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleUserEmail)
-	user := GetRequiredUserByUsername(t, client, SampleUsername)
-	assert.Nil(t, client.Users.SetRole(user.Id, true))
-	err := client.Users.SetEnabled(user.Id, false)
-	u.AssertDeepStackErrorFromRequest(t, err, users.AdminMustBeDemotedBeforeDeactivationError)
-	assert.Nil(t, client.Users.SetRole(user.Id, false))
-	assert.Nil(t, client.Users.SetEnabled(user.Id, false))
-	user = GetRequiredUserByUsername(t, client, SampleUsername)
-	assert.False(t, user.IsAdmin)
-	assert.False(t, user.IsEnabled)
-}
-
 func getNormalUser(userList []api.User) (*api.User, error) {
 	for _, user := range userList {
 		if !user.IsAdmin {
@@ -259,8 +231,8 @@ func TestInvitingExistingUserEmailFails(t *testing.T) {
 	adminClient := GetClientAndLogin(t)
 	defer adminClient.Test.ResetTestState()
 
-	assert.Nil(t, adminClient.Users.Invite(SampleUsername, SampleRealUserEmail))
-	err := adminClient.Users.Invite("user2", SampleRealUserEmail)
+	assert.Nil(t, adminClient.Users.Invite(SampleUsername, tools.SampleRealUserEmail))
+	err := adminClient.Users.Invite("user2", tools.SampleRealUserEmail)
 	u.AssertDeepStackErrorFromRequest(t, err, users.EmailAlreadyExistsError)
 }
 
@@ -295,8 +267,8 @@ func TestChangeEmail(t *testing.T) {
 	assert.Equal(t, 1, len(userList))
 	assert.Equal(t, "newadmin@example.com", userList[0].Email)
 
-	assert.Nil(t, client.Users.Invite(SampleUsername, SampleRealUserEmail))
-	err := client.Users.ChangeEmail(adminUser.Id, SampleRealUserEmail)
+	assert.Nil(t, client.Users.Invite(SampleUsername, tools.SampleRealUserEmail))
+	err := client.Users.ChangeEmail(adminUser.Id, tools.SampleRealUserEmail)
 	u.AssertDeepStackErrorFromRequest(t, err, users.EmailAlreadyExistsError)
 }
 

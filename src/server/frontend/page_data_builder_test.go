@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"server/alerts"
 	"server/app_store"
 	"server/apps_basic"
 	"server/backup_server"
@@ -184,11 +185,27 @@ func TestBuildInstalledAppsPage_ForNonAdmin_ReturnsLeanFieldsAndSortsByMaintaine
 	assert.Nil(t, err)
 
 	assert.Equal(t, []InstalledAppPageDto{
-		{Maintainer: "a-maintainer", AppName: "a-app", IsRunning: true},
-		{Maintainer: "a-maintainer", AppName: "z-app", IsRunning: true},
-		{Maintainer: "b-maintainer", AppName: "a-app", IsRunning: true, IsPublic: true},
+		{Maintainer: "a-maintainer", AppName: "a-app", IsRunning: true, IsOpenable: true},
+		{Maintainer: "a-maintainer", AppName: "z-app", IsRunning: true, IsOpenable: true},
+		{Maintainer: "b-maintainer", AppName: "a-app", IsRunning: true, IsOpenable: true, IsPublic: true},
 	}, pageContent.Apps)
 	assert.False(t, pageContent.IsBackupEnabled)
+}
+
+func TestIsInstalledAppOpenable(t *testing.T) {
+	for _, testCase := range []struct {
+		name    string
+		appName string
+		want    bool
+	}{
+		{name: "regular app", appName: "webapp", want: true},
+		{name: "Postgres app", appName: u.OfficialDatabaseAppName, want: false},
+		{name: "Docker registry app", appName: tools.DockerRegistryAppName, want: false},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, isInstalledAppOpenable(testCase.appName))
+		})
+	}
 }
 
 func TestBuildInstalledAppsPage_ForNonAdmin_MapsIsPublic(t *testing.T) {
@@ -706,6 +723,42 @@ func TestBuildMaintenancePage_SortsByMaintainerThenAppName(t *testing.T) {
 
 	assert.Equal(t, "b-maintainer", pageContent.Apps[2].Maintainer)
 	assert.Equal(t, "a-app", pageContent.Apps[2].AppName)
+}
+
+func TestBuildAlertsPage_ReturnsSettingsAndAlertRows(t *testing.T) {
+	testObjects := getTestObjects(t)
+	settingsRepo := alerts.NewAlertSettingsRepositoryMock(t)
+	stateRepo := alerts.NewStateRepositoryMock(t)
+	testObjects.Builder.AlertSettingsRepository = settingsRepo
+	testObjects.Builder.AlertStateRepository = stateRepo
+
+	settings := &api.AlertSettings{
+		CPUUsageEnabled:          true,
+		MemoryUsageEnabled:       false,
+		DiskUsageEnabled:         true,
+		CertificateExpiryEnabled: false,
+		QuollixErrorsEnabled:     true,
+	}
+	state := &alerts.RuntimeState{
+		CPUUsage:          alerts.AlertRuntimeState{Status: alerts.AlertStatusPending},
+		MemoryUsage:       alerts.AlertRuntimeState{Status: alerts.AlertStatusFiring},
+		DiskUsage:         alerts.AlertRuntimeState{Status: alerts.AlertStatusHealthy},
+		CertificateExpiry: alerts.AlertRuntimeState{Status: alerts.AlertStatusFiring},
+		QuollixErrors:     alerts.AlertRuntimeState{Status: alerts.AlertStatusPending},
+	}
+	settingsRepo.EXPECT().Read().Return(settings, nil)
+	stateRepo.EXPECT().Read().Return(state, nil)
+
+	pageContent, err := testObjects.Builder.BuildAlertsPage()
+	assert.Nil(t, err)
+	assert.Equal(t, settings, pageContent.Settings)
+	assert.Equal(t, []AlertRow{
+		{Id: "cpu", Name: "Host CPU usage", Enabled: true, Status: "pending"},
+		{Id: "memory", Name: "Host memory usage", Enabled: false, Status: "unknown"},
+		{Id: "disk", Name: "Host disk usage", Enabled: true, Status: "healthy"},
+		{Id: "certificate", Name: "Certificate expiration", Enabled: false, Status: "unknown"},
+		{Id: "quollix-errors", Name: "Quollix errors", Enabled: true, Status: "pending"},
+	}, pageContent.Alerts)
 }
 
 func TestBuildUserEditPageData(t *testing.T) {

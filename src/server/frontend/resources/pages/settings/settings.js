@@ -150,6 +150,7 @@ window.save = async function(
     password,
     knownHosts,
     encryptionPassword,
+    backupFolderPath,
     isEnabled
 ) {
     const backupServer = {
@@ -160,6 +161,7 @@ window.save = async function(
         password: password,
         known_hosts: knownHosts,
         encryption_password: encryptionPassword,
+        backup_folder_path: backupFolderPath,
     }
 
     const ok = await window.doNetworkChangedRequest('{{ $.Static.Paths.BackendSettingsSshSave }}', backupServer)
@@ -293,6 +295,7 @@ window.purgeBackupServer = async function(
     user,
     password,
     knownHosts,
+    backupFolderPath,
 ) {
     const confirmed = await confirmDialog(
         `Purge backup repository? All backups in the repository will be permanently deleted.`
@@ -305,6 +308,7 @@ window.purgeBackupServer = async function(
         user: user,
         password: password,
         known_hosts: knownHosts,
+        backup_folder_path: backupFolderPath,
     }
 
     const ok = await window.apiPost('{{ $.Static.Paths.BackendBackupsPurgeBackupServer }}', backupServer)

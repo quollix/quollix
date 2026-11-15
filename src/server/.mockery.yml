@@ -1,4 +1,26 @@
 packages:
+  server/alerts:
+    interfaces:
+      AlertChecks:
+        config:
+          filename: alert_checks_mock.go
+          structname: AlertChecksMock
+      AlertSettingsRepository:
+        config:
+          filename: alert_settings_repository_mock.go
+          structname: AlertSettingsRepositoryMock
+      StateRepository:
+        config:
+          filename: state_repository_mock.go
+          structname: StateRepositoryMock
+      VictoriaAlertQueries:
+        config:
+          filename: victoria_alert_queries_mock.go
+          structname: VictoriaAlertQueriesMock
+      Notifier:
+        config:
+          filename: notifier_mock.go
+          structname: NotifierMock
   server/metrics:
     interfaces:
       DockerVolumeClient:
@@ -343,8 +365,22 @@ packages:
         config:
           filename: maintenance_service_mock.go
           structname: MaintenanceServiceMock
+  server/email:
+    interfaces:
+      MultiUserEmailSender:
+        config:
+          filename: multi_user_email_sender_mock.go
+          structname: MultiUserEmailSenderMock
+      EmailService:
+        config:
+          filename: email_service_mock.go
+          structname: EmailServiceMock
   server/certificates:
     interfaces:
+      CertificateService:
+        config:
+          filename: certificate_service_mock.go
+          structname: CertificateServiceMock
       CertificateCache:
         config:
           filename: certificate_cache_mock.go

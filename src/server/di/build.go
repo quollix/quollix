@@ -1,6 +1,7 @@
 package di
 
 import (
+	"server/alerts"
 	"server/app_migrations"
 	"server/app_store"
 	"server/apps_advanced"
@@ -41,6 +42,7 @@ type Dependencies struct {
 	VolumeMetricsMonitor        apps_basic.VolumeMetricsMonitor
 	ContainerLogMonitor         apps_basic.ContainerLogMonitor
 	MaintenanceAgent            maintenance.MaintenanceAgent
+	AlertAgent                  alerts.AlertAgent
 	ResticDockerImageService    backup_server.ResticDockerImageService
 	SystemConfigMigrator        system_config_migrations.SystemConfigMigrator
 	DatabaseSnapshotRepository  u.DatabaseSnapshotRepository
@@ -84,6 +86,7 @@ type Repositories struct {
 
 var SharedSet = wire.NewSet(
 	NewContainerMetricsMonitor,
+	alerts.NewVictoriaAlertQueries,
 	NewVolumeMetricsMonitor,
 	metrics.NewVolumeMetricsCollectionService,
 	wire.Bind(new(metrics.VolumeMetricsCollectionService), new(*metrics.VolumeMetricsCollectionServiceImpl)),
@@ -101,7 +104,7 @@ var SharedSet = wire.NewSet(
 	wire.Bind(new(metrics.DockerContainerStatsAPI), new(*client.Client)),
 	NewLogSink,
 	NewVictoriaLogsClient,
-	NewVictoriaMetricsClient,
+	ProvideVictoriaMetricsClient,
 	wire.Struct(new(logging.Handler), "*"),
 	wire.Struct(new(metrics.Handler), "*"),
 	logging.NewContainerLogMonitor,
@@ -230,6 +233,13 @@ var SharedSet = wire.NewSet(
 	wire.Bind(new(configs.ObservabilityRepository), new(*configs.ObservabilityRepositoryImpl)),
 	wire.Bind(new(observability.SettingsService), new(*observability.SettingsServiceImpl)),
 	wire.Struct(new(maintenance.MaintenanceAgentImpl), "*"),
+	wire.Struct(new(alerts.AlertSettingsRepositoryImpl), "*"),
+	wire.Struct(new(alerts.AlertSettingsServiceImpl), "*"),
+	wire.Struct(new(alerts.AlertSettingsHandler), "*"),
+	wire.Struct(new(alerts.StateRepositoryImpl), "*"),
+	wire.Struct(new(alerts.NotifierImpl), "*"),
+	wire.Struct(new(alerts.AlertChecksImpl), "*"),
+	wire.Struct(new(alerts.AlertAgentImpl), "*"),
 	wire.Struct(new(retention.BackupDeletionFinderImpl), "*"),
 	wire.Struct(new(retention.BackupRetentionSelectorImpl), "*"),
 	wire.Struct(new(maintenance.MaintenanceConfigsHandler), "*"),
@@ -240,6 +250,7 @@ var SharedSet = wire.NewSet(
 	wire.Struct(new(certificates2.OperationMonitorImpl)),
 	wire.Struct(new(email.EmailHandler), "*"),
 	wire.Struct(new(email.EmailServiceImpl), "*"),
+	wire.Struct(new(email.MultiUserEmailSenderImpl), "*"),
 	wire.Struct(new(email.UserEmailServiceImpl), "*"),
 	wire.Struct(new(groups.GroupHandler), "*"),
 	wire.Struct(new(groups.GroupRepositoryImpl), "*"),
@@ -280,6 +291,13 @@ var SharedSet = wire.NewSet(
 	wire.Bind(new(retention.BackupRetentionSelector), new(*retention.BackupRetentionSelectorImpl)),
 	wire.Bind(new(retention.BackupDeletionFinder), new(*retention.BackupDeletionFinderImpl)),
 	wire.Bind(new(maintenance.MaintenanceAgent), new(*maintenance.MaintenanceAgentImpl)),
+	wire.Bind(new(alerts.VictoriaAlertQueries), new(*alerts.VictoriaAlertQueriesImpl)),
+	wire.Bind(new(alerts.AlertSettingsRepository), new(*alerts.AlertSettingsRepositoryImpl)),
+	wire.Bind(new(alerts.AlertSettingsService), new(*alerts.AlertSettingsServiceImpl)),
+	wire.Bind(new(alerts.StateRepository), new(*alerts.StateRepositoryImpl)),
+	wire.Bind(new(alerts.Notifier), new(*alerts.NotifierImpl)),
+	wire.Bind(new(alerts.AlertChecks), new(*alerts.AlertChecksImpl)),
+	wire.Bind(new(alerts.AlertAgent), new(*alerts.AlertAgentImpl)),
 	wire.Bind(new(configs.MaintenanceRepository), new(*configs.MaintenanceRepositoryImpl)),
 	wire.Bind(new(maintenance.RandomProvider), new(*maintenance.RandomProviderImpl)),
 	wire.Bind(new(maintenance.AgentHelper), new(*maintenance.AgentHelperImpl)),
@@ -328,6 +346,7 @@ var SharedSet = wire.NewSet(
 	wire.Bind(new(apps_basic.AppReverseProxyFactory), new(*apps_basic.AppReverseProxyFactoryImpl)),
 	wire.Bind(new(apps_basic.AppSessionService), new(*apps_basic.AppSessionServiceImpl)),
 	wire.Bind(new(email.EmailService), new(*email.EmailServiceImpl)),
+	wire.Bind(new(email.MultiUserEmailSender), new(*email.MultiUserEmailSenderImpl)),
 	wire.Bind(new(email.UserEmailService), new(*email.UserEmailServiceImpl)),
 	wire.Bind(new(groups.GroupRepository), new(*groups.GroupRepositoryImpl)),
 	wire.Bind(new(terminal.DockerTerminalClient), new(*terminal.DockerTerminalClientImpl)),

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"server/alerts"
 	"server/app_store"
 	"server/apps_basic"
 	"server/backup_server"
@@ -45,6 +46,7 @@ type FrontendPageDataBuilder interface {
 	BuildProvidersPage() (*ProvidersPageContent, error)
 	BuildOidcClientsPage() (*OidcClientsPageContent, error)
 	BuildMaintenancePage() (*MaintenancePage, error)
+	BuildAlertsPage() (*AlertsPage, error)
 	BuildUserEditPageData(userId string) (*UserEditPage, error)
 	BuildAccountPageData(user *api.User) *AccountPageData
 }
@@ -69,6 +71,8 @@ type FrontendPageDataBuilderImpl struct {
 	GroupRepo                  groups.GroupRepository
 	OidcAuthProviderRepo       oidc_client.OidcAuthProviderRepository
 	OidcRelyingPartyRepo       oidc_provider.OidcRelyingPartyRepository
+	AlertSettingsRepository    alerts.AlertSettingsRepository
+	AlertStateRepository       alerts.StateRepository
 	GlobalConfig               *tools.GlobalConfig
 }
 
@@ -191,6 +195,7 @@ func installedAppPageDtosForAdmin(apps []api.AdminAppDto, now time.Time) []Insta
 			VersionCreationTimestampTooltip:   app.VersionCreationTimestamp.UTC().Format(tools.PrettyFrontendTimeLayout),
 			IsRunning:                         app.IsRunning,
 			IsOfficialDatabaseApp:             app.IsOfficialDatabaseApp,
+			IsOpenable:                        isInstalledAppOpenable(app.AppName),
 			IsOfficial:                        app.IsOfficial,
 			IsPublic:                          app.AccessPolicy == api.Policies.PublicAccessPolicy,
 		})
@@ -206,9 +211,14 @@ func installedAppPageDtosForNonAdmin(apps []api.NonAdminAppDto) []InstalledAppPa
 			AppName:    app.AppName,
 			IsRunning:  true,
 			IsPublic:   app.IsPublic,
+			IsOpenable: isInstalledAppOpenable(app.AppName),
 		})
 	}
 	return appDtos
+}
+
+func isInstalledAppOpenable(appName string) bool {
+	return appName != u.OfficialDatabaseAppName && appName != tools.DockerRegistryAppName
 }
 
 func (b *FrontendPageDataBuilderImpl) BuildAppsWithSecretsPage() (*AppsWithSecretsPageContent, error) {
@@ -320,6 +330,10 @@ func (b *FrontendPageDataBuilderImpl) BuildEmailPage() (*EmailPageContent, error
 	if err != nil {
 		return nil, err
 	}
+	broadcastTemplate, err := b.ConfigsRepo.GetConfig(configs.ConfigKeys.BroadcastEmailTemplate)
+	if err != nil {
+		return nil, err
+	}
 
 	exposeRealEmail, err := b.OidcEmailService.ReadExposeRealEmailInOidcToken()
 	if err != nil {
@@ -330,6 +344,7 @@ func (b *FrontendPageDataBuilderImpl) BuildEmailPage() (*EmailPageContent, error
 		EmailConfig:                emailConfig,
 		ExposeRealEmailInOidcToken: exposeRealEmail,
 		InvitationEmailTemplate:    invitationTemplate,
+		BroadcastEmailTemplate:     broadcastTemplate,
 	}, nil
 }
 
@@ -726,6 +741,27 @@ func (b *FrontendPageDataBuilderImpl) BuildMaintenancePage() (*MaintenancePage, 
 
 	return &MaintenancePage{
 		Apps: appsForAdmin,
+	}, nil
+}
+
+func (b *FrontendPageDataBuilderImpl) BuildAlertsPage() (*AlertsPage, error) {
+	settings, err := b.AlertSettingsRepository.Read()
+	if err != nil {
+		return nil, err
+	}
+	state, err := b.AlertStateRepository.Read()
+	if err != nil {
+		return nil, err
+	}
+	return &AlertsPage{
+		Settings: settings,
+		Alerts: []AlertRow{
+			alertRow("cpu", "Host CPU usage", settings.CPUUsageEnabled, state.CPUUsage),
+			alertRow("memory", "Host memory usage", settings.MemoryUsageEnabled, state.MemoryUsage),
+			alertRow("disk", "Host disk usage", settings.DiskUsageEnabled, state.DiskUsage),
+			alertRow("certificate", "Certificate expiration", settings.CertificateExpiryEnabled, state.CertificateExpiry),
+			alertRow("quollix-errors", "Quollix errors", settings.QuollixErrorsEnabled, state.QuollixErrors),
+		},
 	}, nil
 }
 

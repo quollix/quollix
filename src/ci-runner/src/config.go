@@ -32,6 +32,7 @@ var (
 	dockerDir             = assetsDir + "/docker"
 	DockerPostgresTestDir = dockerDir + "/postgres/test"
 	DockerOidcTestDir     = dockerDir + "/oidc"
+	DockerVictoriaTestDir = dockerDir + "/victoria-test"
 	sampleAppDir          = dockerDir + "/sampleapp"
 
 	DevProfile = "DEV"

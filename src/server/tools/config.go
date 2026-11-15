@@ -30,6 +30,7 @@ const (
 	BrandAppService       = u.BrandName
 	BrandAppContainerName = u.OfficialMaintainer + "_" + u.OfficialBrandAppName + "_" + BrandAppService
 
+	DockerRegistryAppName                  = "dockerregistry"
 	GrafanaAppName                         = "grafana"
 	DefaultLogsRetentionDays               = 30
 	DefaultLogsMaxDiskSpaceGB              = 5
@@ -49,6 +50,11 @@ var ComposeEnvVars = struct {
 	LogsMaxDiskSpaceGB         string
 	MetricsRetentionDays       string
 	HostMetricsIntervalSeconds string
+	SmtpEnabled                string
+	SmtpHost                   string
+	SmtpUser                   string
+	SmtpPassword               string
+	SmtpFromAddress            string
 }{
 	BaseDomain:                 "BASE_DOMAIN",
 	ClientId:                   "CLIENT_ID",
@@ -58,10 +64,17 @@ var ComposeEnvVars = struct {
 	LogsMaxDiskSpaceGB:         "LOGS_MAX_DISK_SPACE_GB",
 	MetricsRetentionDays:       "METRICS_RETENTION_DAYS",
 	HostMetricsIntervalSeconds: "HOST_METRICS_INTERVAL_SECONDS",
+	SmtpEnabled:                "SMTP_ENABLED",
+	SmtpHost:                   "SMTP_HOST",
+	SmtpUser:                   "SMTP_USER",
+	SmtpPassword:               "SMTP_PASSWORD",
+	SmtpFromAddress:            "SMTP_FROM_ADDRESS",
 }
 
 type GlobalConfig struct {
 	CollectMetricsAutomatically           bool
+	// Force flush keeps tests from waiting for VictoriaMetrics to make pushed samples readable.
+	ForceFlushMetricsAfterPush            bool
 	PrintCommandOutput                    bool
 	ShouldRunMaintenanceAgent             bool
 	DeployOfficialDatabaseWithPortExposed bool

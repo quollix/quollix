@@ -33,6 +33,7 @@ type UsageDocsLinksType struct {
 	Email         string
 	Terminal      string
 	Groups        string
+	Alerts        string
 }
 
 type LinksType struct {
@@ -66,5 +67,6 @@ var Links = LinksType{
 		Email:         UsageDocsBaseUrl + "/email",
 		Terminal:      UsageDocsBaseUrl + "/terminal",
 		Groups:        UsageDocsBaseUrl + "/groups",
+		Alerts:        UsageDocsBaseUrl + "/alerts",
 	},
 }

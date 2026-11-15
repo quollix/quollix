@@ -85,7 +85,3 @@ input[list]:focus::-webkit-calendar-picker-indicator {
     width: 250px;
     max-width: 100%;
 }
-
-#observability-settings-save-button {
-    width: auto;
-}

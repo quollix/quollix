@@ -19,7 +19,7 @@ type SshClient interface {
 	GetKnownHosts(host, port string) (string, error)
 	TestWhetherSshAccessWorks(repo *api.SshConnectionRequest) error
 	PrepareBackupServer(repo *api.BackupServerConfigs) error
-	PurgeBackupServer(repo *api.SshConnectionRequest) error
+	PurgeBackupServer(repo *api.PurgeBackupServerRequest) error
 }
 
 type SshClientImpl struct {
@@ -27,7 +27,7 @@ type SshClientImpl struct {
 }
 
 func (s *SshClientImpl) GetKnownHosts(host, port string) (string, error) {
-	output, err := s.ResticContainerExecutor.Execute([]string{"ssh-keyscan", "-p", port, host}, nil, nil, "", "")
+	output, err := s.ResticContainerExecutor.Execute([]string{"ssh-keyscan", "-p", port, host}, nil, nil, "", "", "")
 	if output == nil {
 		return "", err
 	}
@@ -35,11 +35,11 @@ func (s *SshClientImpl) GetKnownHosts(host, port string) (string, error) {
 }
 
 func (s *SshClientImpl) TestWhetherSshAccessWorks(repo *api.SshConnectionRequest) error {
-	if _, err := s.ResticContainerExecutor.Execute([]string{"mkdir", "-p", SshDirLocation}, nil, nil, "", ""); err != nil {
+	if _, err := s.ResticContainerExecutor.Execute([]string{"mkdir", "-p", SshDirLocation}, nil, nil, "", "", ""); err != nil {
 		return err
 	}
 
-	if _, err := s.ResticContainerExecutor.Execute(writeKnownHostsCommand(repo.SshKnownHosts), nil, nil, "", ""); err != nil {
+	if _, err := s.ResticContainerExecutor.Execute(writeKnownHostsCommand(repo.SshKnownHosts), nil, nil, "", "", ""); err != nil {
 		return err
 	}
 
@@ -54,7 +54,7 @@ func (s *SshClientImpl) TestWhetherSshAccessWorks(repo *api.SshConnectionRequest
 		"-o", "ConnectTimeout=1",
 		"exit",
 	}
-	_, err := s.ResticContainerExecutor.Execute(sshCommand, nil, nil, "", "")
+	_, err := s.ResticContainerExecutor.Execute(sshCommand, nil, nil, "", "", "")
 	if err != nil {
 		return err
 	}
@@ -87,11 +87,11 @@ func rcloneConfigCreateCommand(repo *api.SshConnectionRequest) []string {
 	}
 }
 
-func rclonePurgeCommand() []string {
+func rclonePurgeCommand(backupFolderPath string) []string {
 	return []string{
 		"rclone",
 		"purge",
-		fmt.Sprintf("%s:%s", tools.SshConfigName, tools.RelativeBackupRepoPathInResticContainer),
+		fmt.Sprintf("%s:%s", tools.SshConfigName, backupFolderPath),
 	}
 }
 
@@ -104,6 +104,7 @@ func GetSampleRemoteRepo() *api.BackupServerConfigs {
 		SshPassword:        "sshpassword",
 		SshKnownHosts:      "sample-value",
 		EncryptionPassword: "restic-password",
+		BackupFolderPath:   tools.LegacyRemoteBackupFolderPath,
 	}
 }
 
@@ -112,13 +113,13 @@ func (r *SshClientImpl) PrepareBackupServer(repo *api.BackupServerConfigs) error
 		return err
 	}
 
-	output, err := r.ResticContainerExecutor.Execute([]string{"restic", "check"}, nil, nil, repo.EncryptionPassword, "")
+	output, err := r.ResticContainerExecutor.Execute([]string{"restic", "check"}, nil, nil, repo.EncryptionPassword, "", repo.BackupFolderPath)
 	if err != nil {
 		if output != nil && strings.Contains(output.Combined(), WrongEncryptionPasswordResticCommandOutputPattern) {
 			return u.Logger.NewError(WrongEncryptionPasswordErr)
 		}
 
-		_, err = r.ResticContainerExecutor.Execute([]string{"restic", "init"}, nil, nil, repo.EncryptionPassword, "")
+		_, err = r.ResticContainerExecutor.Execute([]string{"restic", "init"}, nil, nil, repo.EncryptionPassword, "", repo.BackupFolderPath)
 		if err != nil {
 			return err
 		}
@@ -144,23 +145,24 @@ func (r *SshClientImpl) prepareConfigFilesShared(repo *api.SshConnectionRequest,
 	// exposes the SFTP subsystem. Modern scp clients use SFTP internally by default,
 	// and rclone/restic expose SFTP as the supported reusable remote backend rather
 	// than the legacy SCP/RCP protocol.
-	_, err := r.ResticContainerExecutor.Execute(rcloneConfigCreateCommand(repo), nil, nil, resticEncryptionPassword, "")
+	_, err := r.ResticContainerExecutor.Execute(rcloneConfigCreateCommand(repo), nil, nil, resticEncryptionPassword, "", "")
 	if err != nil {
 		return err
 	}
 
-	_, err = r.ResticContainerExecutor.Execute(writeKnownHostsCommand(repo.SshKnownHosts), nil, nil, resticEncryptionPassword, "")
+	_, err = r.ResticContainerExecutor.Execute(writeKnownHostsCommand(repo.SshKnownHosts), nil, nil, resticEncryptionPassword, "", "")
 	return err
 }
 
-func (r *SshClientImpl) PurgeBackupServer(repo *api.SshConnectionRequest) error {
-	if err := r.TestWhetherSshAccessWorks(repo); err != nil {
+func (r *SshClientImpl) PurgeBackupServer(repo *api.PurgeBackupServerRequest) error {
+	sshRepo := repo.ConvertToSshConnectionTestRequest()
+	if err := r.TestWhetherSshAccessWorks(sshRepo); err != nil {
 		return err
 	}
 
-	if err := r.prepareConfigFilesShared(repo, ""); err != nil {
+	if err := r.prepareConfigFilesShared(sshRepo, ""); err != nil {
 		return err
 	}
-	_, err := r.ResticContainerExecutor.Execute(rclonePurgeCommand(), nil, nil, "", "")
+	_, err := r.ResticContainerExecutor.Execute(rclonePurgeCommand(repo.BackupFolderPath), nil, nil, "", "", "")
 	return err
 }

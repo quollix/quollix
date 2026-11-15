@@ -37,6 +37,7 @@ func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	defer client.Test.ResetTestState()
 	settings := configs.NewObservabilitySettings(14, 10, 60, 420, 660, 5400)
 	assert.Nil(t, client.Settings.SaveObservabilitySettings(settings))
+	assert.Nil(t, client.Email.SaveConfig(configs.GetSampleEmailConfig()))
 	_, err := InstallAndStartSample(t, client, "2.0")
 	assert.Nil(t, err)
 
@@ -51,6 +52,12 @@ func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	serverURL, err := ReadSampleAppEnvValue(appClient, "SERVER_URL")
 	assert.Nil(t, err)
 	assert.Equal(t, "https://sampleapp.localhost", serverURL)
+	baseDomain, err := ReadSampleAppEnvValue(appClient, tools.ComposeEnvVars.BaseDomain)
+	assert.Nil(t, err)
+	assert.Equal(t, "localhost", baseDomain)
+	baseDomainIsSet, err := readSampleAppUrl(appClient, sampleAppHttpsUrl+"/env-present/"+tools.ComposeEnvVars.BaseDomain)
+	assert.Nil(t, err)
+	assert.Equal(t, "true", baseDomainIsSet)
 
 	clientId, err := ReadSampleAppEnvValue(appClient, "OIDC_CLIENT_ID")
 	assert.Nil(t, err)
@@ -64,15 +71,20 @@ func TestSampleAppReceivesConfiguredEnvValues(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "Europe/London", ianaTimezone)
 
-	for name, expected := range map[string]string{
-		tools.ComposeEnvVars.LogsRetentionDays:          settings.LogsRetentionDays,
-		tools.ComposeEnvVars.LogsMaxDiskSpaceGB:         settings.LogsMaxDiskSpaceGB,
-		tools.ComposeEnvVars.MetricsRetentionDays:       settings.MetricsRetentionDays,
-		tools.ComposeEnvVars.HostMetricsIntervalSeconds: settings.HostMetricsIntervalSeconds,
+	for _, name := range []string{
+		tools.ComposeEnvVars.LogsRetentionDays,
+		tools.ComposeEnvVars.LogsMaxDiskSpaceGB,
+		tools.ComposeEnvVars.MetricsRetentionDays,
+		tools.ComposeEnvVars.HostMetricsIntervalSeconds,
+		tools.ComposeEnvVars.SmtpEnabled,
+		tools.ComposeEnvVars.SmtpHost,
+		tools.ComposeEnvVars.SmtpUser,
+		tools.ComposeEnvVars.SmtpPassword,
+		tools.ComposeEnvVars.SmtpFromAddress,
 	} {
-		value, err := ReadSampleAppEnvValue(appClient, name)
+		isSet, err := readSampleAppUrl(appClient, sampleAppHttpsUrl+"/env-present/"+name)
 		assert.Nil(t, err)
-		assert.Equal(t, expected, value)
+		assert.Equal(t, "false", isSet)
 	}
 
 	sharedSecret, err := ReadSampleAppEnvValue(appClient, "SECRET_SAMPLE_SHARED")

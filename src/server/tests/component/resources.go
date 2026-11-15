@@ -23,7 +23,6 @@ const (
 	SampleUsername             = "user"
 	SampleUserPassword         = "userpassword"
 	SampleUserEmail            = "user@example.invalid"
-	SampleRealUserEmail        = "user@example.com"
 	installedAppsURLForTesting = "https://quollix.localhost/installed-apps"
 )
 

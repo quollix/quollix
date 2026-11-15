@@ -40,7 +40,6 @@ func newMaintenanceAgentTestObjects(t *testing.T) maintenanceAgentTestObjects {
 	oidcLoginStateCache := oidc_client.NewOidcLoginStateCacheMock(t)
 	sessionRepo := users.NewSessionRepositoryMock(t)
 	resticImage := backup_server.NewResticDockerImageServiceMock(t)
-
 	agent := &MaintenanceAgentImpl{
 		Repository:          repository,
 		ServiceHelper:       helper,

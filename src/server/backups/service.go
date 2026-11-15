@@ -70,7 +70,7 @@ func (b *BackupServiceImpl) CreateBackup(appId int, description string) error {
 	}
 	defer b.removeDir(prepared.TempDir)
 
-	if err = b.ResticService.CreateBackup(prepared.MountArgsForRestic, prepared.Volumes, resticTags, repo.EncryptionPassword); err != nil {
+	if err = b.ResticService.CreateBackup(prepared.MountArgsForRestic, prepared.Volumes, resticTags, repo.EncryptionPassword, repo.BackupFolderPath); err != nil {
 		return err
 	}
 
@@ -153,7 +153,7 @@ func (b *BackupServiceImpl) RestoreBackup(request api.BackupOperationRequest) (*
 	}
 	defer b.removeDir(tempDir)
 
-	if err = b.ResticService.RestoreFiles(request.BackupId, tempDir, repo.EncryptionPassword); err != nil {
+	if err = b.ResticService.RestoreFiles(request.BackupId, tempDir, repo.EncryptionPassword, repo.BackupFolderPath); err != nil {
 		return nil, err
 	}
 
@@ -162,7 +162,7 @@ func (b *BackupServiceImpl) RestoreBackup(request api.BackupOperationRequest) (*
 		return nil, err
 	}
 
-	backupInfo, err := b.ResticService.GetSnapshotInfo(request.BackupId, repo.EncryptionPassword)
+	backupInfo, err := b.ResticService.GetSnapshotInfo(request.BackupId, repo.EncryptionPassword, repo.BackupFolderPath)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (b *BackupServiceImpl) RestoreBackup(request api.BackupOperationRequest) (*
 	b.DockerService.StopAppContainers(containerNames)
 	b.DockerService.RemoveVolumes(volumes)
 
-	if err = b.ResticService.RestoreVolumes(request.BackupId, snapshot.Volumes, repo.EncryptionPassword); err != nil {
+	if err = b.ResticService.RestoreVolumes(request.BackupId, snapshot.Volumes, repo.EncryptionPassword, repo.BackupFolderPath); err != nil {
 		return nil, err
 	}
 

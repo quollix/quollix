@@ -52,6 +52,17 @@ func (c *CertificateBundle) GetTlsCertificate() *tls.Certificate {
 	return c.tlsCertificate
 }
 
+func (c *CertificateBundle) GetLeafCertificate() (*x509.Certificate, error) {
+	if len(c.tlsCertificate.Certificate) == 0 {
+		return nil, u.Logger.NewError("certificate bundle has no leaf certificate")
+	}
+	certificate, err := x509.ParseCertificate(c.tlsCertificate.Certificate[0])
+	if err != nil {
+		return nil, u.Logger.NewError(err.Error())
+	}
+	return certificate, nil
+}
+
 func SplitPemBundle(pemBundle []byte) (certPem []byte, keyPem []byte, err error) {
 	var certificateBlocks [][]byte
 	var keyBlockBytes []byte

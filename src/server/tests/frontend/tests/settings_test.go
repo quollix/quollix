@@ -66,9 +66,11 @@ func TestSettingsBackupServerFlow(t *testing.T) {
 	frame := frontend_pages.Setup(t)
 	defer frame.Client.Test.ResetTestState()
 	expected := backup_server.GetSampleRemoteRepo()
+	expected.BackupFolderPath = "./backups2"
 
 	page := frame.Pages.GoToSettingsPage().
 		AssertBackupServerFormValues(&api.BackupServerConfigs{}).
+		EnterBackupServerFolderPath(expected.BackupFolderPath).
 		EnterBackupServerHostAndPortAndGetKnownHostsAndAssertValid(expected.Host, expected.SshPort)
 
 	expected.SshKnownHosts = page.GetBackupServerKnownHosts()
@@ -122,6 +124,7 @@ func TestSettingsBackupServerPurgeFlow(t *testing.T) {
 
 	frame.Pages.SettingsPage.
 		EnterBackupServerHostAndPortAndGetKnownHostsAndAssertValid(expected.Host, expected.SshPort)
+	frame.Pages.SettingsPage.EnterBackupServerFolderPath(expected.BackupFolderPath)
 
 	expected.SshKnownHosts = frame.Pages.SettingsPage.GetBackupServerKnownHosts()
 	err = validation.Validate("SshKnownHosts", validation.FieldKnownHosts, expected.SshKnownHosts)

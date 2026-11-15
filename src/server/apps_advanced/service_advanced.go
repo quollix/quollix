@@ -195,11 +195,11 @@ func (b *AppsServiceAdvancedImpl) replaceInstalledAppVersion(app *apps_basic.Rep
 	newApp.AutomaticBackupsEnabled = app.AutomaticBackupsEnabled
 	newApp.Metadata = maps.Clone(app.Metadata)
 
-	oldComposeContent, err := apps_basic.CompleteAppComposeYaml(app, "", "", &api.ObservabilitySettings{})
+	oldComposeContent, err := apps_basic.CompleteAppComposeYaml(app, "", "", api.ObservabilitySettings{}, u.EmailConfig{})
 	if err != nil {
 		return err
 	}
-	newComposeContent, err := apps_basic.CompleteAppComposeYaml(newApp, "", "", &api.ObservabilitySettings{})
+	newComposeContent, err := apps_basic.CompleteAppComposeYaml(newApp, "", "", api.ObservabilitySettings{}, u.EmailConfig{})
 	if err != nil {
 		return err
 	}

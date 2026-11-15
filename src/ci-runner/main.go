@@ -28,6 +28,7 @@ func main() {
 }
 
 func buildSubCommands() {
+	src.BuildCmd.AddCommand(src.BuildLocalCmd)
 	src.DeployDevCmd.Flags().BoolP(src.KeepDbFlagName, "k", false, "keep the existing database container and volume")
 	src.DeployDevCmd.Flags().BoolP(src.TestDomainFlagName, "t", false, "set the base domain to test.quollix.org after deployment")
 	src.DeployProdCmd.Flags().BoolP(src.KeepDbFlagName, "k", false, "keep the existing database container and volume")
@@ -46,6 +47,7 @@ func buildSubCommands() {
 	src.ConfigureTestCmd()
 	src.RootCmd.AddCommand(
 		src.TestCmd,
+		src.BuildCmd,
 		src.ReleaseCmd,
 		src.DeployCmd,
 		ci.NewCommonCmd(Tr, src.ProjectDir+"/src", "quollix"),

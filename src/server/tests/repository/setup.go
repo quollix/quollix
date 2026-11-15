@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"server/alerts"
 	"server/app_store"
 	"server/apps_basic"
 	"server/backup_server"
@@ -37,6 +38,8 @@ var (
 	UserAuthMethodRepo   *oidc_client.UserAuthMethodRepositoryImpl
 	OidcRelyingPartyRepo *oidc_provider.OidcRelyingPartyRepositoryImpl
 	MaintainerRepo       *app_store.MaintainerRepositoryImpl
+	AlertSettingsRepo    *alerts.AlertSettingsRepositoryImpl
+	AlertStateRepo       *alerts.StateRepositoryImpl
 )
 
 func InitDeps() {
@@ -79,6 +82,8 @@ func InitDeps() {
 	UserAuthMethodRepo = &oidc_client.UserAuthMethodRepositoryImpl{DbConnector: DatabaseConnector}
 	OidcRelyingPartyRepo = &oidc_provider.OidcRelyingPartyRepositoryImpl{DbConnector: DatabaseConnector}
 	MaintainerRepo = &app_store.MaintainerRepositoryImpl{DbProvider: DatabaseConnector}
+	AlertSettingsRepo = &alerts.AlertSettingsRepositoryImpl{ConfigsRepository: ConfigRepo}
+	AlertStateRepo = &alerts.StateRepositoryImpl{ConfigsRepository: ConfigRepo}
 	isInitialized = true
 }
 

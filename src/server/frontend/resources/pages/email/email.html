@@ -1,7 +1,70 @@
-<section>
-  <h3>SMTP server</h3>
+{{if .Page.EmailConfig.IsEnabled}}
+  <section>
+    <h3>Broadcast email</h3>
 
-  <form id="email-config-form" onsubmit="return false;">
+    <form id="broadcast-email-form" onsubmit="return false;">
+      <label>
+        <strong>Subject</strong>
+        <input id="broadcast-email-subject-input" type="text" name="broadcastSubject" required />
+      </label>
+      <label>
+        <strong>Email body</strong>
+        <textarea id="broadcast-email-body-input" name="broadcastEmailBody" rows="10"
+          placeholder="Enter the message to send" required>{{$.Page.BroadcastEmailTemplate}}</textarea>
+      </label>
+
+      <div class="label-bar">
+        <button id="email-save-broadcast-template-button" type="button"
+          onclick="saveBroadcastEmailTemplate(this.form.broadcastEmailBody.value)">
+          Save as template
+        </button>
+        <button id="email-reset-broadcast-template-button" type="button" class="alert"
+          onclick="resetBroadcastEmailTemplate()">
+          Reset to default
+        </button>
+      </div>
+
+      <button id="send-broadcast-email-button" type="button"
+        onclick="sendBroadcastEmail(this.form.broadcastSubject.value, this.form.broadcastEmailBody.value)">
+        Email all users
+      </button>
+    </form>
+  </section>
+
+  <hr />
+
+  <section>
+    <h3>Invitation email template</h3>
+
+    <form id="email-template-form" onsubmit="return false;">
+      <label>
+        <textarea id="invitation-email-template-input" name="invitationEmailTemplate" rows="14"
+          placeholder="Enter invitation email template" required>{{$.Page.InvitationEmailTemplate}}</textarea>
+      </label>
+
+      <p>Required placeholders: <code>{{"{{.Username}}"}}</code>, <code>{{"{{.InvitationLink}}"}}</code>,
+        <code>{{"{{.ExpirationDate}}"}}</code>, <code>{{"{{.ServerUrl}}"}}</code>
+      </p>
+
+      <div class="label-bar">
+        <button id="email-save-template-button" type="button"
+          onclick="saveInvitationEmailTemplate(this.form.invitationEmailTemplate.value)">
+          Save template
+        </button>
+        <button id="email-reset-template-button" type="button" class="alert" onclick="resetInvitationEmailTemplate()">
+          Reset to default
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <hr />
+{{end}}
+
+  <section>
+    <h3>SMTP server</h3>
+
+    <form id="email-config-form" onsubmit="return false;">
     <div class="label-bar">
       <label>
         <strong>SMTP Host</strong>
@@ -96,7 +159,7 @@
         Reset
       </button>
     </div>
-  </form>
+    </form>
 </section>
 
 <hr />
@@ -114,28 +177,3 @@
 </section>
 
 <hr />
-
-<section>
-  <h3>Invitation email template</h3>
-
-  <form id="email-template-form" onsubmit="return false;">
-    <label>
-      <textarea id="invitation-email-template-input" name="invitationEmailTemplate" rows="14"
-        placeholder="enter invitation email template" required>{{$.Page.InvitationEmailTemplate}}</textarea>
-    </label>
-
-    <p>Required placeholders: <code>{{"{{.Username}}"}}</code>, <code>{{"{{.InvitationLink}}"}}</code>,
-      <code>{{"{{.ExpirationDate}}"}}</code>, <code>{{"{{.ServerUrl}}"}}</code>
-    </p>
-
-    <div class="label-bar">
-      <button id="email-save-template-button" type="button"
-        onclick="saveInvitationEmailTemplate(this.form.invitationEmailTemplate.value)">
-        Save Template
-      </button>
-      <button id="email-reset-template-button" type="button" class="alert" onclick="resetInvitationEmailTemplate()">
-        Reset To Default
-      </button>
-    </div>
-  </form>
-</section>

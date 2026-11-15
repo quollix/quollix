@@ -47,12 +47,13 @@ func getFeatureTestObjects(t *testing.T) featureFrontendBuilderTestObjects {
 	}
 }
 
-func TestBuildEmailPage_ReturnsEmailConfigAndInvitationTemplate(t *testing.T) {
+func TestBuildEmailPage_ReturnsEmailConfigAndTemplates(t *testing.T) {
 	testObjects := getFeatureTestObjects(t)
 	expectedConfig := &u.EmailConfig{IsEnabled: true}
 
 	testObjects.EmailRepo.EXPECT().ReadEmailConfig().Return(expectedConfig, nil)
 	testObjects.ConfigsRepo.EXPECT().GetConfig(configs.ConfigKeys.InvitationEmailTemplate).Return("invitation template", nil)
+	testObjects.ConfigsRepo.EXPECT().GetConfig(configs.ConfigKeys.BroadcastEmailTemplate).Return("broadcast template", nil)
 	testObjects.ConfigsRepo.EXPECT().GetConfig(configs.ConfigKeys.ExposeRealEmailInOidcToken).Return("true", nil)
 
 	pageContent, err := testObjects.Builder.BuildEmailPage()
@@ -60,6 +61,7 @@ func TestBuildEmailPage_ReturnsEmailConfigAndInvitationTemplate(t *testing.T) {
 	assert.Equal(t, expectedConfig, pageContent.EmailConfig)
 	assert.True(t, pageContent.ExposeRealEmailInOidcToken)
 	assert.Equal(t, "invitation template", pageContent.InvitationEmailTemplate)
+	assert.Equal(t, "broadcast template", pageContent.BroadcastEmailTemplate)
 }
 
 func TestBuildTerminalAppsPage_FiltersAndSortsAndAppendsOfficial(t *testing.T) {

@@ -37,7 +37,7 @@ window.saveEmailConfig = async function (
     }
 
     const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailSaveConfig }}', emailConfig)
-    if (ok) showSnackbar('Email settings saved.')
+    if (ok) window.reloadPageAndShowSnackbar('Email settings saved.')
 }
 
 window.sendTestEmail = async function (
@@ -109,4 +109,29 @@ window.resetInvitationEmailTemplate = async function () {
 
     const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailResetInvitationTemplate }}', null)
     if (ok) window.reloadPageAndShowSnackbar('Invitation email template has been reset.')
+}
+
+window.saveBroadcastEmailTemplate = async function (template) {
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailSaveBroadcastTemplate }}', { template })
+    if (ok) showSnackbar('Broadcast email template saved.')
+}
+
+window.resetBroadcastEmailTemplate = async function () {
+    const confirmed = await confirmDialog(
+        `Reset broadcast email template? The default text will replace the current template.`
+    )
+    if (!confirmed) return
+
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailResetBroadcastTemplate }}', null)
+    if (ok) window.reloadPageAndShowSnackbar('Broadcast email template has been reset.')
+}
+
+window.sendBroadcastEmail = async function (subject, body) {
+    const confirmed = await confirmDialog(
+        `Send this email to all enabled users with a real email address? This action cannot be undone.`
+    )
+    if (!confirmed) return
+
+    const ok = await window.apiPost('{{ $.Static.Paths.BackendEmailSendBroadcast }}', { subject, body })
+    if (ok) window.reloadPageAndShowSnackbar('Email sent to all eligible users.')
 }

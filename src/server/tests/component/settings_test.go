@@ -6,10 +6,13 @@ import (
 	"reflect"
 	"testing"
 
+	"server/alerts"
 	"server/backup_server"
 	"server/configs"
 
 	"github.com/quollix/common/assert"
+	"github.com/quollix/common/quollix/api"
+	u "github.com/quollix/common/utils"
 )
 
 func TestAssertSampleAppContentUsingHttps(t *testing.T) {
@@ -67,4 +70,34 @@ func TestObservabilitySettings(t *testing.T) {
 	settings, err = client.Settings.ReadObservabilitySettings()
 	assert.Nil(t, err)
 	assert.Equal(t, expected, settings)
+}
+
+func TestAlertSettings(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	settings, err := client.Settings.ReadAlertSettings()
+	assert.Nil(t, err)
+	assert.Equal(t, alerts.DefaultAlertSettings(), settings)
+
+	expected := &api.AlertSettings{
+		CPUUsageEnabled:          false,
+		MemoryUsageEnabled:       false,
+		DiskUsageEnabled:         false,
+		CertificateExpiryEnabled: false,
+		QuollixErrorsEnabled:     false,
+		HostUsageTriggerPercent:  95,
+		HostUsageRecoveryPercent: 75,
+		HostUsagePendingMinutes:  0,
+	}
+	assert.Nil(t, client.Settings.SaveAlertSettings(expected))
+
+	settings, err = client.Settings.ReadAlertSettings()
+	assert.Nil(t, err)
+	assert.Equal(t, expected, settings)
+
+	invalidSettings := *expected
+	invalidSettings.HostUsageTriggerPercent = 9
+	err = client.Settings.SaveAlertSettings(&invalidSettings)
+	u.AssertDeepStackErrorFromRequest(t, err, alerts.InvalidAlertSettingsError)
 }

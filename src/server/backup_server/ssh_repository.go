@@ -42,7 +42,8 @@ VALUES
 	($7, $8),
 	($9, $10),
 	($11, $12),
-	($13, $14)
+	($13, $14),
+	($15, $16)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
 `,
 		configs.ConfigKeys.BackupEnabled, isEnabledValue,
@@ -52,6 +53,7 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
 		configs.ConfigKeys.BackupServerPassword, remoteBackupRepository.SshPassword,
 		configs.ConfigKeys.BackupServerKnownHosts, remoteBackupRepository.SshKnownHosts,
 		configs.ConfigKeys.BackupEncryptionPassword, remoteBackupRepository.EncryptionPassword,
+		configs.ConfigKeys.BackupFolderPath, remoteBackupRepository.BackupFolderPath,
 	)
 	if err != nil {
 		return u.Logger.NewError(err.Error())
@@ -71,7 +73,8 @@ SELECT
 	(SELECT value FROM configs WHERE key = $4),
 	(SELECT value FROM configs WHERE key = $5),
 	(SELECT value FROM configs WHERE key = $6),
-	(SELECT value FROM configs WHERE key = $7);
+	(SELECT value FROM configs WHERE key = $7),
+	(SELECT value FROM configs WHERE key = $8);
 `,
 		configs.ConfigKeys.BackupEnabled,
 		configs.ConfigKeys.BackupServerHost,
@@ -80,6 +83,7 @@ SELECT
 		configs.ConfigKeys.BackupServerPassword,
 		configs.ConfigKeys.BackupServerKnownHosts,
 		configs.ConfigKeys.BackupEncryptionPassword,
+		configs.ConfigKeys.BackupFolderPath,
 	).Scan(
 		&isEnabledString,
 		&repo.Host,
@@ -88,6 +92,7 @@ SELECT
 		&repo.SshPassword,
 		&repo.SshKnownHosts,
 		&repo.EncryptionPassword,
+		&repo.BackupFolderPath,
 	)
 
 	if err != nil {
@@ -103,7 +108,7 @@ func (r *SshRepositoryImpl) IsRemoteBackupConfigPresent() (bool, error) {
 
 	err := r.DbProvider.GetDB().QueryRow(`
 SELECT COUNT(*) FROM configs
-WHERE key IN ($1,$2,$3,$4,$5,$6,$7);
+WHERE key IN ($1,$2,$3,$4,$5,$6,$7,$8);
 `,
 		configs.ConfigKeys.BackupEnabled,
 		configs.ConfigKeys.BackupServerHost,
@@ -112,13 +117,14 @@ WHERE key IN ($1,$2,$3,$4,$5,$6,$7);
 		configs.ConfigKeys.BackupServerPassword,
 		configs.ConfigKeys.BackupServerKnownHosts,
 		configs.ConfigKeys.BackupEncryptionPassword,
+		configs.ConfigKeys.BackupFolderPath,
 	).Scan(&count)
 
 	if err != nil {
 		return false, err
 	}
 
-	return count == 7, nil
+	return count == 8, nil
 }
 
 func GetEmptyRemoteRepoConfigs() *api.BackupServerConfigs {

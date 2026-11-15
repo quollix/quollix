@@ -7,15 +7,16 @@ import (
 )
 
 func TestExecuteInResticContainer(t *testing.T) {
+	backupFolderPath := "/backups"
 	expectedArgs := []string{
-		"run", "--rm",
+		"run", "--rm", "--pull=never",
 		"--label", ResticCleanupLabel,
 		"--network", OfficialDatabaseAppNetworkName,
 		"-v", "/mnt/sample:/mnt/sample",
 		"-v", BackupDockerVolumeName + ":" + AbsoluteBackupRepoPathInResticContainer,
 		"-v", "sample-vol-1:/source/sample-vol-1",
 		"-v", "sample-vol-2:/source/sample-vol-2",
-		"-e", "RESTIC_REPOSITORY=rclone:" + SshConfigName + ":backups",
+		"-e", "RESTIC_REPOSITORY=rclone:" + SshConfigName + ":" + backupFolderPath,
 		"-e", "RESTIC_PASSWORD=restic-encryption-password",
 		"--entrypoint", "",
 		"-v", ResticContainerRootDirVolume + ":/root",
@@ -32,17 +33,17 @@ func TestExecuteInResticContainer(t *testing.T) {
 		[]string{"tag1", "tag2"},
 		"restic-encryption-password",
 		"-v /mnt/sample:/mnt/sample",
+		backupFolderPath,
 		expectedArgs,
 	)
 }
 
 func TestExecuteInResticContainer_NilInputs(t *testing.T) {
 	expectedArgs := []string{
-		"run", "--rm",
+		"run", "--rm", "--pull=never",
 		"--label", ResticCleanupLabel,
 		"--network", OfficialDatabaseAppNetworkName,
 		"-v", BackupDockerVolumeName + ":" + AbsoluteBackupRepoPathInResticContainer,
-		"-e", "RESTIC_REPOSITORY=rclone:" + SshConfigName + ":backups",
 		"-e", "RESTIC_PASSWORD=",
 		"--entrypoint", "",
 		"-v", ResticContainerRootDirVolume + ":/root",
@@ -50,14 +51,14 @@ func TestExecuteInResticContainer_NilInputs(t *testing.T) {
 		"some-restic-command",
 	}
 
-	assertExecuteInResticContainer(t, []string{"some-restic-command"}, nil, nil, "", "", expectedArgs)
+	assertExecuteInResticContainer(t, []string{"some-restic-command"}, nil, nil, "", "", "", expectedArgs)
 }
 
 func assertExecuteInResticContainer(
 	t *testing.T,
 	command []string,
 	appVolumes, resticTags []string,
-	resticEncryptionPassword, mountVolume string,
+	resticEncryptionPassword, mountVolume, backupFolderPath string,
 	expectedArgs []string,
 ) {
 	commandRunnerMock := &CommandRunnerMock{}
@@ -67,7 +68,7 @@ func assertExecuteInResticContainer(
 
 	commandRunnerMock.EXPECT().RunCommand("docker", expectedArgs).Return(&CommandOutput{Stdout: "output"}, nil)
 
-	output, err := resticContainerAgent.Execute(command, appVolumes, resticTags, resticEncryptionPassword, mountVolume)
+	output, err := resticContainerAgent.Execute(command, appVolumes, resticTags, resticEncryptionPassword, mountVolume, backupFolderPath)
 	assert.Nil(t, err)
 	assert.Equal(t, "output", output.Combined())
 

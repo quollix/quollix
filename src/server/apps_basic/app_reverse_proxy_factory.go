@@ -54,13 +54,22 @@ func (h appProxyErrorHandler) ServeHTTPError(w http.ResponseWriter, r *http.Requ
 	if r.Context().Err() != nil {
 		return
 	}
-	u.Logger.Error(err, "app", h.appName, "upstream", h.upstream)
+	h.logProxyFailure(err.Error())
 	w.WriteHeader(http.StatusBadGateway)
 }
 
 func (h appProxyErrorHandler) Write(p []byte) (int, error) {
-	u.Logger.Error(strings.TrimSpace(string(p)), "app", h.appName, "upstream", h.upstream)
+	h.logProxyFailure(strings.TrimSpace(string(p)))
 	return len(p), nil
+}
+
+func (h appProxyErrorHandler) logProxyFailure(message string) {
+	if strings.Contains(strings.ToLower(message), "connection refused") {
+		// An app may be accessed before its container has finished starting.
+		u.Logger.Warn(message, "app", h.appName, "upstream", h.upstream)
+	} else {
+		u.Logger.Error(message, "app", h.appName, "upstream", h.upstream)
+	}
 }
 
 func removeAuthCookie(proxyRequest *http.Request, originalRequest *http.Request) {

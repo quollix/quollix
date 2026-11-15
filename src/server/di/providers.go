@@ -136,8 +136,8 @@ func NewVictoriaLogsClient(repository apps_basic.AppRepository) logging.Victoria
 	}
 }
 
-func NewVictoriaMetricsClient(repository apps_basic.AppRepository) metrics.VictoriaMetricsClient {
-	return metrics.NewVictoriaMetricsClient("http://quollix_grafana_victoriametrics:8428", repository)
+func ProvideVictoriaMetricsClient(repository apps_basic.AppRepository, config *tools.GlobalConfig) metrics.VictoriaMetricsClient {
+	return metrics.NewVictoriaMetricsClient("http://quollix_grafana_victoriametrics:8428", repository, config.ForceFlushMetricsAfterPush)
 }
 
 func NewContainerMetricsMonitor(service metrics.MetricsCollectionService, config *tools.GlobalConfig, repository configs.ConfigsRepository) apps_basic.ContainerMetricsMonitor {

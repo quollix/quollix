@@ -138,6 +138,6 @@ func expectResticImageIsBuiltAndHashIsStored(testObjects resticDockerImageServic
 
 func expectResticContainerDirectoriesArePrepared(testObjects resticDockerImageServiceTestObjects) {
 	var emptyStringSlice []string
-	testObjects.ResticContainerExecutor.EXPECT().Execute([]string{"mkdir", "-p", "/root/.config/rclone"}, emptyStringSlice, emptyStringSlice, "", "").Return(&tools.CommandOutput{}, nil)
-	testObjects.ResticContainerExecutor.EXPECT().Execute([]string{"mkdir", "-p", "/root/.ssh"}, emptyStringSlice, emptyStringSlice, "", "").Return(&tools.CommandOutput{}, nil)
+	testObjects.ResticContainerExecutor.EXPECT().Execute([]string{"mkdir", "-p", "/root/.config/rclone"}, emptyStringSlice, emptyStringSlice, "", "", "").Return(&tools.CommandOutput{}, nil)
+	testObjects.ResticContainerExecutor.EXPECT().Execute([]string{"mkdir", "-p", "/root/.ssh"}, emptyStringSlice, emptyStringSlice, "", "", "").Return(&tools.CommandOutput{}, nil)
 }

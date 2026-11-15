@@ -266,9 +266,6 @@ func (s *UserServiceImpl) SetUserEnabled(userId int, isEnabled bool, currentlyLo
 	if err != nil {
 		return err
 	}
-	if user.IsAdmin && !isEnabled {
-		return u.Logger.NewError(AdminMustBeDemotedBeforeDeactivationError)
-	}
 	user.IsEnabled = isEnabled
 	if err = s.UserRepo.UpdateUser(user); err != nil {
 		return err
@@ -286,9 +283,6 @@ func (s *UserServiceImpl) SetUserRole(userId int, isAdmin bool, currentlyLoggedI
 	user, err := s.UserRepo.GetUserById(userId)
 	if err != nil {
 		return err
-	}
-	if isAdmin && !user.IsEnabled {
-		return u.Logger.NewError(DisabledUserCanNotBePromotedError)
 	}
 	user.IsAdmin = isAdmin
 	return s.UserRepo.UpdateUser(user)

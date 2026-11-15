@@ -8,7 +8,7 @@
 </section>
 
 <hr />
-<section>
+<section id="certificate-settings">
     <h3>Certificate</h3>
 
     <div class="inline-form-row">
@@ -76,31 +76,31 @@
             </label>
 
             <label>
-                <strong>SSH Port</strong>
+                <strong>SSH port</strong>
                 <input type="number" min="0" name="backupServerSshPort" value="{{$.Page.BackupServer.SshPort}}"
                     placeholder="enter ssh port" required />
             </label>
 
             <button id="backup-server-get-known-hosts-button" type="button"
                 onclick="getKnownHosts(this.form.backupServerHost.value, this.form.backupServerSshPort.value)">
-                Get Known Hosts
+                Get known hosts
             </button>
         </div>
 
         <label>
-            <strong>SSH Known Hosts</strong>
+            <strong>SSH known hosts</strong>
             <textarea id="backup-server-known-hosts" name="backupServerKnownHosts"
                 placeholder="known_hosts entries">{{$.Page.BackupServer.SshKnownHosts}}</textarea>
         </label>
 
         <div class="label-bar">
             <label>
-                <strong>SSH User</strong>
+                <strong>SSH user</strong>
                 <input id="backup-server-ssh-user" type="text" name="backupServerSshUser"
                     value="{{$.Page.BackupServer.SshUser}}" placeholder="enter ssh user" autocomplete="username" />
             </label>
             <label>
-                <strong>SSH Password</strong>
+                <strong>SSH password</strong>
                 <input id="backupServerSshPassword" type="password" name="backupServerSshPassword"
                     value="{{$.Page.BackupServer.SshPassword}}" placeholder="enter ssh password"
                     autocomplete="current-password" />
@@ -119,14 +119,24 @@
           this.form.backupServerSshPassword.value,
           this.form.backupServerKnownHosts.value
         )">
-                Test Connection
+                Test connection
             </button>
+        </div>
+
+        <div class="label-bar">
+            <label>
+                <strong>Backup folder path</strong>
+                <input id="backup-server-folder-path" type="text" name="backupServerFolderPath"
+                    value="{{$.Page.BackupServer.BackupFolderPath}}" placeholder="./quollix-backups" required />
+            </label>
+
             <button id="backup-server-purge-button" type="button" class="alert" onclick="purgeBackupServer(
           this.form.backupServerHost.value,
           this.form.backupServerSshPort.value,
           this.form.backupServerSshUser.value,
           this.form.backupServerSshPassword.value,
-          this.form.backupServerKnownHosts.value
+          this.form.backupServerKnownHosts.value,
+          this.form.backupServerFolderPath.value
         )">
                 Purge backup server
             </button>
@@ -134,7 +144,7 @@
 
         <div class="label-bar">
             <label>
-                <strong>Data Encryption Password</strong>
+                <strong>Data encryption password</strong>
                 <input id="backupServerEncryptionPassword" type="password" name="backupServerEncryptionPassword"
                     value="{{$.Page.BackupServer.EncryptionPassword}}" placeholder="enter encryption password"
                     autocomplete="new-password" />
@@ -147,7 +157,7 @@
             </button>
 
             <label id="enable-backup-server-label">
-                <strong>Enable Backup Server</strong>
+                <strong>Enable backup server</strong>
                 <input type="checkbox" id="backup-server-enabled-checkbox" name="backupServerIsEnabled" {{if
                     .Page.BackupServer.IsEnabled}}checked{{end}} />
             </label>
@@ -159,6 +169,7 @@
           this.form.backupServerSshPassword.value,
           this.form.backupServerKnownHosts.value,
           this.form.backupServerEncryptionPassword.value,
+          this.form.backupServerFolderPath.value,
           this.form.backupServerIsEnabled.checked
         )">
                 Save
@@ -277,20 +288,23 @@
         <div class="label-bar">
             <label>
                 <strong>Host collection interval (seconds)</strong>
-                <input id="host-metrics-interval-seconds" name="host_metrics_interval_seconds" type="number" min="1" max="604800"
-                    step="1" value="{{$.Page.ObservabilitySettings.HostMetricsIntervalSeconds}}" required />
+                <input id="host-metrics-interval-seconds" name="host_metrics_interval_seconds" type="number" min="1"
+                    max="604800" step="1" value="{{$.Page.ObservabilitySettings.HostMetricsIntervalSeconds}}"
+                    required />
             </label>
             <label>
                 <strong>Container collection interval (seconds)</strong>
-                <input id="container-metrics-interval-seconds" name="container_metrics_interval_seconds" type="number" min="1" max="604800"
-                    step="1" value="{{$.Page.ObservabilitySettings.ContainerMetricsIntervalSeconds}}" required />
+                <input id="container-metrics-interval-seconds" name="container_metrics_interval_seconds" type="number"
+                    min="1" max="604800" step="1"
+                    value="{{$.Page.ObservabilitySettings.ContainerMetricsIntervalSeconds}}" required />
             </label>
             <label>
                 <strong>Volume collection interval (seconds)</strong>
-                <input id="volume-metrics-interval-seconds" name="volume_metrics_interval_seconds" type="number" min="1" max="604800"
-                    step="1" value="{{$.Page.ObservabilitySettings.VolumeMetricsIntervalSeconds}}" required />
+                <input id="volume-metrics-interval-seconds" name="volume_metrics_interval_seconds" type="number" min="1"
+                    max="604800" step="1" value="{{$.Page.ObservabilitySettings.VolumeMetricsIntervalSeconds}}"
+                    required />
             </label>
-            <button id="observability-settings-save-button" type="submit">Save</button>
+            <button id="observability-settings-save-button" class="button-auto-width" type="submit">Save</button>
         </div>
     </form>
 </section>

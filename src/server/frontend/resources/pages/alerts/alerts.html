@@ -1,0 +1,46 @@
+<section>
+    <form id="alert-settings-form" onsubmit="saveAlertSettings(this); return false;">
+        <button id="alert-settings-save-button" class="button-auto-width" type="submit">Save all</button>
+        <h3>Alert types</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Alert</th>
+                    <th>Enabled</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range $.Page.Alerts}}
+                <tr class="alert-row" data-alert-id="{{.Id}}">
+                    <td>{{.Name}}</td>
+                    <td>
+                        <input id="alert-{{.Id}}-enabled" name="{{.Id}}_enabled" type="checkbox"
+                            aria-label="Enable {{.Name}} alert" {{if .Enabled}}checked{{end}} />
+                    </td>
+                    <td><span class="alert-status alert-status-{{.Status}}">{{.Status}}</span></td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+
+        <h3>Host usage thresholds</h3>
+        <div class="label-bar">
+            <label>
+                <strong>Trigger threshold (%)</strong>
+                <input id="host-usage-trigger-percent" name="host_usage_trigger_percent" type="number" min="10"
+                    max="100" step="1" value="{{$.Page.Settings.HostUsageTriggerPercent}}" required />
+            </label>
+            <label>
+                <strong>Recovery threshold (%)</strong>
+                <input id="host-usage-recovery-percent" name="host_usage_recovery_percent" type="number" min="10"
+                    max="100" step="1" value="{{$.Page.Settings.HostUsageRecoveryPercent}}" required />
+            </label>
+            <label>
+                <strong>Pending time (minutes)</strong>
+                <input id="host-usage-pending-minutes" name="host_usage_pending_minutes" type="number" min="0" step="1"
+                    value="{{$.Page.Settings.HostUsagePendingMinutes}}" required />
+            </label>
+        </div>
+    </form>
+</section>

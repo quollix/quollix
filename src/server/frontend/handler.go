@@ -650,6 +650,20 @@ func (t *TemplateHandlerImpl) MaintenancePageHandler(w http.ResponseWriter, r *h
 	t.renderPage(w, r, pageRenderRequest)
 }
 
+func (t *TemplateHandlerImpl) AlertsPageHandler(w http.ResponseWriter, r *http.Request) {
+	content, err := t.PageDataBuilder.BuildAlertsPage()
+	if err != nil {
+		t.pageCreationFailed(w, err)
+		return
+	}
+	t.renderPage(w, r, frontendpages.PageRenderRequest{
+		PageName:             "alerts",
+		PageTitle:            "Alerts",
+		InfoIconRedirectPath: tools.Links.UsageDocs.Alerts,
+		Content:              content,
+	})
+}
+
 func (t *TemplateHandlerImpl) PageNotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	t.pageCreationFailed(w, u.Logger.NewError("page creation failed", "path", r.URL.Path))
 }

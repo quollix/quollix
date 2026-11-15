@@ -5,6 +5,7 @@ package component
 import (
 	"server/configs"
 	"server/email"
+	"server/tools"
 	"server/users"
 	"testing"
 
@@ -34,6 +35,67 @@ func TestInvitationEmailTemplateAndInviteViaEmail(t *testing.T) {
 	resetTemplate, err := client.Email.ReadInvitationTemplate()
 	assert.Nil(t, err)
 	assert.Equal(t, users.DefaultInvitationEmailTemplate, resetTemplate)
+}
+
+func TestBroadcastEmailTemplateAndSendToUsers(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	readTemplate, err := client.Email.ReadBroadcastTemplate()
+	assert.Nil(t, err)
+	assert.Equal(t, users.DefaultBroadcastEmailTemplate, readTemplate)
+	assert.Nil(t, client.Email.SaveBroadcastTemplate(email.TestBroadcastEmailBody))
+	readTemplate, err = client.Email.ReadBroadcastTemplate()
+	assert.Nil(t, err)
+	assert.Equal(t, email.TestBroadcastEmailBody, readTemplate)
+
+	assert.Nil(t, client.Email.SaveConfig(configs.GetSampleEmailConfig()))
+	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, tools.SampleRealUserEmail)
+	assert.Nil(t, client.Email.SendBroadcast(email.TestBroadcastEmailSubject, email.TestBroadcastEmailBody))
+
+	assert.Nil(t, client.Email.ResetBroadcastTemplate())
+	readTemplate, err = client.Email.ReadBroadcastTemplate()
+	assert.Nil(t, err)
+	assert.Equal(t, users.DefaultBroadcastEmailTemplate, readTemplate)
+}
+
+func TestBroadcastEmailReturnsExpectedErrors(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	err := client.Email.SaveBroadcastTemplate("")
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, email.BroadcastEmailTemplateCannotBeEmptyError)
+
+	assert.Nil(t, client.Email.SaveBroadcastTemplate("Plain text without placeholders."))
+
+	assert.Nil(t, client.Email.SaveConfig(configs.GetSampleEmailConfig()))
+	err = client.Email.SendBroadcast(" ", email.TestBroadcastEmailBody)
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, email.BroadcastEmailSubjectCannotBeEmptyError)
+
+	err = client.Email.SendBroadcast(email.TestBroadcastEmailSubject, "\t")
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, email.BroadcastEmailBodyCannotBeEmptyError)
+
+	assert.Nil(t, client.Email.ResetConfig())
+	err = client.Email.SendBroadcast(email.TestBroadcastEmailSubject, email.TestBroadcastEmailBody)
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, u.EmailServiceNotEnabledErrorMessage)
+}
+
+func TestBroadcastEmailReturnsPartialDeliveryError(t *testing.T) {
+	client := GetClientAndLogin(t)
+	defer client.Test.ResetTestState()
+
+	assert.Nil(t, client.Email.SaveConfig(configs.GetSampleEmailConfig()))
+	assert.Nil(t, client.Email.SaveBroadcastTemplate(email.TestBroadcastEmailBody))
+	InviteUserAndSetPassword(t, client, "broadcast-success", SampleUserPassword, tools.SampleRealUserEmail)
+	InviteUserAndSetPassword(t, client, "broadcast-failure", SampleUserPassword, "broadcast-failure@example.com")
+
+	err := client.Email.SendBroadcast(email.TestBroadcastEmailSubject, email.TestBroadcastEmailBody)
+	assert.NotNil(t, err)
+	u.AssertDeepStackErrorFromRequest(t, err, email.PartialEmailDeliveryError)
 }
 
 func TestEmailConfigWorkflow(t *testing.T) {
@@ -101,9 +163,9 @@ func TestInviteViaEmailReturnsEmailAlreadyExistsError(t *testing.T) {
 	defer client.Test.ResetTestState()
 
 	assert.Nil(t, client.Email.SaveConfig(configs.GetSampleEmailConfig()))
-	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, SampleRealUserEmail)
+	InviteUserAndSetPassword(t, client, SampleUsername, SampleUserPassword, tools.SampleRealUserEmail)
 
-	err := client.Email.InviteViaEmail("another-username", SampleRealUserEmail)
+	err := client.Email.InviteViaEmail("another-username", tools.SampleRealUserEmail)
 	assert.NotNil(t, err)
 	u.AssertDeepStackErrorFromRequest(t, err, users.EmailAlreadyExistsError)
 }

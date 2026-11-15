@@ -7,7 +7,9 @@ import (
 	"github.com/quollix/common/quollix/api"
 )
 
-const defaultStructuredLogMessage = "(no message)"
+const (
+	defaultStructuredLogMessage = "(no message)"
+)
 
 type LogRecordContext struct {
 	ReadTimestamp time.Time

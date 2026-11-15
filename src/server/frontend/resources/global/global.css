@@ -55,6 +55,9 @@
     border: none;
 }
 
+button.button-auto-width[type="submit"] {
+    width: auto;
+}
 
 .alert {
     background: var(--alert-color);

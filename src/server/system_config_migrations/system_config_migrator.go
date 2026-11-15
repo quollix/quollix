@@ -33,7 +33,6 @@ func (s *SystemConfigMigratorImpl) Run() error {
 			continue
 		}
 
-		u.Logger.Info("running system config migration", "version", targetVersion)
 		if err := migration(); err != nil {
 			return err
 		}

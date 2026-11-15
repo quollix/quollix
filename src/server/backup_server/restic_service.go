@@ -23,10 +23,10 @@ var (
 type ResticService interface {
 	ListBackups() ([]api.BackupInfo, error)
 	DeleteBackup(backupId []string) error
-	CreateBackup(sourceMount string, volumes []string, tags []string, encryptionPassword string) error
-	RestoreFiles(backupId string, targetDir string, encryptionPassword string) error
-	RestoreVolumes(backupId string, volumes []string, encryptionPassword string) error
-	GetSnapshotInfo(backupId string, encryptionPassword string) (*api.BackupInfo, error)
+	CreateBackup(sourceMount string, volumes []string, tags []string, encryptionPassword, backupFolderPath string) error
+	RestoreFiles(backupId string, targetDir string, encryptionPassword, backupFolderPath string) error
+	RestoreVolumes(backupId string, volumes []string, encryptionPassword, backupFolderPath string) error
+	GetSnapshotInfo(backupId string, encryptionPassword, backupFolderPath string) (*api.BackupInfo, error)
 }
 
 type ResticServiceImpl struct {
@@ -43,7 +43,7 @@ func (r *ResticServiceImpl) ListBackups() ([]api.BackupInfo, error) {
 	}
 
 	command := []string{"restic", "snapshots", "--json"}
-	output, err := r.ResticContainerExecutor.Execute(command, nil, nil, repo.EncryptionPassword, "")
+	output, err := r.ResticContainerExecutor.Execute(command, nil, nil, repo.EncryptionPassword, "", repo.BackupFolderPath)
 	if err != nil {
 		return nil, err
 	}
@@ -62,30 +62,30 @@ func (r *ResticServiceImpl) DeleteBackup(backupIds []string) error {
 	}
 	// The forget command only removes the snapshot reference; it does not immediately reclaim storage. We therefore add the --prune flag to physically remove unreferenced data from the repository.
 	command := append([]string{"restic", "forget", "--prune"}, backupIds...)
-	_, err = r.ResticContainerExecutor.Execute(command, nil, nil, repo.EncryptionPassword, "")
+	_, err = r.ResticContainerExecutor.Execute(command, nil, nil, repo.EncryptionPassword, "", repo.BackupFolderPath)
 	return err
 }
 
-func (r *ResticServiceImpl) CreateBackup(sourceMount string, volumes []string, tags []string, encryptionPassword string) error {
-	_, err := r.ResticContainerExecutor.Execute([]string{"restic", "backup", "/source"}, volumes, tags, encryptionPassword, sourceMount)
+func (r *ResticServiceImpl) CreateBackup(sourceMount string, volumes []string, tags []string, encryptionPassword, backupFolderPath string) error {
+	_, err := r.ResticContainerExecutor.Execute([]string{"restic", "backup", "/source"}, volumes, tags, encryptionPassword, sourceMount, backupFolderPath)
 	return err
 }
 
-func (r *ResticServiceImpl) RestoreFiles(backupId string, targetDir string, encryptionPassword string) error {
+func (r *ResticServiceImpl) RestoreFiles(backupId string, targetDir string, encryptionPassword, backupFolderPath string) error {
 	command := []string{"restic", "restore", backupId, "--target", "/", "--include", MetaYmlFileName, "--include", DockerComposeYaml}
 	mount := "-v " + targetDir + ":/source "
-	_, err := r.ResticContainerExecutor.Execute(command, nil, nil, encryptionPassword, mount)
+	_, err := r.ResticContainerExecutor.Execute(command, nil, nil, encryptionPassword, mount, backupFolderPath)
 	return err
 }
 
-func (r *ResticServiceImpl) RestoreVolumes(backupId string, volumes []string, encryptionPassword string) error {
-	_, err := r.ResticContainerExecutor.Execute([]string{"restic", "restore", backupId, "--target", "/"}, volumes, nil, encryptionPassword, "")
+func (r *ResticServiceImpl) RestoreVolumes(backupId string, volumes []string, encryptionPassword, backupFolderPath string) error {
+	_, err := r.ResticContainerExecutor.Execute([]string{"restic", "restore", backupId, "--target", "/"}, volumes, nil, encryptionPassword, "", backupFolderPath)
 	return err
 }
 
-func (r *ResticServiceImpl) GetSnapshotInfo(backupId string, encryptionPassword string) (*api.BackupInfo, error) {
+func (r *ResticServiceImpl) GetSnapshotInfo(backupId string, encryptionPassword, backupFolderPath string) (*api.BackupInfo, error) {
 	command := []string{"restic", "snapshots", "--json", backupId}
-	output, err := r.ResticContainerExecutor.Execute(command, nil, nil, encryptionPassword, "")
+	output, err := r.ResticContainerExecutor.Execute(command, nil, nil, encryptionPassword, "", backupFolderPath)
 	if err != nil {
 		return nil, err
 	}

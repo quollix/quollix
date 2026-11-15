@@ -24,6 +24,7 @@ type FramePages struct {
 	StorePage            *StorePage
 	VersionsPage         *VersionsPage
 	MaintenancePage      *MaintenancePage
+	AlertsPage           *AlertsPage
 	UsersPage            *UsersPage
 	UserEditPage         *UserEditPage
 	TerminalAppsPage     *TerminalAppsPage
@@ -52,6 +53,7 @@ func newFramePages(frame *FrameType) *FramePages {
 		StorePage:            &StorePage{Frame: frame},
 		VersionsPage:         &VersionsPage{Frame: frame},
 		MaintenancePage:      &MaintenancePage{Frame: frame},
+		AlertsPage:           &AlertsPage{Frame: frame},
 		UsersPage:            &UsersPage{Frame: frame},
 		UserEditPage:         &UserEditPage{Frame: frame},
 		TerminalAppsPage:     &TerminalAppsPage{Frame: frame},
@@ -119,6 +121,12 @@ func (p *FramePages) GoToStorePage() *StorePage {
 func (p *FramePages) OpenMaintenancePage() *MaintenancePage {
 	p.Visit(api.Paths.FrontendMaintenance)
 	return p.MaintenancePage
+}
+
+func (p *FramePages) OpenAlertsPage() *AlertsPage {
+	p.Frame.Browser.ClickSidebarLink("sidebar-group-system", "sidebar-link-alerts")
+	p.Frame.Assert.PagePath(api.Paths.FrontendAlerts)
+	return p.AlertsPage
 }
 
 func (p *FramePages) GoToMaintenancePage() *FrameType {

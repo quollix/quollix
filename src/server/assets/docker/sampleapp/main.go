@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -21,6 +22,7 @@ var (
 func main() {
 	http.HandleFunc("/", versionHandler)
 	http.HandleFunc("/env/", envHandler)
+	http.HandleFunc("/env-present/", envPresentHandler)
 	http.HandleFunc("/header/", headerHandler)
 	http.HandleFunc("/save-string", saveStringHandler)
 	http.HandleFunc("/read-string", readStringHandler)
@@ -47,6 +49,19 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil)) // #nosec G114 (CWE-676): Use of net/http serve function that has no support for setting timeouts; sample app is only relevant for testing
 }
 
+func envPresentHandler(w http.ResponseWriter, r *http.Request) {
+	requestedEnvName := strings.TrimPrefix(r.URL.Path, "/env-present/")
+	if requestedEnvName == "" {
+		http.Error(w, "unknown env variable", http.StatusBadRequest)
+		return
+	}
+	_, isSet := os.LookupEnv(requestedEnvName)
+	if _, err := w.Write([]byte(strconv.FormatBool(isSet))); err != nil { // #nosec G705 -- test-only sample app
+		http.Error(w, "error writing response", http.StatusInternalServerError)
+		log.Printf("Error writing response: %v", err)
+	}
+}
+
 func envHandler(w http.ResponseWriter, r *http.Request) {
 	requestedEnvName := strings.TrimPrefix(r.URL.Path, "/env/")
 	if requestedEnvName == "" {
@@ -54,7 +69,7 @@ func envHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := w.Write([]byte(os.Getenv(requestedEnvName))); err != nil {
+	if _, err := w.Write([]byte(os.Getenv(requestedEnvName))); err != nil { // #nosec G705 -- test-only sample app
 		http.Error(w, "error writing response", http.StatusInternalServerError)
 		log.Printf("Error writing response: %v", err)
 	}
@@ -67,7 +82,7 @@ func headerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := w.Write([]byte(r.Header.Get(requestedHeaderName))); err != nil {
+	if _, err := w.Write([]byte(r.Header.Get(requestedHeaderName))); err != nil { // #nosec G705 -- test-only sample app
 		http.Error(w, "error writing response", http.StatusInternalServerError)
 		log.Printf("Error writing response: %v", err)
 	}
