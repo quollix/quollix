@@ -13,7 +13,7 @@ var (
 	PrettyFrontendTimeLayoutWithDay = PrettyFrontendTimeLayout + ", Mon"
 )
 
-const ApplicationVersion = "1.4.0"
+const ApplicationVersion = "1.4.1"
 
 const (
 	SampleRealUserEmail      = "user@example.com"
