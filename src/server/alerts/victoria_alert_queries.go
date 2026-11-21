@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"server/logging"
 	"server/metrics"
@@ -37,11 +38,11 @@ func (s *VictoriaAlertQueriesImpl) GetHostMemoryUsage() (float64, error) {
 }
 
 func (s *VictoriaAlertQueriesImpl) GetHostDiskUsage() (float64, error) {
-	return s.queryUsagePercent(`100 * host_filesystem_used_ratio`)
+	return s.queryUsagePercent(`100 * host_filesystem_used_ratio{mountpoint="/host"}`)
 }
 
 func (s *VictoriaAlertQueriesImpl) GetQuollixErrorCount() (int, error) {
-	query := fmt.Sprintf(`_time:%s maintainer:quollix app:quollix service:quollix level:in("error", "fatal") | stats count() as errors`, quollixErrorLookback.String())
+	query := fmt.Sprintf(`_time:%s maintainer:quollix app:quollix service:quollix level:in("error", "fatal") | stats count() as errors`, time.Duration(quollixErrorLookbackMinutes)*time.Minute)
 	rows, err := s.victoriaLogs.Query(query)
 	if err != nil {
 		return 0, err

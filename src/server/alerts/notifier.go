@@ -20,8 +20,6 @@ const (
 	alertEmailBodyTemplate    = `%s
 
 Quollix instance: https://quollix.%s
-Alert: %s
-Status: %s
 `
 )
 
@@ -55,6 +53,6 @@ func formatNotificationEmail(notification Notification, baseDomain string) (stri
 		status = "firing"
 	}
 	subject := fmt.Sprintf(alertEmailSubjectTemplate, status, notification.AlertName)
-	body := fmt.Sprintf(alertEmailBodyTemplate, notification.Details, baseDomain, notification.AlertName, status)
+	body := fmt.Sprintf(alertEmailBodyTemplate, notification.Details, baseDomain)
 	return subject, body
 }

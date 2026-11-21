@@ -19,7 +19,7 @@ const (
 
 	alertCheckInterval         = 5 * time.Minute
 	certificateExpiryThreshold = 14 * 24 * time.Hour
-	quollixErrorLookback       = 10 * time.Minute
+	quollixErrorLookbackMinutes = 10
 )
 
 const (

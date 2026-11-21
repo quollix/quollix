@@ -37,8 +37,13 @@ func TestVictoriaAlertQueries_HostUsageQueries(t *testing.T) {
 			Timestamps: []int64{cpuEnd.UnixMilli()},
 		},
 		{
-			Metric:     map[string]string{metrics.MetricNameLabel: "host_filesystem_used_ratio"},
+			Metric:     map[string]string{metrics.MetricNameLabel: "host_filesystem_used_ratio", "mountpoint": "/host"},
 			Values:     []float64{0.42},
+			Timestamps: []int64{cpuEnd.UnixMilli()},
+		},
+		{
+			Metric:     map[string]string{metrics.MetricNameLabel: "host_filesystem_used_ratio", "mountpoint": "/other"},
+			Values:     []float64{0.99},
 			Timestamps: []int64{cpuEnd.UnixMilli()},
 		},
 	}))

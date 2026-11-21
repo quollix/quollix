@@ -68,7 +68,7 @@ func (c *AlertChecksImpl) CheckQuollixErrors(state *RuntimeState) error {
 	if count > 0 {
 		target = AlertStatusFiring
 	}
-	details := fmt.Sprintf("Quollix logged %d error or fatal events in the last %s.", count, quollixErrorLookback)
+	details := fmt.Sprintf("Quollix logged %d error or fatal events in the last %d minutes.", count, quollixErrorLookbackMinutes)
 	if target == AlertStatusFiring {
 		details += " Review Quollix logs in the Grafana app."
 	}
