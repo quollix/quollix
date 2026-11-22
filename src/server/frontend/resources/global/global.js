@@ -66,12 +66,20 @@ window.confirmDialog = async function (message) {
     })
 }
 
-window.doRequest = async function(path, data) {
+window.doRequest = async function(path, data, redirect = 'follow') {
     return fetch(path, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data),
+        redirect,
     });
+}
+
+window.openBlog = async function(button) {
+    const blogWindow = window.open('about:blank', '_blank')
+    await window.doRequest(button.dataset.markCheckedUrl, {}, 'manual')
+    blogWindow.location.href = button.dataset.blogUrl
+    window.location.reload()
 }
 
 async function executePostRequest(path, data, options = {}) {

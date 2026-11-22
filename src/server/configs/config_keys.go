@@ -66,6 +66,8 @@ var ConfigKeys = struct {
 	AlertDiskUsagePendingSince    string
 	AlertCertificateExpiryState   string
 	AlertQuollixErrorsState       string
+	LatestBlogArticleDate         string
+	LastBlogFetchAttempt          string
 }{
 	BaseDomain:                      "base_domain",
 	LogsRetentionDays:               "logs_retention_days",
@@ -131,4 +133,6 @@ var ConfigKeys = struct {
 	AlertDiskUsagePendingSince:    "alert_disk_usage_pending_since",
 	AlertCertificateExpiryState:   "alert_certificate_expiry_state",
 	AlertQuollixErrorsState:       "alert_quollix_errors_state",
+	LatestBlogArticleDate:         "blog_latest_article_date",
+	LastBlogFetchAttempt:          "blog_last_fetch_attempt",
 }

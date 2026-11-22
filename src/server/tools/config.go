@@ -72,7 +72,7 @@ var ComposeEnvVars = struct {
 }
 
 type GlobalConfig struct {
-	CollectMetricsAutomatically           bool
+	CollectMetricsAutomatically bool
 	// Force flush keeps tests from waiting for VictoriaMetrics to make pushed samples readable.
 	ForceFlushMetricsAfterPush            bool
 	PrintCommandOutput                    bool
@@ -89,6 +89,8 @@ type GlobalConfig struct {
 	UseLocalTestingAuthorizedKey          bool
 	UseStrictEmailClientStub              bool
 	UseMockWildcardCertificateService     bool
+	MockRSSClient                         bool
+	BlogURL                               string
 	UseExternalDatabase                   bool
 	AllowInsecureOidcProviderTls          bool
 }

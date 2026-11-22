@@ -79,6 +79,7 @@ func runServer(deps *di.Dependencies) error {
 	}
 	deps.MaintenanceAgent.StartMaintenanceAgentDaemon()
 	deps.AlertAgent.StartAlertAgentDaemon()
+	deps.BlogAgent.StartBlogAgentDaemon()
 	if err := deps.TimezoneProvider.InitializeIanaTimezones(); err != nil {
 		return err
 	}

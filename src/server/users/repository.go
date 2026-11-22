@@ -8,7 +8,7 @@ import (
 	u "github.com/quollix/common/utils"
 )
 
-var (
+const (
 	userColumnsNoId = `
        username,
        email,
@@ -17,12 +17,12 @@ var (
        is_enabled,
        set_password_token,
        set_password_token_expiration_date,
-       creation_date
+       creation_date,
+       last_blog_check
 	`
-
-	userSelect = fmt.Sprintf(`SELECT users.user_id, %s FROM users`, userColumnsNoId)
-	userInsert = fmt.Sprintf(`INSERT INTO users (%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING user_id`, userColumnsNoId)
-	userUpdate = fmt.Sprintf(`UPDATE users SET (%s) = ($2, $3, $4, $5, $6, $7, $8, $9) WHERE user_id = $1`, userColumnsNoId)
+	userSelect = `SELECT users.user_id, ` + userColumnsNoId + ` FROM users`
+	userInsert = `INSERT INTO users (` + userColumnsNoId + `) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING user_id`
+	userUpdate = `UPDATE users SET (` + userColumnsNoId + `) = ($2, $3, $4, $5, $6, $7, $8, $9, $10) WHERE user_id = $1`
 )
 
 type UserRepository interface {
@@ -84,23 +84,28 @@ func (r *UserRepositoryImpl) scanUsers(query string, args ...any) ([]api.User, e
 	var users []api.User
 	for rows.Next() {
 		var user api.User
-		if err = rows.Scan(
-			&user.Id,
-			&user.Username,
-			&user.Email,
-			&user.HashedPassword,
-			&user.IsAdmin,
-			&user.IsEnabled,
-			&user.SetPasswordToken,
-			&user.SetPasswordTokenExpirationDate,
-			&user.CreationDate,
-		); err != nil {
+		if err = rows.Scan(userScanDestinations(&user)...); err != nil {
 			return nil, u.Logger.NewError(err.Error())
 		}
 		normalizeUserTimes(&user)
 		users = append(users, user)
 	}
 	return users, nil
+}
+
+func userScanDestinations(user *api.User) []any {
+	return []any{
+		&user.Id,
+		&user.Username,
+		&user.Email,
+		&user.HashedPassword,
+		&user.IsAdmin,
+		&user.IsEnabled,
+		&user.SetPasswordToken,
+		&user.SetPasswordTokenExpirationDate,
+		&user.CreationDate,
+		&user.LastBlogCheck,
+	}
 }
 
 func (r *UserRepositoryImpl) GetUserById(userId int) (*api.User, error) {
@@ -112,18 +117,8 @@ func (r *UserRepositoryImpl) GetUserByUsername(username string) (*api.User, erro
 }
 
 func (r *UserRepositoryImpl) UpdateUser(info *api.User) error {
-	_, err := r.DbProvider.GetDB().Exec(
-		userUpdate,
-		info.Id,
-		info.Username,
-		info.Email,
-		info.HashedPassword,
-		info.IsAdmin,
-		info.IsEnabled,
-		info.SetPasswordToken,
-		info.SetPasswordTokenExpirationDate,
-		info.CreationDate,
-	)
+	args := append([]any{info.Id}, userWriteArgs(info)...)
+	_, err := r.DbProvider.GetDB().Exec(userUpdate, args...)
 	if err != nil {
 		return u.Logger.NewError(err.Error())
 	}
@@ -141,14 +136,14 @@ func (r *UserRepositoryImpl) DoesAnyAdminUserExist() (bool, error) {
 
 func (r *UserRepositoryImpl) CreateUser(user *api.User) (int, error) {
 	var id int
-	err := r.DbProvider.GetDB().QueryRow(userInsert, userInsertArgs(user)...).Scan(&id)
+	err := r.DbProvider.GetDB().QueryRow(userInsert, userWriteArgs(user)...).Scan(&id)
 	if err != nil {
 		return 0, u.Logger.NewError(err.Error())
 	}
 	return id, nil
 }
 
-func userInsertArgs(user *api.User) []any {
+func userWriteArgs(user *api.User) []any {
 	return []any{
 		user.Username,
 		user.Email,
@@ -158,6 +153,7 @@ func userInsertArgs(user *api.User) []any {
 		user.SetPasswordToken,
 		user.SetPasswordTokenExpirationDate,
 		user.CreationDate,
+		user.LastBlogCheck.UTC(),
 	}
 }
 
@@ -226,6 +222,7 @@ func (r *UserRepositoryImpl) Wipe() {
 func normalizeUserTimes(user *api.User) {
 	user.SetPasswordTokenExpirationDate = user.SetPasswordTokenExpirationDate.UTC()
 	user.CreationDate = user.CreationDate.UTC()
+	user.LastBlogCheck = user.LastBlogCheck.UTC()
 }
 
 func (r *UserRepositoryImpl) GetUserByToken(token string) (*api.User, error) {

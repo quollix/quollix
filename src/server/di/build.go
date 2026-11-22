@@ -8,6 +8,7 @@ import (
 	"server/apps_basic"
 	"server/backup_server"
 	"server/backups"
+	"server/blog"
 	certificates2 "server/certificates"
 	"server/configs"
 	"server/email"
@@ -43,6 +44,7 @@ type Dependencies struct {
 	ContainerLogMonitor         apps_basic.ContainerLogMonitor
 	MaintenanceAgent            maintenance.MaintenanceAgent
 	AlertAgent                  alerts.AlertAgent
+	BlogAgent                   blog.Agent
 	ResticDockerImageService    backup_server.ResticDockerImageService
 	SystemConfigMigrator        system_config_migrations.SystemConfigMigrator
 	DatabaseSnapshotRepository  u.DatabaseSnapshotRepository
@@ -85,6 +87,13 @@ type Repositories struct {
 }
 
 var SharedSet = wire.NewSet(
+	wire.Struct(new(blog.MockFeedClient)),
+	NewBlogFeedClient,
+	wire.Struct(new(blog.Handler), "*"),
+	wire.Struct(new(blog.BlogServiceImpl), "*"),
+	wire.Bind(new(blog.BlogService), new(*blog.BlogServiceImpl)),
+	wire.Struct(new(blog.AgentImpl), "*"),
+	wire.Bind(new(blog.Agent), new(*blog.AgentImpl)),
 	NewContainerMetricsMonitor,
 	alerts.NewVictoriaAlertQueries,
 	NewVolumeMetricsMonitor,

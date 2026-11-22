@@ -49,6 +49,23 @@ footer {
   animation: spin 1s linear infinite;
 }
 
+#blog-news-button {
+  position: relative;
+  background: transparent;
+  border: none;
+  color: var(--pico-primary);
+  padding: 0;
+  font-size: 1.6rem;
+}
+
+#blog-news-button .blog-unread-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--alert-color);
+  font-size: 0.55rem;
+}
+
 #sidebar-list {
   list-style: none;
   padding: 0;

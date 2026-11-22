@@ -5,6 +5,7 @@ import (
 )
 
 const DevProfile = "DEV"
+const MockBlogPagePath = "/test-blog"
 
 const (
 	DatabaseHostNameEnvVar    = "DATABASE_HOST_NAME"
@@ -54,6 +55,8 @@ func newDevGlobalConfig() *GlobalConfig {
 		UseLocalTestingAuthorizedKey:          true,
 		UseStrictEmailClientStub:              true,
 		UseMockWildcardCertificateService:     true,
+		MockRSSClient:                         true,
+		BlogURL:                               "https://quollix.localhost" + MockBlogPagePath,
 		UseExternalDatabase:                   false,
 		AllowInsecureOidcProviderTls:          true,
 	}
@@ -77,6 +80,8 @@ func newProdGlobalConfig() *GlobalConfig {
 		UseLocalTestingAuthorizedKey:          false,
 		UseStrictEmailClientStub:              false,
 		UseMockWildcardCertificateService:     false,
+		MockRSSClient:                         false,
+		BlogURL:                               "https://quollix.org/blog/",
 		UseExternalDatabase:                   false,
 		AllowInsecureOidcProviderTls:          false,
 	}

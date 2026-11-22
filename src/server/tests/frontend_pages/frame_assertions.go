@@ -107,6 +107,35 @@ func (a *FrameAssertions) ElementNotPresent(selector string) *FrameType {
 	return a.Frame
 }
 
+func (a *FrameAssertions) BlogNewsUnread() *FrameType {
+	button := a.Frame.Page.MustElement("#blog-news-button")
+	title := button.MustAttribute("title")
+	assert.NotNil(a.Frame.T, title)
+	assert.Equal(a.Frame.T, "There are unread blog posts", *title)
+	a.ElementPresent("#blog-news-button .blog-unread-indicator")
+	return a.Frame
+}
+
+func (a *FrameAssertions) BlogNewsRead() *FrameType {
+	err := u.EventuallyWithTimeout(browserTimeout, 50*time.Millisecond, func() error {
+		exists, _, err := a.Frame.Page.Has("#blog-news-button .blog-unread-indicator")
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("blog unread indicator is still visible")
+		}
+		return nil
+	})
+	assert.Nil(a.Frame.T, err)
+
+	button := a.Frame.Page.MustElement("#blog-news-button")
+	title := button.MustAttribute("title")
+	assert.NotNil(a.Frame.T, title)
+	assert.Equal(a.Frame.T, "Open the Quollix blog", *title)
+	return a.Frame
+}
+
 func (a *FrameAssertions) AppOperationStarted() *FrameType {
 	err := u.EventuallyWithTimeout(backupOperationTimeout, 50*time.Millisecond, func() error {
 		_, isOngoing, err := a.Frame.Client.Apps.GetCurrentOperations()

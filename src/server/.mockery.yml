@@ -401,3 +401,9 @@ packages:
         config:
           filename: apps_service_advanced_mock.go
           structname: AppsServiceAdvancedMock
+  server/blog:
+    interfaces:
+      FeedClient:
+        config:
+          filename: feed_client_mock.go
+          structname: FeedClientMock

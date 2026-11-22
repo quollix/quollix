@@ -58,5 +58,6 @@ func (s *SystemConfigMigrationsProviderImpl) List() []func() error {
 		s.createBackupFolderPath,
 		s.createAlertConfiguration,
 		s.createBroadcastEmailTemplate,
+		s.createLatestBlogArticleDate,
 	}
 }

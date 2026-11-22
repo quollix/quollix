@@ -10,6 +10,7 @@ import (
 	"server/apps_basic"
 	"server/backup_server"
 	"server/backups"
+	"server/blog"
 	"server/certificates"
 	"server/configs"
 	"server/email"
@@ -45,6 +46,7 @@ type HandlerRegisterer struct {
 	SetupHandler                 *ingress.SetupHandler
 	AppStoreHandler              *app_store.AppStoreHandler
 	UserHandler                  *users.UserHandler
+	BlogHandler                  *blog.Handler
 	RouteRegisterer              *users.RouteRegisterer
 	CertificateHandler           *certificates.CertificateHandler
 	Router                       chi.Router
@@ -126,6 +128,7 @@ func (h *HandlerRegisterer) authenticatedRoutes() []users.Route {
 
 func (h *HandlerRegisterer) adminRoutes() []users.Route {
 	routes := make([]users.Route, 0)
+	routes = append(routes, h.adminBlogRoutes()...)
 	routes = append(routes, h.adminAppRoutes()...)
 	routes = append(routes, h.adminAlertSettingsRoutes()...)
 	routes = append(routes, h.adminObservabilityRoutes()...)
@@ -138,6 +141,12 @@ func (h *HandlerRegisterer) adminRoutes() []users.Route {
 	routes = append(routes, h.adminOidcProviderRoutes()...)
 	routes = append(routes, h.adminOidcClientRoutes()...)
 	return routes
+}
+
+func (h *HandlerRegisterer) adminBlogRoutes() []users.Route {
+	return []users.Route{
+		{Path: api.Paths.BackendBlogMarkChecked, HandlerFunc: h.BlogHandler.MarkBlogCheckedAndRedirect, AccessLevel: tools.AdminLevel},
+	}
 }
 
 func (h *HandlerRegisterer) adminAlertSettingsRoutes() []users.Route {
@@ -271,6 +280,7 @@ func (h *HandlerRegisterer) adminOidcClientRoutes() []users.Route {
 
 func (h *HandlerRegisterer) developmentRoutes() []users.Route {
 	return []users.Route{
+		{Path: tools.MockBlogPagePath, HandlerFunc: h.BlogHandler.MockBlogPage, AccessLevel: tools.AnonymousLevel},
 		{Path: api.Paths.BackendMetricsWipe, HandlerFunc: h.MetricsHandler.WipeMetrics, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendLogsWipe, HandlerFunc: h.LoggingHandler.WipeLogs, AccessLevel: tools.AdminLevel},
 		{Path: api.Paths.BackendReloadFrontendTemplatesFromFileSystem, HandlerFunc: h.TemplateHandler.ReloadFrontendTemplatesFromFileSystemHandler, AccessLevel: tools.AnonymousLevel},

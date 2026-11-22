@@ -8,6 +8,7 @@ import (
 
 	"server/app_store"
 	"server/apps_basic"
+	"server/blog"
 	certificates2 "server/certificates"
 	"server/configs"
 	"server/email"
@@ -92,6 +93,13 @@ func NewEmailClient(config *tools.GlobalConfig) u.EmailClient {
 		return &email.StrictEmailClientStub{}
 	}
 	return &u.EmailClientImpl{}
+}
+
+func NewBlogFeedClient(config *tools.GlobalConfig, mockClient *blog.MockFeedClient) blog.FeedClient {
+	if config.MockRSSClient {
+		return mockClient
+	}
+	return blog.NewRSSClient(&http.Client{Timeout: 10 * time.Second}, blog.RSSFeedURL)
 }
 
 func NewWildcardCertificateService(

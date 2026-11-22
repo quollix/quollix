@@ -23,6 +23,11 @@ func (b *FrameBrowser) CollectMetrics() *FrameType {
 	return b.Frame
 }
 
+func (b *FrameBrowser) ClickBlogNewsIcon() *FrameType {
+	assert.Nil(b.Frame.T, b.Frame.Page.ClickElementWithin("#blog-news-button", browserTimeout))
+	return b.Frame
+}
+
 func (b *FrameBrowser) DoAndWaitDOMContentLoaded(action func()) {
 	assert.Nil(b.Frame.T, b.Frame.Page.DoAndWaitLoad(func() error {
 		action()

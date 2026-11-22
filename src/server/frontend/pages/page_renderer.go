@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"server/apps_basic"
+	"server/blog"
 	"server/configs"
 	"server/tools"
 
@@ -28,6 +29,7 @@ type PageRenderRequest struct {
 
 type PageRendererImpl struct {
 	Config            *tools.GlobalConfig
+	BlogService       blog.BlogService
 	ConfigsService    configs.ConfigsService
 	FrontendEngine    frontend.EngineService
 	OperationRegistry apps_basic.OperationRegistry
@@ -42,6 +44,7 @@ type Auth struct {
 type PageGlobals struct {
 	Auth                Auth
 	Config              *tools.GlobalConfig
+	HasUnreadBlogPosts  bool
 	Host                string
 	InfoIconRedirectUrl string
 }
@@ -70,6 +73,15 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 		auth.IsAdmin = user.IsAdmin
 	}
 
+	hasUnreadBlogPosts := false
+	if user != nil && user.IsAdmin {
+		hasUnreadBlogPosts, err = p.BlogService.HasUnreadPosts(user.LastBlogCheck)
+		if err != nil {
+			p.PageCreationFailed(request.ResponseWriter, err)
+			return
+		}
+	}
+
 	host, err := p.ConfigsService.GetBaseDomain()
 	if err != nil {
 		p.PageCreationFailed(request.ResponseWriter, err)
@@ -82,6 +94,7 @@ func (p *PageRendererImpl) RenderPage(request PageRenderRequest) {
 		Globals: PageGlobals{
 			Auth:                auth,
 			Config:              p.Config,
+			HasUnreadBlogPosts:  hasUnreadBlogPosts,
 			Host:                host,
 			InfoIconRedirectUrl: infoIconRedirectUrl(request.InfoIconRedirectPath, auth.IsAdmin),
 		},

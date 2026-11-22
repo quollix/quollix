@@ -170,7 +170,7 @@ func callSampleRabbitMQManagementAPI(method string, path string, requestBody any
 	if err != nil {
 		return nil, 0, err
 	}
-	defer response.Body.Close()
+	defer u.Close(response.Body)
 
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {

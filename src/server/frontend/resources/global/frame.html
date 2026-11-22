@@ -25,10 +25,6 @@
 
             <div id="header-right">
 
-                {{ if .Globals.Auth.IsAdmin }}
-                <span id="current-operation"></span>
-                <i id="request-indicator" class="mdi mdi-loading"></i>
-                {{ end }}
 
                 {{ if .Globals.Config.ExposeDevelopmentRoutes }}
                 {{ if .Globals.Auth.IsAdmin }}
@@ -43,6 +39,21 @@
                 {{ if .Globals.Config.ExposeDevelopmentRoutes }}
                 <button class="lean" onclick="reloadFrontend()">Reload Frontend</button>
                 {{ end }}
+
+                {{ if .Globals.Auth.IsAdmin }}
+                <span id="current-operation"></span>
+                <i id="request-indicator" class="mdi mdi-loading"></i>
+                <button id="blog-news-button" class="lean" type="button"
+                    data-mark-checked-url="{{.Static.Paths.BackendBlogMarkChecked}}"
+                    data-blog-url="{{.Globals.Config.BlogURL}}"
+                    title="{{if .Globals.HasUnreadBlogPosts}}There are unread blog posts{{else}}Open the Quollix blog{{end}}"
+                    onclick="openBlog(this)">
+                    <i class="mdi mdi-newspaper-variant-outline" aria-hidden="true"></i>
+                    {{if .Globals.HasUnreadBlogPosts}}<i class="mdi mdi-circle blog-unread-indicator"
+                        aria-hidden="true"></i>{{end}}
+                </button>
+                {{ end }}
+
                 <a id="github-link" href="{{.Static.Links.GitHubRepositories}}" target="_blank"
                     rel="noopener noreferrer" title="Open GitHub">
                     <i class="mdi mdi-github"></i>

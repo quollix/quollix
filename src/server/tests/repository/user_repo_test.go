@@ -182,6 +182,7 @@ func TestUpdateUser(t *testing.T) {
 		IsEnabled:                      false,
 		SetPasswordToken:               "other-set-password-token",
 		SetPasswordTokenExpirationDate: time.Date(1991, time.January, 1, 0, 0, 0, 0, time.UTC),
+		LastBlogCheck:                  time.Date(2026, time.November, 22, 8, 15, 0, 0, time.UTC),
 	}
 
 	assert.Nil(t, UserRepo.UpdateUser(updatedUser))
@@ -218,6 +219,7 @@ func assertUserEquality(t *testing.T, expectedUser *api.User, actualUser *api.Us
 	assert.Equal(t, expectedUser.SetPasswordToken, actualUser.SetPasswordToken)
 	assert.Equal(t, expectedUser.SetPasswordTokenExpirationDate, actualUser.SetPasswordTokenExpirationDate)
 	assert.Equal(t, expectedUser.CreationDate, actualUser.CreationDate)
+	assert.Equal(t, expectedUser.LastBlogCheck, actualUser.LastBlogCheck)
 }
 
 func insertTestUser(t *testing.T, username string) {

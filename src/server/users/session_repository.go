@@ -20,16 +20,7 @@ const (
 	`
 
 	authenticatedSessionSelect = `
-		SELECT
-			users.user_id,
-			users.username,
-			users.email,
-			users.hashed_password,
-			users.is_admin,
-			users.is_enabled,
-			users.set_password_token,
-			users.set_password_token_expiration_date,
-			users.creation_date,
+		SELECT users.user_id, ` + userColumnsNoId + `,
 			user_sessions.session_id,
 			user_sessions.user_id,
 			user_sessions.audience,
@@ -122,26 +113,18 @@ type sessionRowScanner interface {
 
 func scanAuthenticatedSession(row sessionRowScanner) (*AuthenticatedSession, error) {
 	var authenticatedSession AuthenticatedSession
-	if err := row.Scan(
-		&authenticatedSession.User.Id,
-		&authenticatedSession.User.Username,
-		&authenticatedSession.User.Email,
-		&authenticatedSession.User.HashedPassword,
-		&authenticatedSession.User.IsAdmin,
-		&authenticatedSession.User.IsEnabled,
-		&authenticatedSession.User.SetPasswordToken,
-		&authenticatedSession.User.SetPasswordTokenExpirationDate,
-		&authenticatedSession.User.CreationDate,
+	scanDestinations := userScanDestinations(&authenticatedSession.User)
+	scanDestinations = append(scanDestinations,
 		&authenticatedSession.Session.SessionId,
 		&authenticatedSession.Session.UserId,
 		&authenticatedSession.Session.Audience,
 		&authenticatedSession.Session.HashedCookieValue,
 		&authenticatedSession.Session.CookieExpirationDate,
-	); err != nil {
+	)
+	if err := row.Scan(scanDestinations...); err != nil {
 		return nil, u.Logger.NewError(err.Error())
 	}
-	authenticatedSession.User.SetPasswordTokenExpirationDate = authenticatedSession.User.SetPasswordTokenExpirationDate.UTC()
-	authenticatedSession.User.CreationDate = authenticatedSession.User.CreationDate.UTC()
+	normalizeUserTimes(&authenticatedSession.User)
 	authenticatedSession.Session.CookieExpirationDate = authenticatedSession.Session.CookieExpirationDate.UTC()
 	return &authenticatedSession, nil
 }

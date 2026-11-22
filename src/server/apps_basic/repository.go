@@ -9,23 +9,29 @@ import (
 	u "github.com/quollix/common/utils"
 )
 
-var (
+const appColumnsNoId = `
+	maintainer,
+	app_name,
+	version_name,
+	version_creation_date,
+	version_content,
+	should_be_running,
+	access_policy,
+	client_id,
+	client_secret,
+	app_secret,
+	port,
+	automatic_backups_enabled,
+	automatic_updates_enabled
+`
+
+const appWriteValues = "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13" // #nosec G101 (CWE-798): Potential hardcoded credentials
+
+const (
 	appSelect = `
 		SELECT
 			apps.app_id,
-			apps.maintainer,
-			apps.app_name,
-			apps.version_name,
-			apps.version_creation_date,
-			apps.version_content,
-			apps.should_be_running,
-			apps.access_policy,
-			apps.client_id,
-			apps.client_secret,
-			apps.app_secret,
-			apps.port,
-			apps.automatic_backups_enabled,
-			apps.automatic_updates_enabled,
+			` + appColumnsNoId + `,
 			COALESCE(app_secrets.values, '{}'::jsonb)
 		FROM apps
 		LEFT JOIN LATERAL (
@@ -48,43 +54,9 @@ var (
 		WHERE apps.app_name = $1
 	`
 
-	appUpdate = `
-		UPDATE apps SET
-			maintainer = $1,
-			app_name = $2,
-			version_name = $3,
-			version_creation_date = $4,
-			version_content = $5,
-			should_be_running = $6,
-			access_policy = $7,
-			client_id = $8,
-			client_secret = $9,
-			app_secret = $10,
-			port = $11,
-			automatic_backups_enabled = $12,
-			automatic_updates_enabled = $13
-		WHERE app_id = $14
-	`
+	appUpdate = `UPDATE apps SET (` + appColumnsNoId + `) = (` + appWriteValues + `) WHERE app_id = $14`
 
-	appInsert = `
-		INSERT INTO apps (
-			maintainer,
-			app_name,
-			version_name,
-			version_creation_date,
-			version_content,
-			should_be_running,
-			access_policy,
-			client_id,
-			client_secret,
-			app_secret,
-			port,
-			automatic_backups_enabled,
-			automatic_updates_enabled
-		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-		RETURNING app_id
-	`
+	appInsert = `INSERT INTO apps (` + appColumnsNoId + `) VALUES (` + appWriteValues + `) RETURNING app_id`
 )
 
 type AppRepository interface {
